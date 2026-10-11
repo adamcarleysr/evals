@@ -46,7 +46,7 @@ scenarios:
     same_start_as: null
     state: twelve active cases in scope, two of them older than the age threshold; one case with two items outstanding.
     fixture: oakridge/sam-taylor-ashdown
-    tenant_values: ', plus 11 other active cases; two opened more than 30 days ago. Sam Taylor''s case at evidence
+    tenant_values: 'plus 11 other active cases; two opened more than 30 days ago. Sam Taylor''s case at evidence
       collection with Reference 2 and the DBS outstanding. Age threshold (K3): 30 days.'
   input:
     prompt: Show the compliance case view for all active onboarding cases. Highlight cases older than 30 days.

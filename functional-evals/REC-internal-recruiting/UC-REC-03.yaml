@@ -60,8 +60,8 @@ scenarios:
     state: three boards connected; three new applications on one board for different open jobs, none from an existing
       candidate.
     fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: ', with Job Boards A to C. Sam Taylor applied for Senior Support Worker at Ashdown House via
-      Job Board A today and has no ATS record; two other new Job Board A applicants for other open jobs.'
+    tenant_values: with Job Boards A to C. Sam Taylor applied for Senior Support Worker at Ashdown House via Job
+      Board A today and has no ATS record; two other new Job Board A applicants for other open jobs.
   input:
     prompt: Pull new applicants from Job Board A for all active ATS vacancies. Deduplicate against existing candidates,
       link each application to the correct vacancy, and tell me how many new applicants were ingested and for which

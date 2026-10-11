@@ -61,7 +61,7 @@ scenarios:
     state: a validated weekly run with recruiters under target on one KPI, a notable rise in another, forecast changes,
       homes with fewer forecast starters than open vacancies, and one qualified metric.
     fixture: oakridge/recruitment-team-w41
-    tenant_values: ', validated run W41-r1. Delta flag (K3): over 20%. Two recruiters under target on Prescreens;
+    tenant_values: 'validated run W41-r1. Delta flag (K3): over 20%. Two recruiters under target on Prescreens;
       Virtual Interviews +25% vs W40; forecast change set from UC-REC-18 (3 new at Willow Lodge); Beacon House and
       Rowan House with fewer forecast starters than open vacancies; Talk Time qualified.'
   input:
