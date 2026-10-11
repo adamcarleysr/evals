@@ -51,8 +51,8 @@ scenarios:
     state: last month's Deals and target stored; six weeks of Virtual Interview snapshots up to the current part-complete
       week; dashboard reference values stored.
     fixture: oakridge/recruitment-team-w41
-    tenant_values: ', asked on 08/10/2026. September 2026 Deals and target stored; Virtual Interview snapshots for
-      W36–W41; the tenant has both Ashdown House and Ashdown House Annex.'
+    tenant_values: asked on 08/10/2026. September 2026 Deals and target stored; Virtual Interview snapshots for
+      W36–W41; the tenant has both Ashdown House and Ashdown House Annex.
   input:
     prompt: How many deals did the team close last month vs target? What's the trend on virtual interviews over
       6 weeks?

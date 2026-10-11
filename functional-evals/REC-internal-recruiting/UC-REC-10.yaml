@@ -60,9 +60,9 @@ scenarios:
     state: one home has two candidates awaiting interview feedback and one awaiting offer approval; another home's
       candidates are also pending; two managers share a first name.
     fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: ', plus Willow Lodge with two candidates awaiting Stage 2 feedback and one awaiting offer approval;
-      Dana Bennett is RM for Willow Lodge; Sam Taylor''s Stage 2 item is waiting for Megan Hart (RM, Ashdown House);
-      two managers called Becky.'
+    tenant_values: plus Willow Lodge with two candidates awaiting Stage 2 feedback and one awaiting offer approval;
+      Dana Bennett is RM for Willow Lodge; Sam Taylor's Stage 2 item is waiting for Megan Hart (RM, Ashdown House);
+      two managers called Becky.
   input:
     prompt: Show me the hiring-manager decision queue for Dana Bennett (RM, Willow Lodge). Pre-load relevant context
       for each candidate.

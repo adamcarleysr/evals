@@ -57,8 +57,8 @@ scenarios:
     state: four job boards configured; an open senior support worker job with an approved advert, not yet on any
       board.
     fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: ', with Job Boards A to D. Senior Support Worker at Ashdown House, advert approved. Job Board
-      A (K1): HTML, 100-character title, 4,000-character description.'
+    tenant_values: 'with Job Boards A to D. Senior Support Worker at Ashdown House, advert approved. Job Board A
+      (K1): HTML, 100-character title, 4,000-character description.'
   input:
     prompt: Publish the approved job advert for Senior Support Worker at Ashdown House to Job Board A. Set up the
       application webhook to link back to the correct ATS vacancy.

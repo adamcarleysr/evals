@@ -64,9 +64,9 @@ scenarios:
     state: a weekly run that passes every check; a governed list of three recipients; last week's report version
       exists.
     fixture: oakridge/recruitment-team-w41
-    tenant_values: ', run W41-r1. Schedule (K1): data window Mon 00:00–Thu 23:59; Friday 14:00 build, 15:30 QA,
-      15:45 build deadline, 15:55 QA deadline, 16:00 send, 16:15 retry, 17:00 cut-off, UK time. KPI flag (K2): over
-      20%. Governed list: Alex Rowe, Jordan Blake, Kim Lowe. W40 report version exists.'
+    tenant_values: 'run W41-r1. Schedule (K1): data window Mon 00:00–Thu 23:59; Friday 14:00 build, 15:30 QA, 15:45
+      build deadline, 15:55 QA deadline, 16:00 send, 16:15 retry, 17:00 cut-off, UK time. KPI flag (K2): over 20%.
+      Governed list: Alex Rowe, Jordan Blake, Kim Lowe. W40 report version exists.'
   input:
     prompt: 'Generate this week''s Friday leadership email draft: KPIs, four-week starter forecast, week-on-week
       movement, exceptions, commentary.'

@@ -54,7 +54,7 @@ scenarios:
     state: placements across all homes in the horizon, including one cancelled, one withdrawn and one deferred;
       a reference calculation of the grid is stored.
     fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: ', run on Thu 08/10/2026. Horizon (K1): the next four weeks, current week excluded. Sam Taylor''s
+    tenant_values: 'run on Thu 08/10/2026. Horizon (K1): the next four weeks, current week excluded. Sam Taylor''s
       Senior Support Worker at Ashdown House placement is in Onboarding with start date 03/11/2026; seeded placements
       across the nine homes.'
   input:
