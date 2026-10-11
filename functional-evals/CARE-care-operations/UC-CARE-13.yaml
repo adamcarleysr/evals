@@ -100,9 +100,14 @@ scenarios:
     must_not:
     - Show a missing value as 0
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
       stops_at: null
-      note: TODO
+      note: Full-access view with North filter then company-wide employment-type breakdown; no drill-down requested.
 - id: S02
   kind: policy
   detail: P1
@@ -123,9 +128,15 @@ scenarios:
     must_say: []
     must_not: []
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
       stops_at: null
-      note: TODO
+      note: 'P1 and extension at 6: chat answer via UC-CARE-14 matches the filtered tile and drill-down count.'
 - id: S03
   kind: policy
   detail: P2
@@ -149,9 +160,13 @@ scenarios:
     must_not:
     - Present headcount as current
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 5
       stops_at: null
-      note: TODO
+      note: 'P2 and extension at 5: tiles labelled stale and blocked; alert to People team per K3.'
 - id: S04
   kind: edge
   detail: extension at step 1
@@ -171,9 +186,14 @@ scenarios:
     must_say: []
     must_not: []
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
       stops_at: null
-      note: TODO
+      note: 'Extension at 1: reopened view keeps its pin, Rowan House filter, date range and layout.'
 - id: S05
   kind: edge
   detail: extension at step 2
@@ -194,9 +214,13 @@ scenarios:
     - Willow Lodge is outside the viewer's region
     must_not: []
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 5
       stops_at: null
-      note: TODO
+      note: 'Extension at 2: RI scope is South only; Willow Lodge declined, South tiles shown.'
 - id: S06
   kind: edge
   detail: extension at step 3
@@ -217,6 +241,10 @@ scenarios:
     must_not:
     - Show a derived retention figure
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 5
       stops_at: null
-      note: TODO
+      note: 'Extension at 3: retention tile shows ''no definition''; no derived figure (P1).'

@@ -114,9 +114,14 @@ scenarios:
     - Send anything
     - Suggest a reason for any absence or an outcome
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      stops_at: 6
+      note: 'A1: three alerts drafted, Owen Price''s non-counting absences excluded; waits for approval at 6.'
 - id: S02
   kind: policy
   detail: P1
@@ -146,9 +151,14 @@ scenarios:
     must_not:
     - Draft a disciplinary letter or a reason for the absences
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      stops_at: 6
+      note: 'P1: only the formal-meeting alert drafted; no disciplinary letter or speculation on reasons.'
 - id: S03
   kind: policy
   detail: P2
@@ -174,9 +184,14 @@ scenarios:
     must_not:
     - Include Jordan Lee in anything addressed to Dana
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      stops_at: 6
+      note: 'P2: Dana''s drafts cover Willow Lodge employees only; no group-wide list.'
 - id: S04
   kind: policy
   detail: P3
@@ -201,9 +216,16 @@ scenarios:
     must_not:
     - Hold the alert for the next scheduled run
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
       stops_at: null
-      note: TODO
+      note: 'P3: immediate absence type, so alert sent at once to RM and RI and logged.'
 - id: S05
   kind: edge
   detail: hand-off at step 6
@@ -226,9 +248,9 @@ scenarios:
     must_not:
     - Send anything
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps: []
+      stops_at: 6
+      note: 'Hand-off at 6: drafts exist; A1 alerts need approval, so nothing is sent.'
 - id: S06
   kind: edge
   detail: step 2 failure
@@ -249,9 +271,11 @@ scenarios:
     must_not:
     - Report that nobody at Larch House has hit a trigger
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      stops_at: 2
+      note: 'Step 2 failure: Larch House records missing, so triggers not evaluated and the gap shown.'
 - id: S07
   kind: edge
   detail: extension at step 3
@@ -271,9 +295,12 @@ scenarios:
     - The three triggers were alerted yesterday, to whom
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      stops_at: 3
+      note: 'Extension at 3: all three triggers already alerted this window; existing alerts shown.'
 - id: S08
   kind: happy
   detail: null
@@ -293,6 +320,13 @@ scenarios:
     must_say: []
     must_not: []
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
       stops_at: null
-      note: TODO
+      note: 'A3 scheduled run: three alerts sent and logged; nothing for Owen Price.'

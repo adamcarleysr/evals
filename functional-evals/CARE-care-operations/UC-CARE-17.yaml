@@ -99,9 +99,12 @@ scenarios:
     - Assign "Willow Lodge Annex" to Willow Lodge
     - Describe the data as clean
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
       stops_at: null
-      note: TODO
+      note: 'A0 detect only: steps 4-6 are A2 only; seven issues mapped to metrics, nothing written.'
 - id: S02
   kind: edge
   detail: scope
@@ -121,9 +124,12 @@ scenarios:
     must_say: []
     must_not: []
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
       stops_at: null
-      note: TODO
+      note: 'Unclear: scoped query; prescribed style suggests all checks run but only three matching issues reported.'
 - id: S03
   kind: policy
   detail: P1
@@ -145,9 +151,12 @@ scenarios:
     must_not:
     - Report "all checks passed"
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
       stops_at: null
-      note: TODO
+      note: 'P1: leaver-reason check reported ''not run'' with the error; leaver metrics blocked.'
 - id: S04
   kind: happy
   detail: null
@@ -190,9 +199,15 @@ scenarios:
     - Items per owner, and which metrics remain qualified
     must_not: []
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
       stops_at: null
-      note: TODO
+      note: 'A2: seven items assigned to K1 owners, read back, one notice per owner.'
 - id: S05
   kind: edge
   detail: extension at step 4
@@ -213,9 +228,14 @@ scenarios:
     must_say: []
     must_not: []
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
       stops_at: null
-      note: TODO
+      note: 'Extension at 4: existing items'' last-seen updated; no new assignments so no notices at 6.'
 - id: S06
   kind: edge
   detail: issue cleared
@@ -235,9 +255,14 @@ scenarios:
     must_say: []
     must_not: []
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
       stops_at: null
-      note: TODO
+      note: 'Extension at 4: cleared Larch House item marked Resolved with the run (P2); six open.'
 - id: S07
   kind: edge
   detail: extension at step 5
@@ -259,9 +284,10 @@ scenarios:
     - The pattern rule used (3 or more in 30 days) and the occurrences
     must_not: []
     path:
-      steps: null
+      steps:
+      - 5
       stops_at: null
-      note: TODO
+      note: 'Unclear: question may need only queue history; extension at 5 flags the Ashdown pattern.'
 - id: S08
   kind: policy
   detail: P2
@@ -283,6 +309,7 @@ scenarios:
     - The owner can fix the role mapping
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 4
+      stops_at: 4
+      note: 'P2: queue items are never deleted; item stays Assigned until resolved in the HR system.'

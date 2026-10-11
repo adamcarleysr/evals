@@ -106,9 +106,14 @@ scenarios:
     - Record the outcome
     - Tell Jamie the shift is his
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      - 5
+      stops_at: 6
+      note: RM's request confirms the call; availability captured, reliability judged; outcome awaits RM review
+        at step 6.
 - id: S02
   kind: happy
   detail: null
@@ -132,9 +137,14 @@ scenarios:
     must_not:
     - Allocate the shift or change the rota
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      - 5
+      - 6
+      stops_at: 7
+      note: A3 reliable call recorded on Jamie's record; shift stays open for the RM to allocate at step 7.
 - id: S03
   kind: policy
   detail: P1
@@ -162,9 +172,12 @@ scenarios:
     must_not:
     - Mention the home, the shift or the role
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 4
+      stops_at: 4
+      note: 'Identity unconfirmed: callback-only message, no details (P1); attempt logged under K2 retry rules.'
 - id: S04
   kind: policy
   detail: P2
@@ -191,9 +204,12 @@ scenarios:
     must_say: []
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 4
+      stops_at: 4
+      note: No answer on three attempts; K2 maximum reached, RM told, no fourth call (P2).
 - id: S05
   kind: policy
   detail: P3
@@ -219,9 +235,12 @@ scenarios:
     must_not:
     - Question Jamie about the concern, or judge it or him
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      stops_at: 3
+      note: 'Unclear: disclosure recorded as said and routed to RM at once (P3); whether steps 5–6 follow is unstated.'
 - id: S06
   kind: edge
   detail: hand-off at step 1
@@ -242,9 +261,9 @@ scenarios:
     - At this mode each call is confirmed first
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps: []
+      stops_at: 1
+      note: At A1 the RM confirms each call at step 1; only a call list is prepared.
 - id: S07
   kind: edge
   detail: hand-off at step 7
@@ -265,9 +284,14 @@ scenarios:
     must_say: []
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      - 5
+      - 6
+      stops_at: 7
+      note: Available recorded; allocation is the RM's step 7 decision, so no rota entry written.
 - id: S08
   kind: edge
   detail: extension at step 5
@@ -288,6 +312,10 @@ scenarios:
     must_say: []
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      - 5
+      stops_at: 5
+      note: 'Step 5 extension: unreliable call, no outcome written; transcript to RM for review.'

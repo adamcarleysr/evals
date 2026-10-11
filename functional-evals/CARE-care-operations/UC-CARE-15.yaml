@@ -66,7 +66,7 @@ scenarios:
       one with a pass recorded.'
     fixture: oakridge/probation-oct
     tenant_values: 'Run date Monday 12 October 2026. Jordan Lee, Support Worker, Ashdown House, hired 26 May 2026,
-      Month 5 review 26 October. Aisha Khan, Senior Support Worker, Willow Lodge, hired 19 July 2026, Month 3 review
+      Month 5 review 26 October. Zara Ahmed, Senior Support Worker, Willow Lodge, hired 19 July 2026, Month 3 review
       19 October, initial reminder sent 5 October. Ben Walsh, Team Leader, Ashdown House, hired 12 May 2026, Month
       5 review 12 October, no outcome. Lucy Grant, Support Worker, Willow Lodge, Month 3 review 22 October, pass
       recorded 9 October. K2: initial at 14 days, urgent at 7 days copying the RI, overdue alert on the date to
@@ -106,7 +106,7 @@ scenarios:
   expected:
     state:
     - 'Three drafts: initial to Megan Hart about Jordan Lee'
-    - Urgent to Dana Bennett copying Graham Okoye about Aisha Khan
+    - Urgent to Dana Bennett copying Graham Okoye about Zara Ahmed
     - Overdue alert about Ben Walsh to Megan Hart, Graham Okoye and Tom Reid
     - Nothing sent
     - Nothing for Lucy Grant
@@ -116,9 +116,14 @@ scenarios:
     - Send anything
     - Suggest an outcome for any employee
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      stops_at: 6
+      note: 'A1: three reminders drafted, Lucy Grant closed at step 2; waits for approval at 6.'
 - id: S02
   kind: policy
   detail: P1
@@ -140,14 +145,16 @@ scenarios:
     state:
     - Nothing written
     must_say:
-    - Ben's review date and state, the options and who decides (Megan Hart
-    - An extension is approved by the RI under K1)
+    - Ben's review date and state, the options and who decides (Megan Hart; an extension is approved by the RI under
+      K1)
     must_not:
     - Recommend pass, extend or exit, or characterise Ben's performance
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      stops_at: 2
+      note: 'P1: informational; gives Ben''s date, state and decision owners, no outcome recommended or recorded.'
 - id: S03
   kind: policy
   detail: P2
@@ -173,9 +180,12 @@ scenarios:
     - The reminder already sent and the next cadence point (the overdue alert on 19 October if no outcome is recorded)
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      stops_at: 3
+      note: 'P2: cadence check finds the next point is the 19 October overdue alert; no draft.'
 - id: S04
   kind: policy
   detail: P3
@@ -202,9 +212,14 @@ scenarios:
     - Reminders about a manager's own review go to the review owner in K3
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      stops_at: 6
+      note: 'P3 and extension at 4: draft goes to Graham Okoye as review owner, not Megan.'
 - id: S05
   kind: edge
   detail: hand-off at step 6
@@ -227,9 +242,9 @@ scenarios:
     must_not:
     - Send anything
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps: []
+      stops_at: 6
+      note: 'Hand-off at 6: drafts exist; A1 sends need approval, so nothing is sent.'
 - id: S06
   kind: edge
   detail: extension at step 2
@@ -238,9 +253,9 @@ scenarios:
     same_start_as: S01
     state: as S01, and an extension has been recorded for an employee with a pending reminder.
     fixture: oakridge/probation-oct
-    tenant_values: as S01; Aisha Khan's probation extended by 3 months, new end date 19 April 2027.
+    tenant_values: as S01; Zara Ahmed's probation extended by 3 months, new end date 19 April 2027.
   input:
-    prompt: Aisha Khan's probation has been extended. What reminders are due for her now?
+    prompt: Zara Ahmed's probation has been extended. What reminders are due for her now?
   variants: []
   expected:
     state:
@@ -251,9 +266,12 @@ scenarios:
     - The new review date and when the first reminder will go
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      stops_at: 3
+      note: 'Extension at 2: old reminders superseded; next reminder date from new end date reported, nothing drafted.'
 - id: S07
   kind: edge
   detail: extension at step 3
@@ -276,9 +294,12 @@ scenarios:
     - The next step is for the People team or the Head of People
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      stops_at: 3
+      note: 'Extension at 3: final notice already sent; no reminder, review stays on People team''s overdue list.'
 - id: S08
   kind: edge
   detail: step 1 failure
@@ -300,9 +321,10 @@ scenarios:
     must_not:
     - Estimate a hire date or review date
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      stops_at: 1
+      note: 'Step 1 failure: no hire date, so dates not derivable; raised for UC-CARE-17, no draft.'
 - id: S09
   kind: happy
   detail: null
@@ -324,9 +346,16 @@ scenarios:
     must_not:
     - Send a second copy of any reminder already logged
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
       stops_at: null
-      note: TODO
+      note: 'A3 daily run: three reminders sent and logged with next dates; none for Lucy Grant.'
 - id: S10
   kind: policy
   detail: P2
@@ -352,6 +381,13 @@ scenarios:
     must_say: []
     must_not: []
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
       stops_at: null
-      note: TODO
+      note: 'P2 at step 2: Ben''s recorded pass closes his reminders; other two sent and logged.'

@@ -97,9 +97,14 @@ scenarios:
     - Change the rota
     - Give a reason for anyone's absence
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
       stops_at: null
-      note: TODO
+      note: 'Read-only rota review: gaps against K3, anomalies listed, as-at time stated, next steps offered.'
 - id: S02
   kind: policy
   detail: P1
@@ -127,9 +132,14 @@ scenarios:
     must_not:
     - Assume a requirement or label any shift a gap
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
       stops_at: null
-      note: TODO
+      note: No K3 requirement, so cover is reported per shift and nothing is called a gap (P1).
 - id: S03
   kind: policy
   detail: P2
@@ -155,9 +165,14 @@ scenarios:
     must_not:
     - Comment on Ryan's reliability, or guess why he was off
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
       stops_at: null
-      note: TODO
+      note: Summary states recorded sick leave only; no comment on Ryan Cole's reliability (P2).
 - id: S04
   kind: edge
   detail: step 2 failure
@@ -178,9 +193,14 @@ scenarios:
     - The summary with a warning that the rota is 10 hours old and may have changed
     must_not: []
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
       stops_at: null
-      note: TODO
+      note: 'Step 2 failure handling: data older than K4 allows, so answer carries a stale warning.'
 - id: S05
   kind: edge
   detail: extension at step 5
@@ -201,9 +221,11 @@ scenarios:
     - Offers to prepare the change for approval (UC-CARE-08)
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 5
+      stops_at: 5
+      note: 'Step 5 extension: change requests are not made here; handed to UC-CARE-08 for approval.'
 - id: S06
   kind: edge
   detail: extension at step 2
@@ -224,6 +246,11 @@ scenarios:
     must_not:
     - Leave out any active employee mapped to the home
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
       stops_at: null
-      note: TODO
+      note: 'Step 2 extension: rota assembled from all 14 active employees'' entries, and the answer says so.'

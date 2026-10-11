@@ -109,9 +109,11 @@ scenarios:
     must_not:
     - Call or email anyone
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      stops_at: 3
+      note: Prepares call plan, script and email draft; at A1 the contact waits for human confirmation at step 3.
 - id: S02
   kind: edge
   detail: hand-off at step 3
@@ -134,9 +136,9 @@ scenarios:
     - Booking follows under the booking rules once a quote is captured
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps: []
+      stops_at: 3
+      note: Script already prepared; at A1 the RM confirms before any call; booking is UC-CARE-04 (P3).
 - id: S03
   kind: happy
   detail: null
@@ -161,9 +163,16 @@ scenarios:
     must_say: []
     must_not: []
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 7
+      - 8
       stops_at: null
-      note: TODO
+      note: 'A3 run: identity confirmed, quote and availability captured, reliable outcome recorded, handed to booking.'
 - id: S04
   kind: policy
   detail: P1
@@ -190,9 +199,14 @@ scenarios:
     must_not:
     - Mention Ashdown House, the leak or the case reference in the voicemail
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 6
+      stops_at: 6
+      note: 'Voicemail: callback-only message (P1); attempt recorded and next attempt scheduled within K2.'
 - id: S05
   kind: policy
   detail: P2
@@ -218,9 +232,14 @@ scenarios:
     must_say: []
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 6
+      stops_at: 6
+      note: No answer on all three attempts; K2 maximum reached, so RM task raised and no fourth call (P2).
 - id: S06
   kind: policy
   detail: P3
@@ -247,9 +266,16 @@ scenarios:
     must_not:
     - Tell the contractor the price or the booking is agreed
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 7
+      - 8
       stops_at: null
-      note: TODO
+      note: £450 captured as stated and flagged above K4 limit; nothing agreed (P3); handed to booking for approval.
 - id: S07
   kind: policy
   detail: P4
@@ -270,9 +296,15 @@ scenarios:
     must_say: []
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 7
+      stops_at: 7
+      note: Poor audio makes the call unreliable; held for RM review, nothing written to the case (P4).
 - id: S08
   kind: edge
   detail: extension at step 6
@@ -294,6 +326,11 @@ scenarios:
     must_say: []
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 6
+      stops_at: 6
+      note: 'Step 6 extension: opt-out request stops all calls and is flagged to the RM (P2).'

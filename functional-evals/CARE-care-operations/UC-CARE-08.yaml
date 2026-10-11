@@ -96,9 +96,12 @@ scenarios:
     must_not:
     - Write to the HR system
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      stops_at: 4
+      note: Write plan of four entries validated; at A1 it waits for approval at step 4 before any write.
 - id: S02
   kind: happy
   detail: null
@@ -119,9 +122,16 @@ scenarios:
     must_say: []
     must_not: []
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
       stops_at: null
-      note: TODO
+      note: 'Unclear: A2 approval triggers re-check (S04 implies validation) then write, read-back and log.'
 - id: S03
   kind: policy
   detail: P1
@@ -147,9 +157,12 @@ scenarios:
     - The change needs approval from the RM or Deputy for Larch House
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      stops_at: 4
+      note: Staff request is not approval (P1); approval requested from Tom Ellis; nothing written.
 - id: S04
   kind: policy
   detail: P2
@@ -175,9 +188,12 @@ scenarios:
     must_not:
     - Write any part of the swap
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      stops_at: 3
+      note: 'Step 3 extension: training entry clashes with the new night, so nothing written and clash shown (P2).'
 - id: S05
   kind: edge
   detail: hand-off at step 4
@@ -198,9 +214,9 @@ scenarios:
     - At this mode the change is written only after approval
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps: []
+      stops_at: 4
+      note: Plan already prepared; at A1 writing happens only after approval at step 4 (P1).
 - id: S06
   kind: edge
   detail: extension at step 4
@@ -222,9 +238,13 @@ scenarios:
     - Absence entries need RM approval
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      stops_at: 4
+      note: 'Step 4 extension: Deputy approval insufficient for absence entries under K4; routed to Megan Hart.'
 - id: S07
   kind: edge
   detail: extension at step 6
@@ -247,6 +267,14 @@ scenarios:
     must_not:
     - Report the swap as recorded
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
       stops_at: null
-      note: TODO
+      note: 'Unclear: step 6 extension marks Owen''s entry failed and alerts RM; logging and report at step 7 still
+        run.'

@@ -108,9 +108,10 @@ scenarios:
     - Close the case
     - Touch MC-0415
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 5
+      stops_at: 6
+      note: Case already at job complete; presents checklist and follow-ons, then waits for Megan's sign-off (P1).
 - id: S02
   kind: policy
   detail: P1
@@ -139,9 +140,9 @@ scenarios:
     must_not:
     - Close the case or record a sign-off
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps: []
+      stops_at: 6
+      note: Sign-off request already sent; P1 forbids closing on say-so, so it waits at step 6.
 - id: S03
   kind: policy
   detail: P2
@@ -168,9 +169,10 @@ scenarios:
     must_not:
     - Describe the invoice as matching the quote
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 5
+      stops_at: 6
+      note: Presents for sign-off showing the £60 variance unexplained (P2); waits for Megan at step 6.
 - id: S04
   kind: edge
   detail: hand-off at step 6
@@ -192,9 +194,9 @@ scenarios:
     - The case closes only when Megan's sign-off is recorded
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps: []
+      stops_at: 6
+      note: 'Unclear: Given says request already sent though prompt asks to send; closure waits for sign-off (P1).'
 - id: S05
   kind: edge
   detail: extension at step 1
@@ -217,9 +219,10 @@ scenarios:
     - The existing case number and its stage
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      stops_at: 1
+      note: 'Step 1 extension: existing open case MC-0412 returned with its stage; report added; no new case.'
 - id: S06
   kind: edge
   detail: extension at step 6
@@ -241,9 +244,9 @@ scenarios:
     must_not:
     - Close the case or record a sign-off
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps: []
+      stops_at: 6
+      note: 'Step 6 extension: K3 limit passed, escalate to the RI; case stays at sign-off (P1).'
 - id: S07
   kind: policy
   detail: P3
@@ -273,9 +276,10 @@ scenarios:
     must_not:
     - State a cause or judge residents
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 5
+      stops_at: 6
+      note: 'Unclear: recurrence flag raised before closure (extension is at step 7); P3 keeps flag factual.'
 - id: S08
   kind: happy
   detail: null
@@ -296,9 +300,11 @@ scenarios:
     must_say: []
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 4
+      - 5
+      stops_at: 6
+      note: Completion event moves stage to job complete with read-back, then sign-off request; waits for RM.
 - id: S09
   kind: edge
   detail: extension at step 4
@@ -320,9 +326,10 @@ scenarios:
     - Asks Megan to confirm it with them
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 4
+      stops_at: 4
+      note: 'Step 4 extension: no contractor completion report, so the move is refused and RM asked to confirm.'
 - id: S10
   kind: edge
   detail: case history
@@ -345,6 +352,6 @@ scenarios:
     - Matching the audit trail
     must_not: []
     path:
-      steps: null
+      steps: []
       stops_at: null
-      note: TODO
+      note: 'Unclear: read-only history request; no reference step covers it, and nothing is written.'

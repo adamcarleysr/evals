@@ -102,9 +102,15 @@ scenarios:
     must_not:
     - Book or send anything
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      stops_at: 6
+      note: 'Unclear: checks pass, auto-approve tier; booking and notices wait for RM confirmation at step 6 (per
+        S02).'
 - id: S02
   kind: edge
   detail: hand-off at step 6
@@ -126,9 +132,9 @@ scenarios:
     - Offers to show it
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps: []
+      stops_at: 6
+      note: Booking already prepared; at A1 the RM confirms each booking at step 6, so nothing is sent.
 - id: S03
   kind: policy
   detail: P1
@@ -159,9 +165,13 @@ scenarios:
     must_not:
     - Book before Megan approves
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      stops_at: 5
+      note: £450 is in the RM band; approval requested from Megan Hart with 4-hour limit; nothing booked (P1).
 - id: S04
   kind: policy
   detail: P1
@@ -190,9 +200,13 @@ scenarios:
     must_say: []
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      stops_at: 5
+      note: £2,500 needs the senior approver; held with Jordan Blake for 24 hours; nothing booked (P1).
 - id: S05
   kind: edge
   detail: extension at step 5
@@ -213,9 +227,9 @@ scenarios:
     must_say: []
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps: []
+      stops_at: 5
+      note: 'Step 5 extension: RM approval time limit passed, escalate to the RI; nothing booked meanwhile.'
 - id: S06
   kind: policy
   detail: P2
@@ -241,9 +255,11 @@ scenarios:
     must_say: []
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      stops_at: 2
+      note: 'Step 2 extension: existing Brookside booking for the same job, so no second booking (P2); RM told.'
 - id: S07
   kind: policy
   detail: P3
@@ -269,9 +285,12 @@ scenarios:
     - Offers times inside it, and flags it to Megan Hart
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      stops_at: 3
+      note: Sunday 11pm is outside the K3 access window; flagged to RM, not booked (P3).
 - id: S08
   kind: happy
   detail: null
@@ -294,6 +313,13 @@ scenarios:
     must_say: []
     must_not: []
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
       stops_at: null
-      note: TODO
+      note: 'A3 run within auto-approve limit: approves, books, notifies contractor and RM, records booking confirmed.'

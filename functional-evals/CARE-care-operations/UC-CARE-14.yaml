@@ -51,8 +51,8 @@ scenarios:
     state: current headcount and the last month's starters and leavers stored for several homes; dashboard reference
       values stored; data within the stale threshold; the asker has full access.
     fixture: oakridge/people-w41
-    tenant_values: ', asked on 08/10/2026 by Helen Marsh (Head of People). Homes as UC-CARE-11 S01, plus Ashdown
-      House Annex as a separate home. September 2026 starters and leavers stored.'
+    tenant_values: asked on 08/10/2026 by Helen Marsh (Head of People). Homes as UC-CARE-11 S01, plus Ashdown House
+      Annex as a separate home. September 2026 starters and leavers stored.
   input:
     prompt: What's our headcount by home today, and how many starters and leavers did we have last month?
   variants:
@@ -92,9 +92,14 @@ scenarios:
     must_not:
     - Ask what today's date is
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
       stops_at: null
-      note: TODO
+      note: 'Guided: governed answer stating last month as September dates, definition version and refresh time.'
 - id: S02
   kind: edge
   detail: extension at step 2
@@ -115,9 +120,14 @@ scenarios:
     - The alias resolution and the 12-month window
     must_not: []
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
       stops_at: null
-      note: TODO
+      note: 'Extension at 2: alias ''OCG Willow'' resolved to Willow Lodge and stated; rolling 12 months.'
 - id: S03
   kind: policy
   detail: P1
@@ -139,9 +149,14 @@ scenarios:
     must_not:
     - Count Larch House as 0%
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
       stops_at: null
-      note: TODO
+      note: 'P1: Larch House unavailable, company rate reported as partial, never zero.'
 - id: S04
   kind: policy
   detail: P2
@@ -170,9 +185,14 @@ scenarios:
     - Recommend extending, passing or exiting
     - Describe Jordan Price's character or effort
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
       stops_at: null
-      note: TODO
+      note: 'P2: recorded absences and review date given as facts; decision left with K4 people.'
 - id: S05
   kind: edge
   detail: extension at step 1
@@ -194,9 +214,14 @@ scenarios:
     must_not:
     - State a cause beyond the recorded reason codes
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
       stops_at: null
-      note: TODO
+      note: 'Extension at 1: ''why'' answered with leavers by month and reason codes; causes not inferred.'
 - id: S06
   kind: edge
   detail: step 3 failure
@@ -217,6 +242,11 @@ scenarios:
     - Cedar House is outside the asker's access
     must_not: []
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
       stops_at: null
-      note: TODO
+      note: 'Step 3 failure: Cedar House declined as outside RM''s access; Ashdown House answered.'

@@ -93,9 +93,14 @@ scenarios:
     - Show the failed write or the held notification as complete
     - Show another home's items
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
       stops_at: null
-      note: TODO
+      note: Read-only view built end to end for Ashdown House; no item opened or acted on.
 - id: S02
   kind: policy
   detail: P1
@@ -122,9 +127,12 @@ scenarios:
     - Offers to retry through UC-CARE-08
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 6
+      stops_at: 6
+      note: 'P1: item stays failed until the source records it complete; retry handed to UC-CARE-08 (extension at
+        6).'
 - id: S03
   kind: edge
   detail: extension at step 1
@@ -146,9 +154,15 @@ scenarios:
     must_not:
     - Show any Willow Lodge item
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
       stops_at: null
-      note: TODO
+      note: 'Extension at 1: Deputy scope resolves to Ashdown House only, read-only; Willow Lodge refused under
+        K3.'
 - id: S04
   kind: edge
   detail: step 5 failure
@@ -168,9 +182,14 @@ scenarios:
     - The view, with a stale warning and the last refresh time on the rota section
     must_not: []
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
       stops_at: null
-      note: TODO
+      note: 'Step 5 failure: view shown with a stale warning and last refresh time on the rota section (K4).'
 - id: S05
   kind: edge
   detail: extension at step 6
@@ -192,9 +211,11 @@ scenarios:
     - Links to it
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 6
+      stops_at: 6
+      note: 'Extension at 6: approval is not made from the view; handed to the owning booking use case (UC-CARE-04/01).'
 - id: S06
   kind: edge
   detail: extension at step 2
@@ -216,6 +237,11 @@ scenarios:
     must_not:
     - Show the incident section as empty
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
       stops_at: null
-      note: TODO
+      note: 'Extension at 2: incident section shown as unavailable with UC-CARE-06 items only, never empty.'

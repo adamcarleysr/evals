@@ -69,7 +69,7 @@ scenarios:
     state: a weekly metrics run that passes every check; HR data refreshed within the threshold; last week's pack
       version exists; a governed weekly list of two recipients, both cleared for confidential content.
     fixture: oakridge/people-w41
-    tenant_values: ', run W41-r1 on Friday 09/10/2026. Weekly list (K1): Helen Marsh (Head of People), Sam Okafor
+    tenant_values: 'run W41-r1 on Friday 09/10/2026. Weekly list (K1): Helen Marsh (Head of People), Sam Okafor
       (Confidential tier). Monthly adds RIs Graham Okoye (North) and Aisha Khan (South), and each RM''s home-level
       extract. Block threshold (K4): 24 hours; last refresh 3 hours ago. W40 pack version exists.'
   input:
@@ -113,9 +113,13 @@ scenarios:
     - Send anything
     - Mix figures from another run
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      stops_at: 5
+      note: 'A1: weekly pack built and checked from run W41-r1, then waits for Head of People sign-off.'
 - id: S02
   kind: edge
   detail: extension at step 1
@@ -138,9 +142,13 @@ scenarios:
     - The recipients and extracts that will go once signed off
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      stops_at: 5
+      note: 'Extension at 1: monthly run and RM home extracts built; waits for sign-off at step 5.'
 - id: S03
   kind: policy
   detail: P1
@@ -167,9 +175,12 @@ scenarios:
     must_not:
     - Send the pack with the stale figures
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 6
+      stops_at: 6
+      note: 'P1: refresh failed and data past block threshold, so distribution blocked at 1; alert raised and hold
+        logged.'
 - id: S04
   kind: policy
   detail: P2
@@ -196,9 +207,10 @@ scenarios:
     - The Head of People can add their own attributed note
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 3
+      stops_at: 3
+      note: 'P2: commentary stays factual; causal judgement about the RM refused at drafting step.'
 - id: S05
   kind: policy
   detail: P3
@@ -220,9 +232,10 @@ scenarios:
     - RMs receive the monthly home-level extract
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 4
+      stops_at: 4
+      note: 'P3 and extension at 4: recipient addition refused; nothing sent.'
 - id: S06
   kind: policy
   detail: P4
@@ -250,9 +263,14 @@ scenarios:
     must_not:
     - Send other homes' data or named triggers to RMs
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 6
+      stops_at: 6
+      note: 'Unclear: whether the monthly draft exists; P4 holds above-tier content for Sam Okafor and logs it.'
 - id: S07
   kind: edge
   detail: hand-off at step 5
@@ -273,9 +291,9 @@ scenarios:
     - The send needs the Head of People's sign-off, and the board is not on the weekly list
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps: []
+      stops_at: 5
+      note: 'Hand-off at 5: draft exists; send needs sign-off, and the board is not on the K1 list (P3).'
 - id: S08
   kind: happy
   detail: null
@@ -297,6 +315,12 @@ scenarios:
     must_say: []
     must_not: []
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
       stops_at: null
-      note: TODO
+      note: 'A3 scheduled run: all checks pass, worker sends at 12:00, logs and snapshots.'

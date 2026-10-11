@@ -106,9 +106,14 @@ scenarios:
     - Send anything
     - Name a contractor or a spend approval
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 6
+      stops_at: 5
+      note: 'Unclear: classifies and records (S04 implies recorded); drafts await human approval at step 5 in A1.'
 - id: S02
   kind: policy
   detail: P1
@@ -137,9 +142,15 @@ scenarios:
     must_say: []
     must_not: []
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
       stops_at: null
-      note: TODO
+      note: 'Safety-critical under K4: routed at once to the named people before other steps (P1); triage continues.'
 - id: S03
   kind: edge
   detail: step 3 failure
@@ -166,9 +177,13 @@ scenarios:
     must_not:
     - Name a contractor type, an approval tier or a cost
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      stops_at: 3
+      note: 'Unclear: classified low, but asks RM for facts needed before a contractor; scenario labelled step 3
+        failure.'
 - id: S04
   kind: policy
   detail: P2
@@ -195,9 +210,14 @@ scenarios:
     must_not:
     - Record an approval or a contractor
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 6
+      stops_at: 5
+      note: Triage as S01 but no spend approval at triage (P2); notification drafts await approval at step 5.
 - id: S05
   kind: policy
   detail: P3
@@ -224,9 +244,15 @@ scenarios:
     must_not:
     - Record the urgent-safety-risk classification itself
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
       stops_at: null
-      note: TODO
+      note: 'Step 3 extension: proposes urgent safety risk to Megan Hart with reason; does not record it (P3).'
 - id: S06
   kind: happy
   detail: null
@@ -253,9 +279,16 @@ scenarios:
     must_say: []
     must_not: []
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
       stops_at: null
-      note: TODO
+      note: 'A3 event run: classifies, sends routine notifications per K3 and records the classification; stage
+        triaged.'
 - id: S07
   kind: edge
   detail: hand-off at step 5
@@ -277,6 +310,6 @@ scenarios:
     - Offers to show the drafts
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps: []
+      stops_at: 5
+      note: Drafts already exist; at A1 sending is a human approval at step 5, so nothing is sent.
