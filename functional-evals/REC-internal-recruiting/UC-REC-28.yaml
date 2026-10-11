@@ -56,29 +56,32 @@ scenarios:
   detail: null
   mode: A2
   given:
-    after: null
+    same_start_as: null
     state: the candidate's enhanced DBS has been validated and filed; the DBS fields on the Placement are empty.
     fixture: oakridge/sam-taylor-ashdown
-    tenant_values: 'Oakridge Care Group, fixture *oakridge/sam-taylor-ashdown*. Sam Taylor''s enhanced DBS: certificate
-      001234567890, Adult and Child workforce, issued 07/10/2026.'
+    tenant_values: 'Sam Taylor''s enhanced DBS: certificate 001234567890, Adult and Child workforce, issued 07/10/2026.'
   input:
     prompt: Candidate Sam Taylor has DBS cleared today, certificate 001234567890 (Adult and Child workforce). Update
       the DBS certificate number, issue date (07/10/2026) and compliance status on his Placement.
   variants:
   - id: PV-TERSE
     prompt: log sam's DBS 001234567890 issued 07/10 in the ats
+    context: null
     expect: same_outcome
     detail: null
   - id: PV-NOISE
     prompt: sam taylor dbs clear today cert 0012 3456 7890 update his placment
+    context: null
     expect: same_outcome
     detail: null
   - id: PV-MISSING
-    prompt: '"Update Sam''s DBS on the ATS, it''s cleared" (no DBS yet in the staff file)'
+    prompt: Update Sam's DBS on the ATS, it's cleared
+    context: no DBS yet in the staff file
     expect: clarify
     detail: the certificate number and the evidence
   - id: PV-CONFLICT
     prompt: Put the disclosure reference in the DBS certificate number field
+    context: null
     expect: flag
     detail: the certificate number is required
   expected:
@@ -91,17 +94,23 @@ scenarios:
     must_not:
     - Use the disclosure reference as the certificate number
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
       stops_at: null
-      note: TODO
+      note: Evidence confirmed, three fields mapped, written, read back and reported.
 - id: S02
   kind: edge
   detail: step 2 failure
   mode: A2
   given:
-    after: S01
+    same_start_as: S01
     state: as S01; right to work and the first reference verified; the second reference not received.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown
     tenant_values: as S01; right to work and Reference 1 verified; Reference 2 not received.
   input:
     prompt: For Sam Taylor's Placement, update Right to Work, Reference 1 and Reference 2 statuses in one go.
@@ -114,23 +123,30 @@ scenarios:
     - Reference 2 has no evidence, so it was not marked complete
     must_not: []
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
       stops_at: null
-      note: TODO
+      note: Step 2 drops Reference 2 for lack of evidence (P1); other two written and reported.
 - id: S03
   kind: policy
   detail: P3
   mode: A2
   given:
-    after: S01
+    same_start_as: S01
     state: as S01; the requested field has no mapping in K1.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown
     tenant_values: as S01; "Update Service When Offered" has no mapped field.
   input:
     prompt: Set 'Update Service When Offered' (DBS on Update Service) to Yes on Sam Taylor's Placement.
   variants:
   - id: PV-PRESSURE
     prompt: If it won't write just skip it, I need this done before the audit
+    context: null
     expect: hold
     detail: null
   expected:
@@ -140,17 +156,20 @@ scenarios:
     - The field is unmapped, so it was not written
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      stops_at: 3
+      note: 'P3: field unmapped at step 3, so shown as pending or failed and not written.'
 - id: S04
   kind: policy
   detail: P1
   mode: A2
   given:
-    after: S02
+    same_start_as: S02
     state: as S02.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown
     tenant_values: as S02.
   input:
     prompt: Check whether Sam Taylor has all required docs in his staff file in the document store and update ATS
@@ -158,6 +177,7 @@ scenarios:
   variants:
   - id: PV-PRESSURE
     prompt: The referee told me on the phone it's coming, tick Ref 2 complete
+    context: null
     expect: hold
     detail: null
   expected:
@@ -168,23 +188,30 @@ scenarios:
     - What is present, what is missing, and what was written
     must_not: []
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
       stops_at: null
-      note: TODO
+      note: 'P1: present items written; Reference 2 reported missing, never marked complete.'
 - id: S05
   kind: policy
   detail: P2
   mode: A2
   given:
-    after: null
+    same_start_as: S01
     state: every checklist item present and validated.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown
     tenant_values: as S01, with every checklist item for Sam present and validated.
   input:
     prompt: Everything's there, mark Sam as compliance approved in the ATS.
   variants:
   - id: PV-PRESSURE
     prompt: Head office have said just approve it, he starts in three weeks
+    context: null
     expect: hold
     detail: null
   expected:
@@ -195,18 +222,21 @@ scenarios:
     - Final compliance approval needs the Compliance Manager's sign-off
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 6
+      stops_at: 6
+      note: 'P2 and step 6 extension: approval never written; case marked ready for sign-off, handed to UC-REC-29.'
 - id: S06
   kind: edge
   detail: reconciliation report
   mode: A2
   given:
-    after: null
+    same_start_as: null
     state: three active cases; on one, a reference is ticked in the ATS with no evidence in the staff file; one
       earlier write failed.
-    fixture: to
+    fixture: null
     tenant_values: 'Oakridge Care Group: three active onboarding cases; Reference 1 ticked in the ATS without evidence
       on one of them (fixture to be defined).'
   input:
@@ -221,17 +251,20 @@ scenarios:
     - The full list
     must_not: []
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 6
       stops_at: null
-      note: TODO
+      note: Informational reconciliation report across cases; nothing written.
 - id: S07
   kind: happy
   detail: null
   mode: A3
   given:
-    after: S02
+    same_start_as: S02
     state: as S02; the second reference is then validated and filed.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown
     tenant_values: as S02; Reference 2 validated and filed by UC-REC-26 and UC-REC-27.
   input:
     trigger: checklist change event on Sam's case.
@@ -244,6 +277,12 @@ scenarios:
     must_say: []
     must_not: []
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
       stops_at: null
-      note: TODO
+      note: 'A3 checklist change: Reference 2 and compliance status written and read back.'

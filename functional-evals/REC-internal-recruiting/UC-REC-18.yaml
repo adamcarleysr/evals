@@ -43,35 +43,40 @@ scenarios:
   detail: null
   mode: A0
   given:
-    after: null
+    same_start_as: null
     state: saved snapshots for this week and last week, differing by new starters, a removal, a moved start date
       and a home change; a reference change set is stored.
     fixture: oakridge/forecast-w40-w41
-    tenant_values: 'Oakridge Care Group, fixture *oakridge/forecast-w40-w41*. Between W40 and W41: 3 placements
-      added at Willow Lodge, 1 removed at Beacon House, Sam Taylor''s Ashdown House placement moved from 27/10/2026
-      to 03/11/2026, and 1 placement changed home from Hazel Lodge to Cedar House.'
+    tenant_values: 'Between W40 and W41: 3 placements added at Willow Lodge, 1 removed at Beacon House, Sam Taylor''s
+      Ashdown House placement moved from 27/10/2026 to 03/11/2026, and 1 placement changed home from Hazel Lodge
+      to Cedar House.'
   input:
     prompt: 'Compare this week''s four-week forecast with last week''s: new, removed, moved dates, home changes,
       net by home/week.'
   variants:
   - id: PV-TERSE
     prompt: forecast changes vs last week
+    context: null
     expect: same_outcome
     detail: null
   - id: PV-COLLOQUIAL
     prompt: What's shifted in the starter numbers since last Friday?
+    context: null
     expect: same_outcome
     detail: null
   - id: PV-CONTEXT
-    prompt: '"Now do the same comparison but just for Willow Lodge" (after S01)'
+    prompt: Now do the same comparison but just for Willow Lodge
+    context: after S01
     expect: same_outcome
     detail: Willow Lodge only
   - id: PV-AMBIGUOUS
     prompt: Compare the forecast with the earlier one
+    context: null
     expect: clarify
     detail: which baseline snapshot
   - id: PV-FALSE-PREMISE
     prompt: Show me the two starters Ashdown House lost this week
+    context: null
     expect: flag
     detail: Ashdown House had no removals; one date moved
   expected:
@@ -85,23 +90,30 @@ scenarios:
     must_not:
     - Give any reason for a change
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
       stops_at: null
-      note: TODO
+      note: 'Full A0 comparison: match, classify, reconcile net movement, factual lines (P1), then present.'
 - id: S02
   kind: policy
   detail: P1
   mode: A0
   given:
-    after: S01
+    same_start_as: S01
     state: as S01.
-    fixture: null
+    fixture: oakridge/forecast-w40-w41
     tenant_values: as S01.
   input:
     prompt: Why did Willow Lodge lose starters this week?
   variants:
   - id: PV-PRESSURE
     prompt: The board wants a reason by 3pm. Just give me your best guess why Beacon House dropped
+    context: null
     expect: hold
     detail: null
   expected:
@@ -112,17 +124,22 @@ scenarios:
     must_not:
     - Attribute the movement to recruiter effort, the market or any person
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      - 5
+      stops_at: 5
+      note: 'Unclear: ''why'' question; gives the factual change list only and says causes aren''t inferred (P1,
+        step 5 extension).'
 - id: S03
   kind: edge
   detail: extension at step 1
   mode: A0
   given:
-    after: S01
+    same_start_as: S01
     state: as S01, and no snapshot exists for the requested baseline week.
-    fixture: null
+    fixture: oakridge/forecast-w40-w41
     tenant_values: as S01, and no snapshot exists for W37.
   input:
     prompt: Compare this week's forecast with the week of 7 September.
@@ -135,18 +152,19 @@ scenarios:
     must_not:
     - Compare against a reconstructed or live forecast instead
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      stops_at: 1
+      note: 'Baseline W37 missing: says ''No baseline available'' and offers nearest snapshots (step 1 extension).'
 - id: S04
   kind: edge
   detail: extension at step 3
   mode: A0
   given:
-    after: S01
+    same_start_as: S01
     state: as S01, and one placement in both snapshots changed start date and home, and moved to a status the rules
       don't cover.
-    fixture: null
+    fixture: oakridge/forecast-w40-w41
     tenant_values: as S01, and the placement's status moved to "Pending".
   input:
     prompt: List every forecast change since last week.
@@ -159,15 +177,21 @@ scenarios:
     must_not:
     - Omit it from the list
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
       stops_at: null
-      note: TODO
+      note: Both changes recorded on one placement, status unclassified not dropped; counted once (step 3 extensions).
 - id: S05
   kind: edge
   detail: sustained pattern
   mode: A0
   given:
-    after: null
+    same_start_as: null
     state: eight weekly snapshots; one home below its starter target for several consecutive weeks.
     fixture: null
     tenant_values: Oakridge Care Group, eight weekly snapshots; Beacon House below its starter target for 4 consecutive
@@ -182,17 +206,20 @@ scenarios:
     must_not:
     - Suggest a cause
     path:
-      steps: null
+      steps:
+      - 1
+      - 6
       stops_at: null
-      note: TODO
+      note: 'Unclear: no reference step covers sustained target gaps (in To verify); loads snapshots and presents
+        values only.'
 - id: S06
   kind: happy
   detail: null
   mode: A3
   given:
-    after: S01
+    same_start_as: S01
     state: as S01; this week's forecast snapshot has just been saved.
-    fixture: null
+    fixture: oakridge/forecast-w40-w41
     tenant_values: as S01; Friday W41 forecast snapshot saved at 14:00.
   input:
     trigger: scheduled change-detection run after the Friday snapshot.
@@ -205,6 +232,12 @@ scenarios:
     must_say: []
     must_not: []
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
       stops_at: null
-      note: TODO
+      note: Scheduled A3 run stores the change set against W41 with an audit entry; sends nothing.

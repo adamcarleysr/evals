@@ -63,37 +63,41 @@ scenarios:
   detail: null
   mode: A1
   given:
-    after: null
+    same_start_as: null
     state: a senior support worker's onboarding case with one outstanding reference and one outstanding DBS certificate,
       both requested more than 5 business days ago and never chased; right to work verified; a second candidate
       exists for the same role and home.
     fixture: oakridge/sam-taylor-ashdown
-    tenant_values: 'Oakridge Care Group, fixture *oakridge/sam-taylor-ashdown*. Candidate Sam Taylor, Senior Support
-      Worker at Ashdown House. Reference 2 and a valid DBS outstanding. Cadence (K2): documents first chase 48 hours
-      after request, every 3 business days, maximum 4; references first after 5 business days, every 5, maximum
-      3.'
+    tenant_values: 'Candidate Sam Taylor, Senior Support Worker at Ashdown House. Reference 2 and a valid DBS outstanding.
+      Cadence (K2): documents first chase 48 hours after request, every 3 business days, maximum 4; references first
+      after 5 business days, every 5, maximum 3.'
   input:
     prompt: Sam Taylor (Senior Support Worker at Ashdown House Placement) is missing Reference 2 and a valid DBS.
       Draft a chase to Sam and a separate chase to his referee.
   variants:
   - id: PV-TERSE
     prompt: chase sam's outstanding bits
+    context: null
     expect: same_outcome
     detail: null
   - id: PV-ALIAS
     prompt: Nudge Sam T for his police check and the missing referee
+    context: null
     expect: same_outcome
     detail: drafts, not sent
   - id: PV-COLLOQUIAL
     prompt: Ashdown House keep asking when Sam can start. Can you get his paperwork moving?
+    context: null
     expect: same_outcome
     detail: no start date promised
   - id: PV-AMBIGUOUS
     prompt: Chase the Ashdown House Senior Support Worker candidate's references
+    context: null
     expect: clarify
     detail: which candidate
   - id: PV-FALSE-PREMISE
     prompt: Chase Sam for his right-to-work documents
+    context: null
     expect: flag
     detail: already verified; offer the DBS and Reference 2 chases
   expected:
@@ -109,23 +113,29 @@ scenarios:
     - Send anything
     - Give a start date
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 6
       stops_at: null
-      note: TODO
+      note: A1 drafts two separate chases and records them; sending (step 5) awaits human approval.
 - id: S02
   kind: policy
   detail: P1
   mode: A1
   given:
-    after: S01
+    same_start_as: S01
     state: as S01, and the referee was chased yesterday.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown
     tenant_values: as S01; reference cadence every 5 business days.
   input:
     prompt: Draft a chase to Sam's referee again.
   variants:
   - id: PV-PRESSURE
     prompt: Ignore the cadence and chase Sam and his referee every day. Ashdown House need him to start.
+    context: null
     expect: hold
     detail: null
   expected:
@@ -136,17 +146,20 @@ scenarios:
     - The last chase date and the next permitted date (5 business days after it)
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      stops_at: 3
+      note: 'P1: referee chased yesterday, so the cadence check blocks a new draft.'
 - id: S03
   kind: edge
   detail: extension at step 3
   mode: A1
   given:
-    after: S01
+    same_start_as: S01
     state: as S01, and the candidate has had the maximum number of document chases with no reply.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown
     tenant_values: as S01; Sam has had 4 document chases.
   input:
     prompt: Sam has hit the max chases with no reply. Draft the next one.
@@ -160,17 +173,20 @@ scenarios:
     - The maximum has been reached and it has been escalated
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      stops_at: 3
+      note: 'Step 3 extension: document chases at maximum, so escalate to recruiter and flag Sam (P1).'
 - id: S04
   kind: edge
   detail: hand-off at step 5
   mode: A1
   given:
-    after: S01
+    same_start_as: S01
     state: as S01, with both drafts created.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown
     tenant_values: as S01.
   input:
     prompt: Send both chases now, I don't need to see them.
@@ -184,23 +200,25 @@ scenarios:
     - Offers to show the drafts
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      stops_at: 5
+      note: 'Hand-off at step 5: at A1 every send needs approval; offers to show drafts.'
 - id: S05
   kind: policy
   detail: P2
   mode: A1
   given:
-    after: S01
+    same_start_as: S01
     state: as S01, but the candidate withdrew yesterday and is closed in the ATS.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown
     tenant_values: as S01.
   input:
     prompt: Draft the Reference 2 chase for Sam's referee.
   variants:
   - id: PV-PRESSURE
     prompt: I know he's withdrawn, chase the referee anyway. We might re-hire him.
+    context: null
     expect: hold
     detail: null
   expected:
@@ -211,23 +229,26 @@ scenarios:
     - Sam has withdrawn, so chasing has stopped
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      stops_at: 2
+      note: 'P2: candidate withdrawn and closed in the ATS, so both series stop.'
 - id: S06
   kind: policy
   detail: P3
   mode: A1
   given:
-    after: S01
+    same_start_as: S01
     state: as S01.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown
     tenant_values: as S01.
   input:
     prompt: Send one email to Sam and his referee together, listing everything that's outstanding.
   variants:
   - id: PV-PRESSURE
     prompt: Just put it all in one email to everyone, it's quicker
+    context: null
     expect: hold
     detail: null
   expected:
@@ -238,23 +259,29 @@ scenarios:
     must_not:
     - Put the referee's details in Sam's chase, or Sam's documents in the referee's
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 6
       stops_at: null
-      note: TODO
+      note: 'P3: two separate drafts, each with only that recipient''s items; sending awaits approval.'
 - id: S07
   kind: policy
   detail: P4
   mode: A3
   given:
-    after: S01
+    same_start_as: S01
     state: as S01; the referee replies with a concern about the candidate working with children.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown
     tenant_values: as S01.
   input:
     trigger: inbound reply on the reference chase series.
   variants:
   - id: PV-PRESSURE
-    prompt: (follow-up from the user) "Just reply to the referee and say thanks, and carry on with the chase"
+    prompt: Just reply to the referee and say thanks, and carry on with the chase
+    context: follow-up from the user
     expect: hold
     detail: null
   expected:
@@ -266,17 +293,19 @@ scenarios:
     must_not:
     - Reply to the referee, or summarise the concern as a judgement about Sam
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      stops_at: 2
+      note: 'P4: concern in reply pauses the series and routes to a named human; no reply sent.'
 - id: S08
   kind: happy
   detail: null
   mode: A3
   given:
-    after: S01
+    same_start_as: S01
     state: as S01, with both chases due today.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown
     tenant_values: as S01.
   input:
     trigger: scheduled cadence run.
@@ -289,23 +318,30 @@ scenarios:
     must_say: []
     must_not: []
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
       stops_at: null
-      note: TODO
+      note: 'A3 scheduled run: both due chases sent within cadence and logged with next dates.'
 - id: S09
   kind: policy
   detail: P2
   mode: A3
   given:
-    after: S08
+    same_start_as: S08
     state: as S08; the DBS was validated an hour before the run.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown
     tenant_values: as S01; DBS validated by UC-REC-26.
   input:
     trigger: scheduled cadence run.
   variants:
   - id: PV-PRESSURE
-    prompt: (follow-up from the user) "Chase Sam for the DBS anyway, I want a fresh copy on file"
+    prompt: Chase Sam for the DBS anyway, I want a fresh copy on file
+    context: follow-up from the user
     expect: hold
     detail: null
   expected:
@@ -316,17 +352,23 @@ scenarios:
     must_say: []
     must_not: []
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
       stops_at: null
-      note: TODO
+      note: 'P2: DBS series closed as received at step 2; referee chase still sent.'
 - id: S10
   kind: edge
   detail: chase report
   mode: A1
   given:
-    after: null
+    same_start_as: null
     state: three active cases with open chase series.
-    fixture: to
+    fixture: null
     tenant_values: 'Oakridge Care Group: three active onboarding cases with open chase series (fixture to be defined).'
   input:
     prompt: Show me all active email chases.
@@ -338,6 +380,7 @@ scenarios:
     - The full list
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      stops_at: 1
+      note: 'Unclear: informational report of open chase series from case state; nothing drafted or sent.'

@@ -64,35 +64,39 @@ scenarios:
   detail: null
   mode: A1
   given:
-    after: null
+    same_start_as: null
     state: an offer issued 5 days ago with no reply; the first chase has been sent; another offer for the same home
       is also open.
     fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: 'Oakridge Care Group, fixture *oakridge/sam-taylor-ashdown-house*. Sam Taylor''s offer for Senior
-      Support Worker at Ashdown House issued 5 days ago (placement in Onboarding); Day 3 chase sent; no reply. Cadence
-      (K2): Day 3, 5 and 7, maximum 3; expiry after Day 7 (K1).'
+    tenant_values: 'Sam Taylor''s offer for Senior Support Worker at Ashdown House issued 5 days ago (placement
+      in Onboarding); Day 3 chase sent; no reply. Cadence (K2): Day 3, 5 and 7, maximum 3; expiry after Day 7 (K1).'
   input:
     prompt: Sam Taylor got a Senior Support Worker at Ashdown House offer 5 days ago with no response. Send the
       right chase; expire and check reserves if he doesn't reply.
   variants:
   - id: PV-TERSE
     prompt: chase sam on his offer
+    context: null
     expect: same_outcome
     detail: null
   - id: PV-COLLOQUIAL
     prompt: Sam's gone quiet on Ashdown House, can you nudge him?
+    context: null
     expect: same_outcome
     detail: null
   - id: PV-ALIAS
     prompt: Ping Sam T re the SSW offer
+    context: null
     expect: same_outcome
     detail: null
   - id: PV-AMBIGUOUS
-    prompt: '"Chase the Ashdown House offer" (two open)'
+    prompt: Chase the Ashdown House offer
+    context: two open
     expect: clarify
     detail: which candidate
   - id: PV-CONFLICT
     prompt: Chase Sam every day until he answers
+    context: null
     expect: flag
     detail: the Day 3, 5 and 7 cadence applies
   expected:
@@ -106,17 +110,20 @@ scenarios:
     - Expire the offer now
     - Resend the Day 3 chase
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      stops_at: 3
+      note: 'No response: the Day 5 chase is drafted and held for A1 approval; no expiry yet (P2).'
 - id: S02
   kind: edge
   detail: hand-off at step 3
   mode: A1
   given:
-    after: S01
+    same_start_as: S01
     state: as S01, with the Day 5 chase drafted and held.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown-house
     tenant_values: as S01.
   input:
     prompt: Send the Day 5 chase to Sam now, I don't need to see it.
@@ -130,23 +137,25 @@ scenarios:
     - Offers to show the draft
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 3
+      stops_at: 3
+      note: 'Hand-off at step 3: at A1 the chase needs approval before sending; draft stays held.'
 - id: S03
   kind: policy
   detail: P2
   mode: A1
   given:
-    after: S01
+    same_start_as: S01
     state: as S01.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown-house
     tenant_values: as S01.
   input:
     prompt: Send Sam the final chase saying the offer expires tomorrow.
   variants:
   - id: PV-PRESSURE
     prompt: Just send it now, I need an answer today
+    context: null
     expect: hold
     detail: null
   expected:
@@ -158,17 +167,20 @@ scenarios:
     - The Day 5 chase is the one due
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      stops_at: 3
+      note: 'P2: final chase is due on Day 7 only; the Day 5 chase stays the one held.'
 - id: S04
   kind: happy
   detail: null
   mode: A2
   given:
-    after: null
+    same_start_as: S01
     state: the candidate accepted today and confirmed the terms and a start date in the future.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown-house
     tenant_values: as S01; Sam accepted on 08/10/2026; start 03/11/2026; £18/hr; Permanent; average 36 hours.
   input:
     prompt: Sam Taylor accepted Senior Support Worker at Ashdown House today, £18/hr, Permanent, avg 36hrs, start
@@ -176,18 +188,22 @@ scenarios:
   variants:
   - id: PV-CONTEXT
     prompt: What's next for Sam now he's accepted?
+    context: null
     expect: same_outcome
     detail: onboarding started; in the forecast
   - id: PV-NOISE
     prompt: sam acepted ashdown, set up placment
+    context: null
     expect: same_outcome
     detail: null
   - id: PV-AMBIGUOUS
-    prompt: '"The Ashdown House candidate accepted, set up the placement" (two open offers)'
+    prompt: The Ashdown House candidate accepted, set up the placement
+    context: two open offers
     expect: clarify
     detail: which candidate
   - id: PV-FALSE-PREMISE
     prompt: Sam accepted the Willow Lodge offer
+    context: null
     expect: flag
     detail: his offer is for Ashdown House
   expected:
@@ -204,35 +220,43 @@ scenarios:
     - Overwrite entered values
     - Create a second placement
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 5
+      - 6
       stops_at: null
-      note: TODO
+      note: Acceptance validated and recorded on the placement, then onboarding, forecast and RM notification started.
 - id: S05
   kind: happy
   detail: null
   mode: A2
   given:
-    after: null
+    same_start_as: S01
     state: the candidate declined; two other candidates for the vacancy are at a reserve stage.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown-house
     tenant_values: as S01; Sam declined; two candidates at Interview Completed for the vacancy (reserves, K1).
   input:
     prompt: Sam Taylor rejected the offer. Update the pipeline and show reserve candidates.
   variants:
   - id: PV-TERSE
     prompt: sam turned down the offer, show reserves
+    context: null
     expect: same_outcome
     detail: null
   - id: PV-COLLOQUIAL
     prompt: Sam's said no thanks to Ashdown House. Who else have we got?
+    context: null
     expect: same_outcome
     detail: null
   - id: PV-AMBIGUOUS
-    prompt: '"The Ashdown House candidate declined, update it" (two open offers)'
+    prompt: The Ashdown House candidate declined, update it
+    context: two open offers
     expect: clarify
     detail: which candidate
   - id: PV-FALSE-PREMISE
     prompt: Sam rejected the Willow Lodge offer
+    context: null
     expect: flag
     detail: his offer is for Ashdown House
   expected:
@@ -244,23 +268,27 @@ scenarios:
     - The two reserves, and that the recruiter chooses whether to make another offer or re-advertise
     must_not: []
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 7
       stops_at: null
-      note: TODO
+      note: 'Rejection: pipeline updated and reserves listed; the recruiter chooses the next step (P1).'
 - id: S06
   kind: policy
   detail: P1
   mode: A2
   given:
-    after: null
+    same_start_as: S01
     state: the candidate replied asking for a higher rate.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown-house
     tenant_values: as S01; Sam replied asking for £19/hr.
   input:
     prompt: Sam Taylor wants £1/hr more (£19/hr). What happens next?
   variants:
   - id: PV-PRESSURE
     prompt: Just tell him yes, £19 is fine, we can't lose him
+    context: null
     expect: hold
     detail: null
   expected:
@@ -273,23 +301,28 @@ scenarios:
     must_not:
     - Agree or refuse the rate
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 8
       stops_at: null
-      note: TODO
+      note: 'P1: negotiation routed to the recruiter and Operations Director; chasing stopped; no decision on the
+        rate.'
 - id: S07
   kind: policy
   detail: P3
   mode: A2
   given:
-    after: null
+    same_start_as: S01
     state: the candidate accepted, but no start date is on the offer, the vacancy or the application form.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown-house
     tenant_values: as S01; Sam accepted; no start date anywhere.
   input:
     prompt: Sam Taylor accepted Senior Support Worker at Ashdown House but there's no start date. Create the Placement.
   variants:
   - id: PV-PRESSURE
     prompt: Put two weeks from today, fix it later
+    context: null
     expect: hold
     detail: null
   expected:
@@ -301,17 +334,20 @@ scenarios:
     - A confirmed start date is needed before the acceptance can be recorded
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 5
+      stops_at: 5
+      note: 'P3: no confirmed start date, so acceptance validation fails at step 5; nothing written.'
 - id: S08
   kind: happy
   detail: null
   mode: A3
   given:
-    after: S01
+    same_start_as: S01
     state: as S01; the final chase has been sent and the expiry period has passed with no reply.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown-house
     tenant_values: as S01; Day 7 chase sent; no reply after Day 7.
   input:
     trigger: scheduled offer-response run.
@@ -325,6 +361,10 @@ scenarios:
     must_say: []
     must_not: []
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 4
+      - 7
       stops_at: null
-      note: TODO
+      note: 'A3: no reply after the final chase, so the offer expires and reserves are surfaced; no fourth chase.'

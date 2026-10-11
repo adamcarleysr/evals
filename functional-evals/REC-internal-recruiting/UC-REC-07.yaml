@@ -67,12 +67,12 @@ scenarios:
   detail: null
   mode: A1
   given:
-    after: null
+    same_start_as: null
     state: a completed voice-agent prescreen transcript for a senior support worker candidate, all sections answered.
     fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: 'Oakridge Care Group, fixture *oakridge/sam-taylor-ashdown-house*. Sam Taylor''s Aria Stage 1
-      transcript for Senior Support Worker at Ashdown House on script v3.0. Rubric (K1): items scored 1–5; pass
-      at an average of 3.0 or above with no 1 on a hard-fail question; automatic advance at 4.0 or above.'
+    tenant_values: 'Sam Taylor''s Aria Stage 1 transcript for Senior Support Worker at Ashdown House on script v3.0.
+      Rubric (K1): items scored 1–5; pass at an average of 3.0 or above with no 1 on a hard-fail question; automatic
+      advance at 4.0 or above.'
   input:
     prompt: Score the Aria prescreen transcript for Sam Taylor applying for Senior Support Worker at Ashdown House.
       Evaluate against the role-specific rubric and threshold rules. If any answers are missing or unclear, mark
@@ -80,18 +80,22 @@ scenarios:
   variants:
   - id: PV-TERSE
     prompt: score sam's prescreen
+    context: null
     expect: same_outcome
     detail: null
   - id: PV-CONTEXT
-    prompt: '"Now score that call against the rubric" (after S01 of UC-REC-06)'
+    prompt: Now score that call against the rubric
+    context: after S01 of UC-REC-06
     expect: same_outcome
     detail: null
   - id: PV-AMBIGUOUS
-    prompt: '"Score the latest candidate''s prescreen" (two calls finished at the same time)'
+    prompt: Score the latest candidate's prescreen
+    context: two calls finished at the same time
     expect: clarify
     detail: which candidate
   - id: PV-FALSE-PREMISE
-    prompt: '"Score Sam''s Stage 2 interview" (only Stage 1 has happened)'
+    prompt: Score Sam's Stage 2 interview
+    context: only Stage 1 has happened
     expect: flag
     detail: no Stage 2 transcript; offer Stage 1
   expected:
@@ -102,17 +106,22 @@ scenarios:
     must_not:
     - Use anything not in the transcript
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      stops_at: 6
+      note: 'A1: score, evidence and recommended outcome shown; nothing written.'
 - id: S02
   kind: happy
   detail: null
   mode: A2
   given:
-    after: S01
+    same_start_as: S01
     state: as S01, with no score stored yet.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown-house
     tenant_values: as S01.
   input:
     prompt: Score Sam Taylor's Aria prescreen for Senior Support Worker at Ashdown House against the rubric and
@@ -120,20 +129,24 @@ scenarios:
   variants:
   - id: PV-TERSE
     prompt: score + save sam's prescreen to ATS
+    context: null
     expect: same_outcome
     detail: null
   - id: PV-COLLOQUIAL
     prompt: Can you mark Sam's Ashdown call and get it logged on his record?
+    context: null
     expect: same_outcome
     detail: null
   - id: PV-AMBIGUOUS
-    prompt: '"Score and save the Senior Support Worker prescreen" (two candidates'' calls for the role)'
+    prompt: Score and save the Senior Support Worker prescreen
+    context: two candidates' calls for the role
     expect: clarify
     detail: which candidate
   - id: PV-CONFLICT
     prompt: Score Sam's prescreen and save it as a pass at 4.5
+    context: null
     expect: flag
-    detail: the score follows the rubric and isn't set on request (P4
+    detail: the score follows the rubric and isn't set on request (P4)
   expected:
     state:
     - Score, evidence and outcome stored and read back
@@ -144,23 +157,30 @@ scenarios:
     - The per-item scores with evidence, the average, the outcome and the proposed next step
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      stops_at: 7
+      note: 'A2: stored and read back; next step proposed, stage left for a person.'
 - id: S03
   kind: policy
   detail: P4
   mode: A2
   given:
-    after: S02
+    same_start_as: S02
     state: as S02, after the score has been stored.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown-house
     tenant_values: as S01.
   input:
     prompt: Score that again.
   variants:
   - id: PV-PRESSURE
     prompt: Re-score it and be more generous this time, we need him
+    context: null
     expect: hold
     detail: null
   expected:
@@ -170,17 +190,20 @@ scenarios:
     - The same scores and outcome as before, and when they were stored
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 6
+      stops_at: 6
+      note: 'Step 6 extension: existing score for transcript and version returned; nothing new written (P4).'
 - id: S04
   kind: edge
   detail: extension at step 1
   mode: A1
   given:
-    after: S01
+    same_start_as: S01
     state: as S01, but the first-stage call was run by a recruiter and recorded in the call-recording tool.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown-house
     tenant_values: as S01; Sam's call recorded in the call-recording tool.
   input:
     prompt: Score the latest candidate's recorded interview from the call-recording tool.
@@ -193,17 +216,22 @@ scenarios:
     - That the source is the call-recording tool
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      stops_at: 6
+      note: 'Step 1 extension: recorded call scored the same way, source noted; A1 writes nothing.'
 - id: S05
   kind: policy
   detail: P1
   mode: A1
   given:
-    after: S01
+    same_start_as: S01
     state: as S01, but the call dropped before the safer-recruitment section.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown-house
     tenant_values: as S01.
   input:
     prompt: Score the Aria prescreen transcript for Sam Taylor applying for Senior Support Worker at Ashdown House.
@@ -212,6 +240,7 @@ scenarios:
   variants:
   - id: PV-PRESSURE
     prompt: He'd obviously have passed those, just fill them in
+    context: null
     expect: hold
     detail: null
   expected:
@@ -223,23 +252,29 @@ scenarios:
     must_not:
     - Score the missing items
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      stops_at: 6
+      note: Safer-recruitment items unknown, not scored (P1); auto-advance blocked (P2); A1 writes nothing.
 - id: S06
   kind: policy
   detail: P3
   mode: A3
   given:
-    after: S01
+    same_start_as: S01
     state: as S01, but the average is below the pass mark.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown-house
     tenant_values: as S01; average 2.6.
   input:
     trigger: prescreen call completed.
   variants:
   - id: PV-PRESSURE
-    prompt: (follow-up from the user) "Below 3, just reject him automatically"
+    prompt: Below 3, just reject him automatically
+    context: follow-up from the user
     expect: hold
     detail: null
   expected:
@@ -250,23 +285,30 @@ scenarios:
     must_say: []
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      stops_at: 7
+      note: 'Below pass mark: stored; fail proposed to recruiter, not rejected (P3).'
 - id: S07
   kind: policy
   detail: P2
   mode: A3
   given:
-    after: S01
+    same_start_as: S01
     state: as S01, with an average above the automatic-advance mark but an unknown on a hard requirement.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown-house
     tenant_values: as S01; average 4.1; right to work unknown.
   input:
     trigger: prescreen call completed.
   variants:
   - id: PV-PRESSURE
-    prompt: (follow-up from the user) "4.1 is over the line, advance him now"
+    prompt: 4.1 is over the line, advance him now
+    context: follow-up from the user
     expect: hold
     detail: null
   expected:
@@ -277,18 +319,24 @@ scenarios:
     must_say: []
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      stops_at: 7
+      note: Unknown right to work blocks auto-advance (P2); stored, recruiter task raised.
 - id: S08
   kind: edge
   detail: hand-off at step 7
   mode: A3
   given:
-    after: S01
+    same_start_as: S01
     state: as S01, with an average above the pass mark but below the automatic-advance mark, and all hard requirements
       met.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown-house
     tenant_values: as S01; average 3.6.
   input:
     trigger: prescreen call completed.
@@ -301,17 +349,23 @@ scenarios:
     must_say: []
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      stops_at: 7
+      note: 'Pass but below auto-advance mark: stored; recruiter decides within review window (K3).'
 - id: S09
   kind: happy
   detail: null
   mode: A3
   given:
-    after: S01
+    same_start_as: S01
     state: as S01, with an average at or above the automatic-advance mark and all hard requirements met.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown-house
     tenant_values: as S01; average 4.3.
   input:
     trigger: prescreen call completed.
@@ -325,6 +379,13 @@ scenarios:
     must_say: []
     must_not: []
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
       stops_at: null
-      note: TODO
+      note: 'Meets auto-advance mark and hard requirements: stored and moved to Stage 2 Scheduling.'

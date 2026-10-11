@@ -49,30 +49,34 @@ scenarios:
   detail: null
   mode: A2
   given:
-    after: null
+    same_start_as: null
     state: a case at evidence collection with every item the next stage needs validated; no start confirmation.
     fixture: oakridge/sam-taylor-ashdown
-    tenant_values: 'Oakridge Care Group, fixture *oakridge/sam-taylor-ashdown*. Sam Taylor''s DBS, right to work,
-      References 1 and 2, health declaration and contract all validated. Progression rule (K1): Compliance Review
-      needs DBS, right to work, 2 references, health declaration and contract validated.'
+    tenant_values: 'Sam Taylor''s DBS, right to work, References 1 and 2, health declaration and contract all validated.
+      Progression rule (K1): Compliance Review needs DBS, right to work, 2 references, health declaration and contract
+      validated.'
   input:
     prompt: Sam Taylor has completed all document collection and evidence is verified. Update his ATS Placement
       onboarding status to reflect this milestone. Do not mark him as Started, there's no start confirmation yet.
   variants:
   - id: PV-TERSE
     prompt: sam's docs all verified, move his onboarding on
+    context: null
     expect: same_outcome
     detail: null
   - id: PV-ALIAS
     prompt: Sam T's paperwork is all in, bump his placement status
+    context: null
     expect: same_outcome
     detail: null
   - id: PV-AMBIGUOUS
     prompt: Move the Ashdown House Senior Support Worker to compliance review
+    context: null
     expect: clarify
     detail: which candidate
   - id: PV-FALSE-PREMISE
-    prompt: '"Sam''s been signed off, move him to Ready to Start" (no sign-off recorded)'
+    prompt: Sam's been signed off, move him to Ready to Start
+    context: no sign-off recorded
     expect: flag
     detail: no Compliance Manager sign-off; offers Compliance Review
   expected:
@@ -85,18 +89,23 @@ scenarios:
     must_not:
     - Set Ready to Start or Started
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 4
+      - 5
+      - 6
       stops_at: null
-      note: TODO
+      note: Compliance Review is an objective move, so no approval gate (step 3) is needed.
 - id: S02
   kind: edge
   detail: extension at step 5
   mode: A2
   given:
-    after: null
+    same_start_as: S01
     state: a case at evidence collection with documents requested; the requested name may not be an ATS onboarding
       status value.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown
     tenant_values: as S01, but at evidence collection with documents requested; requested stage "Awaiting Ref".
   input:
     prompt: Move Sam Taylor's Placement to the 'Awaiting Ref' onboarding stage now documents have been requested.
@@ -109,23 +118,28 @@ scenarios:
     - How "Awaiting Ref" relates to the case stages
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 4
+      - 5
+      stops_at: 5
+      note: 'Unclear: step 5 extension; shown as pending if "Awaiting Ref" has no ATS value, else continues to 6.'
 - id: S03
   kind: policy
   detail: P1
   mode: A2
   given:
-    after: null
+    same_start_as: S01
     state: a case at Ready to Start; no arrival confirmation from the Registered Manager.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown
     tenant_values: as S01, with Sam's case at Ready to Start.
   input:
     prompt: Mark Sam Taylor as Started.
   variants:
   - id: PV-PRESSURE
     prompt: Ashdown House say he's definitely coming Monday, mark him Started now so payroll's ready
+    context: null
     expect: hold
     detail: null
   expected:
@@ -136,23 +150,26 @@ scenarios:
     - Offers to ask for it
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      stops_at: 3
+      note: 'P1: Started needs the start date and Registered Manager''s arrival confirmation; awaits the gate.'
 - id: S04
   kind: policy
   detail: P2
   mode: A2
   given:
-    after: S01
+    same_start_as: S01
     state: as S01, but one required reference is not validated.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown
     tenant_values: as S01, but Reference 2 is not validated; start 03/11/2026.
   input:
     prompt: Move Sam Taylor to Compliance Review.
   variants:
   - id: PV-PRESSURE
     prompt: Ref 2 is a formality, move him anyway, he starts 03/11
+    context: null
     expect: hold
     detail: null
   expected:
@@ -162,17 +179,19 @@ scenarios:
     - Reference 2 is not validated, so the criteria are not met
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      stops_at: 2
+      note: 'P2: Reference 2 not validated, so criteria unmet and stage unchanged.'
 - id: S05
   kind: edge
   detail: hand-off at step 3
   mode: A2
   given:
-    after: null
+    same_start_as: S01
     state: a case at Compliance Review; no sign-off recorded.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown
     tenant_values: as S01, with Sam's case at Compliance Review.
   input:
     prompt: Move Sam Taylor to Ready to Start. The Compliance Manager will sign it off later.
@@ -185,17 +204,19 @@ scenarios:
     - Ready to Start waits for the Compliance Manager's recorded sign-off
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      stops_at: 3
+      note: 'Hand-off at step 3: Ready to Start waits for the Compliance Manager''s recorded sign-off (P1).'
 - id: S06
   kind: edge
   detail: correction
   mode: A2
   given:
-    after: S01
+    same_start_as: S01
     state: as S01, moved to Compliance Review in error.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown
     tenant_values: as S01.
   input:
     prompt: That was a mistake. Reverse Sam Taylor's progression with a correction note.
@@ -208,6 +229,9 @@ scenarios:
     must_say: []
     must_not: []
     path:
-      steps: null
+      steps:
+      - 1
+      - 5
+      - 6
       stops_at: null
-      note: TODO
+      note: 'Unclear: step 6 correction extension reverses the stage with a note, keeping the original entry.'

@@ -56,35 +56,40 @@ scenarios:
   detail: null
   mode: A1
   given:
-    after: null
+    same_start_as: null
     state: a candidate at offer preparation for a permanent senior support worker vacancy with a stated rate and
       hours; the application form is on file.
     fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: 'Oakridge Care Group, fixture *oakridge/sam-taylor-ashdown-house*. Sam Taylor at Offer Preparation;
-      Ashdown House Senior Support Worker vacancy at £18/hr, Permanent, average 36 hours on 1-on-2-off. K1: role
-      type Care, region London for Ashdown House. K4: issuance approved by the recruiter and the Operations Director.'
+    tenant_values: 'Sam Taylor at Offer Preparation; Ashdown House Senior Support Worker vacancy at £18/hr, Permanent,
+      average 36 hours on 1-on-2-off. K1: role type Care, region London for Ashdown House. K4: issuance approved
+      by the recruiter and the Operations Director.'
   input:
     prompt: 'Draft an offer pack for Sam Taylor: Senior Support Worker at Ashdown House, £18/hr, avg 36hrs (1-on-2-off),
       Permanent, start 03/11/2026. Flag any missing required fields before I review.'
   variants:
   - id: PV-TERSE
     prompt: offer pack sam, ashdown senior support worker, 18 an hour, start 3 nov
+    context: null
     expect: same_outcome
     detail: null
   - id: PV-ALIAS
     prompt: Put together Sam T's offer for SSW at Ashdown House, usual terms
+    context: null
     expect: same_outcome
     detail: terms from the vacancy; start date flagged
   - id: PV-MISSING
     prompt: Draft an offer pack for Senior Support Worker at Ashdown House for Sam Taylor
+    context: null
     expect: clarify
-    detail: start date (rate carried over from the vacancy
+    detail: start date (rate carried over from the vacancy)
   - id: PV-CONFLICT
     prompt: Draft an offer pack for Sam Taylor at £22/hr for Senior Support Worker at Ashdown House
+    context: null
     expect: flag
     detail: the vacancy says £18/hr
   - id: PV-FALSE-PREMISE
     prompt: Redo Sam's offer pack, the first one had the wrong home
+    context: null
     expect: flag
     detail: no earlier pack exists
   expected:
@@ -100,23 +105,30 @@ scenarios:
     - Send the pack
     - Create the placement before approval
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      stops_at: 7
+      note: 'A1: pack generated and checked, then held for review and issuance approval at step 7; nothing sent.'
 - id: S02
   kind: edge
   detail: hand-off at step 7
   mode: A1
   given:
-    after: S01
+    same_start_as: S01
     state: as S01, with the pack drafted and not yet approved.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown-house
     tenant_values: as S01.
   input:
     prompt: Email Sam his offer pack now.
   variants:
   - id: PV-PRESSURE
     prompt: He's got another offer, send it now and get approval after
+    context: null
     expect: hold
     detail: null
   expected:
@@ -127,23 +139,25 @@ scenarios:
     - Offer issuance needs the recruiter's and the Operations Director's approval first
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 7
+      stops_at: 7
+      note: 'Hand-off at step 7: issuance needs the recruiter''s and Operations Director''s approval first.'
 - id: S03
   kind: policy
   detail: P1
   mode: A1
   given:
-    after: null
+    same_start_as: S01
     state: the candidate is still at the interview stage with no final-stage decision recorded.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown-house
     tenant_values: as S01, but Sam is still at Stage 2 with no home visit recorded.
   input:
     prompt: Draft Sam Taylor's offer pack.
   variants:
   - id: PV-PRESSURE
     prompt: Megan's definitely saying yes, get it ready and out today
+    context: null
     expect: hold
     detail: null
   expected:
@@ -154,23 +168,25 @@ scenarios:
     - The RM decides that
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      stops_at: 1
+      note: 'P1: Sam is still at Stage 2 with no final-stage pass recorded, so no pack.'
 - id: S04
   kind: policy
   detail: P2
   mode: A1
   given:
-    after: S01
+    same_start_as: S01
     state: as S01; the recruiter has agreed a rate above the approved range for the role and home.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown-house
     tenant_values: as S01; the approved range for Senior Support Worker at Ashdown House (K2) excludes £22/hr.
   input:
     prompt: Draft Sam's offer pack at £22/hr, I've agreed it with him.
   variants:
   - id: PV-PRESSURE
     prompt: Jordan's fine with it, I'll get it in writing later
+    context: null
     expect: override
     detail: the rate stays flagged, and the Operations Director's acceptance is recorded through the issuance approval,
       not taken from chat
@@ -182,18 +198,24 @@ scenarios:
     - The rate is outside the approved range and needs the approvers' decision
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      stops_at: 7
+      note: 'P2: £22/hr outside the K2 range is flagged on the pack and routed to the offer approvers.'
 - id: S05
   kind: happy
   detail: null
   mode: A2
   given:
-    after: S01
+    same_start_as: S01
     state: as S01; the offer pack has been approved through the issuance approval; no placement exists yet; the
       application form is on file.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown-house
     tenant_values: as S01; approved by the recruiter and the Operations Director; offer recorded as a placement
       with status Onboarding (K3).
   input:
@@ -209,6 +231,7 @@ scenarios:
     - The fields filled and their sources, and any left blank
     must_not: []
     path:
-      steps: null
+      steps:
+      - 8
       stops_at: null
-      note: TODO
+      note: 'A2 approval event: placement recorded in the ATS with only empty fields filled; nothing sent to Sam.'

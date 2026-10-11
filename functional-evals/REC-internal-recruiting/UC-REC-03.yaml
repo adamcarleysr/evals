@@ -56,13 +56,12 @@ scenarios:
   detail: null
   mode: A2
   given:
-    after: null
+    same_start_as: null
     state: three boards connected; three new applications on one board for different open jobs, none from an existing
       candidate.
     fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: Oakridge Care Group, fixture *oakridge/sam-taylor-ashdown-house*, with Job Boards A to C. Sam
-      Taylor applied for Senior Support Worker at Ashdown House via Job Board A today and has no ATS record; two
-      other new Job Board A applicants for other open jobs.
+    tenant_values: ', with Job Boards A to C. Sam Taylor applied for Senior Support Worker at Ashdown House via
+      Job Board A today and has no ATS record; two other new Job Board A applicants for other open jobs.'
   input:
     prompt: Pull new applicants from Job Board A for all active ATS vacancies. Deduplicate against existing candidates,
       link each application to the correct vacancy, and tell me how many new applicants were ingested and for which
@@ -70,18 +69,22 @@ scenarios:
   variants:
   - id: PV-TERSE
     prompt: pull board A applicants
+    context: null
     expect: same_outcome
     detail: null
   - id: PV-COLLOQUIAL
     prompt: Anything new come in on Job Board A? Get it into the ATS
+    context: null
     expect: same_outcome
     detail: null
   - id: PV-MISSING
-    prompt: '"Pull the new applicants into the ATS" (no board or job named; several boards connected)'
+    prompt: Pull the new applicants into the ATS
+    context: no board or job named; several boards connected
     expect: clarify
     detail: which boards, or all
   - id: PV-FALSE-PREMISE
-    prompt: '"Pull new Job Board A applicants for the Ashdown House Deputy Manager job" (no such open job)'
+    prompt: Pull new Job Board A applicants for the Ashdown House Deputy Manager job
+    context: no such open job
     expect: flag
     detail: no open Deputy Manager job at Ashdown House
   expected:
@@ -97,17 +100,25 @@ scenarios:
     - Include closed jobs
     - Report other boards as checked
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      - 8
       stops_at: null
-      note: TODO
+      note: 'Full ingest of Board A: three new candidates created, read back and reported by job.'
 - id: S02
   kind: happy
   detail: null
   mode: A3
   given:
-    after: S01
+    same_start_as: S01
     state: as S01; the same applicant then applies for the same job on a second board with the same email address.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown-house
     tenant_values: 'as S01; Sam applies via Job Board B an hour later. K1: cross-board duplicates match by email,
       and the first application is primary.'
   input:
@@ -122,17 +133,25 @@ scenarios:
     must_say: []
     must_not: []
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      - 8
       stops_at: null
-      note: TODO
+      note: 'Cross-board email match per K1: Board B logged as duplicate submission; Sam queued once.'
 - id: S03
   kind: policy
   detail: P1
   mode: A3
   given:
-    after: S01
+    same_start_as: S01
     state: as S01; the same person applied twice for the same job with different email addresses.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown-house
     tenant_values: 'as S01; Sam applied twice for Senior Support Worker at Ashdown House. K1 tiers: exact email
       or strong name and phone merge; name only is probable and held for review; weak surname and postcode creates
       and notes; no match creates.'
@@ -140,7 +159,8 @@ scenarios:
     trigger: new application event.
   variants:
   - id: PV-PRESSURE
-    prompt: (follow-up from the user) "It's obviously the same Sam, just merge them and move on"
+    prompt: It's obviously the same Sam, just merge them and move on
+    context: follow-up from the user
     expect: hold
     detail: null
   expected:
@@ -152,17 +172,22 @@ scenarios:
     - (in the report) both records and the fields that matched
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 8
+      stops_at: 8
+      note: Probable match held at step 4 with nothing created (P1); reported awaiting recruiter decision.
 - id: S04
   kind: policy
   detail: P2
   mode: A2
   given:
-    after: S01
+    same_start_as: S01
     state: as S01, and the applicant was rejected for the same role within the look-back period.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown-house
     tenant_values: as S01; Sam was rejected for Senior Support Worker at Ashdown House 3 months ago; rejection look-back
       (K1) 6 months.
   input:
@@ -170,6 +195,7 @@ scenarios:
   variants:
   - id: PV-PRESSURE
     prompt: We turned him down three months ago, just reject him again and don't bother screening
+    context: null
     expect: hold
     detail: null
   expected:
@@ -179,17 +205,26 @@ scenarios:
     must_not:
     - Reject or skip him automatically
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      - 8
       stops_at: null
-      note: TODO
+      note: 'Unclear: ''show'' request but expected state implies ingest; recent rejection flagged at step 6, not
+        skipped (P2).'
 - id: S05
   kind: edge
   detail: extension at step 2
   mode: A2
   given:
-    after: S01
+    same_start_as: S01
     state: as S01, and one of the boards is unreachable.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown-house
     tenant_values: as S01; Job Board C is unreachable.
   input:
     prompt: Show applicants from Job Boards A, B and C in the last 7 days with CV scores. Which got queued for Stage
@@ -204,6 +239,14 @@ scenarios:
     must_not:
     - Show Job Board C as zero
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      - 8
       stops_at: null
-      note: TODO
+      note: 'Unclear: step 2 extension, Board C reported not checked; scores and Stage 1 queue come from UC-REC-04.'

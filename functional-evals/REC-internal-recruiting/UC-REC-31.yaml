@@ -43,29 +43,32 @@ scenarios:
   detail: null
   mode: A0
   given:
-    after: null
+    same_start_as: null
     state: twelve active cases in scope, two of them older than the age threshold; one case with two items outstanding.
     fixture: oakridge/sam-taylor-ashdown
-    tenant_values: 'Oakridge Care Group, fixture *oakridge/sam-taylor-ashdown*, plus 11 other active cases; two
-      opened more than 30 days ago. Sam Taylor''s case at evidence collection with Reference 2 and the DBS outstanding.
-      Age threshold (K3): 30 days.'
+    tenant_values: ', plus 11 other active cases; two opened more than 30 days ago. Sam Taylor''s case at evidence
+      collection with Reference 2 and the DBS outstanding. Age threshold (K3): 30 days.'
   input:
     prompt: Show the compliance case view for all active onboarding cases. Highlight cases older than 30 days.
   variants:
   - id: PV-TERSE
     prompt: case view, flag 30+ days
+    context: null
     expect: same_outcome
     detail: null
   - id: PV-COLLOQUIAL
     prompt: What's going on with all our new starters' paperwork?
+    context: null
     expect: same_outcome
     detail: null
   - id: PV-MISSING
-    prompt: '"Highlight the old ones" (no view open, no age given)'
+    prompt: Highlight the old ones
+    context: no view open, no age given
     expect: clarify
     detail: which view and what age
   - id: PV-FALSE-PREMISE
     prompt: Show me the 3 cases that are over 30 days old
+    context: null
     expect: flag
     detail: two cases are over 30 days
   expected:
@@ -77,17 +80,22 @@ scenarios:
     - The two older cases highlighted
     must_not: []
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 6
       stops_at: null
-      note: TODO
+      note: Read-only A0 view built for all cases in scope, highlighting the two over 30 days.
 - id: S02
   kind: edge
   detail: filter
   mode: A0
   given:
-    after: S01
+    same_start_as: S01
     state: as S01, with start dates spread over the coming weeks.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown
     tenant_values: as S01; Sam starts 03/11/2026.
   input:
     prompt: Filter the case view to starters in the next 14 days with outstanding items.
@@ -99,17 +107,22 @@ scenarios:
     - Cases with no start date listed separately
     must_not: []
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 6
       stops_at: null
-      note: TODO
+      note: Filter applied at step 4; cases without a start date shown separately (P1).
 - id: S03
   kind: edge
   detail: drill-down
   mode: A0
   given:
-    after: S01
+    same_start_as: S01
     state: as S01.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown
     tenant_values: as S01.
   input:
     prompt: Open Sam Taylor's case from the view.
@@ -121,17 +134,19 @@ scenarios:
       matching the audit trail entry for entry
     must_not: []
     path:
-      steps: null
+      steps:
+      - 1
+      - 5
       stops_at: null
-      note: TODO
+      note: 'Drill-down: scope checked then the case opened with history matching the audit trail.'
 - id: S04
   kind: policy
   detail: P1
   mode: A0
   given:
-    after: S01
+    same_start_as: S01
     state: as S01; one case has no expected start date and a chase series that stopped because the candidate responded.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown
     tenant_values: as S01.
   input:
     prompt: Show the compliance case view.
@@ -143,6 +158,11 @@ scenarios:
     must_not:
     - Show a blank, 0 or an estimated date
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 6
       stops_at: null
-      note: TODO
+      note: 'P1 and step 3 extensions: shows "start date missing" and stopped-chase reason, never blanks.'

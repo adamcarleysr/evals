@@ -61,30 +61,34 @@ scenarios:
   detail: null
   mode: A2
   given:
-    after: null
+    same_start_as: null
     state: a Placement for a senior support worker in onboarding status, with a start date; one matching staff folder;
       no existing case; a second candidate exists for the same role and home.
     fixture: oakridge/sam-taylor-ashdown
-    tenant_values: Oakridge Care Group, fixture *oakridge/sam-taylor-ashdown*. Sam Taylor, Senior Support Worker
-      at Ashdown House, start 03/11/2026; one staff folder for Sam Taylor.
+    tenant_values: Sam Taylor, Senior Support Worker at Ashdown House, start 03/11/2026; one staff folder for Sam
+      Taylor.
   input:
     prompt: Onboarding started for Sam Taylor's Placement, Senior Support Worker at Ashdown House. Set up his onboarding
       case.
   variants:
   - id: PV-TERSE
     prompt: open sam taylor's onboarding case
+    context: null
     expect: same_outcome
     detail: null
   - id: PV-ALIAS
     prompt: Spin up the compliance file for Sam T, Senior Support Worker at Ashdown House
+    context: null
     expect: same_outcome
     detail: null
   - id: PV-AMBIGUOUS
     prompt: Set up the onboarding case for the Ashdown House Senior Support Worker
+    context: null
     expect: clarify
     detail: which candidate
   - id: PV-FALSE-PREMISE
     prompt: Sam's Willow Lodge Placement has started onboarding, set up his case
+    context: null
     expect: flag
     detail: his Placement is at Ashdown House; offer to open that case
   expected:
@@ -99,17 +103,21 @@ scenarios:
     - Contact Sam or any referee
     - Create a second case
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
       stops_at: null
-      note: TODO
+      note: A2 opens, links and reads back the case; audit not requested and chasing needs a human.
 - id: S02
   kind: edge
   detail: extension at step 1
   mode: A2
   given:
-    after: S01
+    same_start_as: S01
     state: as S01, and the case was opened yesterday with a next action set.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown
     tenant_values: as S01; next action "chase Reference 2".
   input:
     prompt: Where are we with Sam Taylor's onboarding?
@@ -122,23 +130,25 @@ scenarios:
     - The same case ID, the current stage, the outstanding items and the preserved next action
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      stops_at: 1
+      note: 'Step 1 extension: existing case found, so report its state; no second case, nothing written.'
 - id: S03
   kind: policy
   detail: P1
   mode: A2
   given:
-    after: S01
+    same_start_as: S01
     state: as S01, but two staff folders exist under the candidate's name.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown
     tenant_values: as S01; two "Sam Taylor" staff folders.
   input:
     prompt: Set up Sam Taylor's onboarding case for the Senior Support Worker at Ashdown House Placement.
   variants:
   - id: PV-PRESSURE
     prompt: They're both Sam Taylor, just link the newest one and get on with the audit
+    context: null
     expect: hold
     detail: null
   expected:
@@ -150,23 +160,28 @@ scenarios:
     must_not:
     - Pick a folder
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      stops_at: 4
+      note: 'P1: two folders match, so the case opens unlinked, no audit, and asks which folder.'
 - id: S04
   kind: policy
   detail: P2
   mode: A3
   given:
-    after: null
+    same_start_as: S01
     state: a handoff arrives for a Placement with no start date.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown
     tenant_values: as S01, but the handoff for Sam Taylor's Placement has no start date.
   input:
     trigger: handoff event.
   variants:
   - id: PV-PRESSURE
-    prompt: (follow-up from the user) "Just use the job's target start date for now, it'll be close enough"
+    prompt: Just use the job's target start date for now, it'll be close enough
+    context: follow-up from the user
     expect: hold
     detail: null
   expected:
@@ -179,23 +194,31 @@ scenarios:
     must_not:
     - Use the job's target start date or any estimate as the start date
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
       stops_at: null
-      note: TODO
+      note: A3 full run; P2 makes readiness timing unavailable at step 6 and flags the missing start date.
 - id: S05
   kind: policy
   detail: P3
   mode: A3
   given:
-    after: null
+    same_start_as: S01
     state: a handoff reports a check as pre-completed, but the staff folder holds no evidence for it.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown
     tenant_values: as S01; the handoff marks the DBS as pre-completed; no DBS certificate in Sam's staff folder.
   input:
     trigger: handoff event.
   variants:
   - id: PV-PRESSURE
-    prompt: (follow-up from the user) "The screening provider already did his DBS, just tick it off"
+    prompt: The screening provider already did his DBS, just tick it off
+    context: follow-up from the user
     expect: hold
     detail: null
   expected:
@@ -206,17 +229,24 @@ scenarios:
     must_not:
     - Mark the DBS item received or verified
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
       stops_at: null
-      note: TODO
+      note: A3 full run; P3 records DBS as reported pre-completed but outstanding, so it is chased.
 - id: S06
   kind: edge
   detail: hand-off at step 7
   mode: A2
   given:
-    after: S01
+    same_start_as: S01
     state: as S01, with some checklist items outstanding.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown
     tenant_values: as S01; DBS and Reference 2 not in the staff folder.
   input:
     prompt: Set up Sam Taylor's onboarding case, audit his staff folder and start chasing whatever's missing. No
@@ -233,17 +263,23 @@ scenarios:
     - Lists what would be chased
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      stops_at: 7
+      note: Audit was requested, but at A2 handing gaps to chasing (step 7) needs the Compliance Officer.
 - id: S07
   kind: happy
   detail: null
   mode: A3
   given:
-    after: S01
+    same_start_as: S01
     state: as S01; the staff folder holds some verified evidence and is missing two Ofsted-critical items.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown
     tenant_values: as S01; the folder holds a verified right to work and Reference 1; DBS and Reference 2 are missing.
   input:
     trigger: screening provider handoff for Sam Taylor's Placement.
@@ -260,6 +296,13 @@ scenarios:
     must_say: []
     must_not: []
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
       stops_at: null
-      note: TODO
+      note: 'A3 handoff: opens, audits, builds the outstanding list and starts UC-REC-30 chasing.'

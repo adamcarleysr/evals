@@ -51,33 +51,37 @@ scenarios:
   detail: null
   mode: A0
   given:
-    after: null
+    same_start_as: null
     state: a validated calculation run refreshed recently; several open data-quality items; recruiter, forecast
       and trend values stored.
     fixture: oakridge/recruitment-team-w41
-    tenant_values: Oakridge Care Group, fixture *oakridge/recruitment-team-w41*. Validated run W41-r1 refreshed
-      20 minutes ago; 7 open data-quality items from UC-REC-19.
+    tenant_values: Validated run W41-r1 refreshed 20 minutes ago; 7 open data-quality items from UC-REC-19.
   input:
     prompt: 'Show the Recruitment Leader dashboard: KPI tables, team totals, forecast by home, trends.'
   variants:
   - id: PV-TERSE
     prompt: my dashboard
+    context: null
     expect: same_outcome
     detail: null
   - id: PV-ALIAS
     prompt: Pull up the recruitment cockpit
+    context: null
     expect: same_outcome
     detail: null
   - id: PV-COLLOQUIAL
     prompt: Where are we at across the team and homes today?
+    context: null
     expect: same_outcome
     detail: null
   - id: PV-AMBIGUOUS
-    prompt: '"Show me the dashboard" (the viewer has both this and a recruiter workbench pinned)'
+    prompt: Show me the dashboard
+    context: the viewer has both this and a recruiter workbench pinned
     expect: clarify
     detail: which dashboard
   - id: PV-FALSE-PREMISE
-    prompt: '"Why has the dashboard stopped showing data-quality issues?" (7 are shown)'
+    prompt: Why has the dashboard stopped showing data-quality issues?
+    context: 7 are shown
     expect: flag
     detail: 7 are open and shown
   expected:
@@ -93,17 +97,21 @@ scenarios:
     must_not:
     - Show a missing value as 0
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
       stops_at: null
-      note: TODO
+      note: Opens the view, applies scope, loads governed tiles and data-quality markers; read-only.
 - id: S02
   kind: policy
   detail: P1
   mode: A0
   given:
-    after: S01
+    same_start_as: S01
     state: as S01.
-    fixture: null
+    fixture: oakridge/recruitment-team-w41
     tenant_values: as S01.
   input:
     prompt: Drill down from team totals to one recruiter's prescreens this week.
@@ -115,20 +123,22 @@ scenarios:
     must_say: []
     must_not: []
     path:
-      steps: null
+      steps:
+      - 6
       stops_at: null
-      note: TODO
+      note: Drill-down count must equal the tile value (P1, step 6).
 - id: S03
   kind: policy
   detail: P1
   mode: A0
   given:
-    after: S01
+    same_start_as: S01
     state: as S01.
-    fixture: null
+    fixture: oakridge/recruitment-team-w41
     tenant_values: as S01.
   input:
-    prompt: '"How many deals did we do this week?" (asked in chat)'
+    prompt: How many deals did we do this week?
+    context: asked in chat
   variants: []
   expected:
     state:
@@ -136,17 +146,18 @@ scenarios:
     must_say: []
     must_not: []
     path:
-      steps: null
+      steps:
+      - 6
       stops_at: null
-      note: TODO
+      note: Chat question answered via UC-REC-23 matching the tile (P1, step 6 extension).
 - id: S04
   kind: edge
   detail: extension at step 1
   mode: A0
   given:
-    after: S01
+    same_start_as: S01
     state: as S01, and the viewer has filtered to one home and changed the layout.
-    fixture: null
+    fixture: oakridge/recruitment-team-w41
     tenant_values: as S01; filtered to Ashdown House.
   input:
     prompt: Close and reopen the dashboard.
@@ -158,18 +169,22 @@ scenarios:
     must_say: []
     must_not: []
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
       stops_at: null
-      note: TODO
+      note: Reopened view keeps pin, filter and layout (step 1 extension).
 - id: S05
   kind: policy
   detail: P2
   mode: A3
   given:
-    after: S01
+    same_start_as: S01
     state: as S01, and the last few ATS refreshes failed, so the data is older than the stale threshold and the
       alert threshold is reached.
-    fixture: null
+    fixture: oakridge/recruitment-team-w41
     tenant_values: 'as S01; the last 3 refreshes failed and the last success was 2 hours 40 minutes ago. Refresh
       cadence (K2): on change plus hourly; stale after 2 hours; alert the recruitment team after 3 failures.'
   input:
@@ -183,17 +198,18 @@ scenarios:
     must_not:
     - Present the tiles as current
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 5
+      stops_at: 5
+      note: 'Refresh failures hit alert threshold: tiles labelled stale (P2), recruitment team alerted per K2.'
 - id: S06
   kind: happy
   detail: null
   mode: A3
   given:
-    after: S01
+    same_start_as: S01
     state: as S01, and a placement's start date changes in the ATS.
-    fixture: null
+    fixture: oakridge/recruitment-team-w41
     tenant_values: as S01; a Placement at Willow Lodge moves its start date.
   input:
     trigger: ATS change event.
@@ -206,6 +222,7 @@ scenarios:
     must_say: []
     must_not: []
     path:
-      steps: null
+      steps:
+      - 5
       stops_at: null
-      note: TODO
+      note: ATS change event recalculates the Willow Lodge forecast tile from the governed layer; no source edits.

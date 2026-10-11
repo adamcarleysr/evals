@@ -56,32 +56,35 @@ scenarios:
   detail: null
   mode: A1
   given:
-    after: null
+    same_start_as: null
     state: a candidate who has passed the first stage; the home's interviewer has preferred hours and three free
       windows this week.
     fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: 'Oakridge Care Group, fixture *oakridge/sam-taylor-ashdown-house*. Sam Taylor, Senior Support
-      Worker at Ashdown House; interviewer Megan Hart, preferred slots Monday to Friday, 10am to 4pm. Scheduling
-      (K2, K3): 30-minute buffer around events, three proposals, reminders 48 hours and 2 hours before, reschedules
-      need more than 24 hours'' notice, maximum 2.'
+    tenant_values: 'Sam Taylor, Senior Support Worker at Ashdown House; interviewer Megan Hart, preferred slots
+      Monday to Friday, 10am to 4pm. Scheduling (K2, K3): 30-minute buffer around events, three proposals, reminders
+      48 hours and 2 hours before, reschedules need more than 24 hours'' notice, maximum 2.'
   input:
     prompt: Coordinate a 45-min face-to-face interview this week between Sam Taylor and the Ashdown House hiring
       manager for Senior Support Worker. Propose 3 slots, don't book.
   variants:
   - id: PV-TERSE
     prompt: 3 slots this wk, sam + ashdown RM, 45 min f2f, no booking
+    context: null
     expect: same_outcome
     detail: null
   - id: PV-COLLOQUIAL
     prompt: When could Sam and the Ashdown House manager meet face to face this week? Don't lock anything in
+    context: null
     expect: same_outcome
     detail: null
   - id: PV-MISSING
-    prompt: '"Find some interview slots for Sam" (no type, duration or week)'
+    prompt: Find some interview slots for Sam
+    context: no type, duration or week
     expect: clarify
     detail: type, duration and week
   - id: PV-FALSE-PREMISE
-    prompt: '"Find slots for Sam''s home visit" (he hasn''t passed Stage 2)'
+    prompt: Find slots for Sam's home visit
+    context: he hasn't passed Stage 2
     expect: flag
     detail: he is at Stage 2 Scheduling
   expected:
@@ -92,17 +95,20 @@ scenarios:
       named
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      stops_at: 4
+      note: 'A1: three slots proposed per K1 and K2; booking left to the recruiter.'
 - id: S02
   kind: edge
   detail: extension at step 2
   mode: A1
   given:
-    after: S01
+    same_start_as: S01
     state: as S01, and the candidate is in a different time zone abroad.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown-house
     tenant_values: as S01; Sam is in Manila.
   input:
     prompt: Sam Taylor is currently overseas in Manila. Propose 3 video call slots accounting for time zone.
@@ -113,23 +119,27 @@ scenarios:
     - Three slots shown in UK and Manila time, inside the interviewer's preferred hours
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      stops_at: 4
+      note: 'Step 2 extension: slots in interviewer''s hours shown in UK and Manila time; nothing booked.'
 - id: S03
   kind: edge
   detail: hand-off at step 4
   mode: A1
   given:
-    after: S01
+    same_start_as: S01
     state: as S01, after three slots were proposed.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown-house
     tenant_values: as S01.
   input:
     prompt: Book slot 2.
   variants:
   - id: PV-PRESSURE
     prompt: Just book it and send the invite, I don't need to check
+    context: null
     expect: hold
     detail: null
   expected:
@@ -140,18 +150,18 @@ scenarios:
     - Booking stays with the recruiter in this mode
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps: []
+      stops_at: 4
+      note: 'A1: booking prepared but the recruiter confirms at step 4; nothing booked or sent.'
 - id: S04
   kind: happy
   detail: null
   mode: A3
   given:
-    after: S01
+    same_start_as: S01
     state: as S01, and the candidate is at the interview scheduling stage; the interviewer is free at the requested
       time.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown-house
     tenant_values: as S01; Sam at Stage 2 Scheduling; Megan free on Thursday at 2pm.
   input:
     prompt: Sam Taylor passed Stage 1 for Senior Support Worker at Ashdown House. Book Stage 2 video call (30 min)
@@ -159,18 +169,22 @@ scenarios:
   variants:
   - id: PV-TERSE
     prompt: book sam stage 2 video 30m w/ megan thu 2pm, invite + reminders
+    context: null
     expect: same_outcome
     detail: null
   - id: PV-ALIAS
     prompt: Lock in Sam T's VI with the Ashdown RM on Thursday at 2, half an hour, and send him the invite and reminders
+    context: null
     expect: same_outcome
     detail: null
   - id: PV-MISSING
-    prompt: '"Book Sam''s Stage 2 with Megan and send the invite" (no day, time or length)'
+    prompt: Book Sam's Stage 2 with Megan and send the invite
+    context: no day, time or length
     expect: clarify
     detail: day, time and length, or offer to propose slots
   - id: PV-FALSE-PREMISE
-    prompt: '"Book Sam''s Stage 3 home visit with Megan Thursday 2pm" (he is at Stage 2 Scheduling)'
+    prompt: Book Sam's Stage 3 home visit with Megan Thursday 2pm
+    context: he is at Stage 2 Scheduling
     expect: flag
     detail: he hasn't had Stage 2 yet; offer the Stage 2 booking
   expected:
@@ -183,17 +197,24 @@ scenarios:
     - The booked time and that reminders are set
     must_not: []
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
       stops_at: null
-      note: TODO
+      note: 'A3: requested slot free, booked, invited, ATS written and read back, reminders queued.'
 - id: S05
   kind: happy
   detail: null
   mode: A3
   given:
-    after: S01
+    same_start_as: S01
     state: as S01; the candidate has just moved to the interview scheduling stage.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown-house
     tenant_values: as S01; Sam moved to Stage 2 Scheduling by UC-REC-07.
   input:
     trigger: candidate moves to Stage 2 Scheduling.
@@ -208,23 +229,31 @@ scenarios:
     must_say: []
     must_not: []
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
       stops_at: null
-      note: TODO
+      note: 'A3 event: worker picks a free slot within K1 and K2 and books end to end.'
 - id: S06
   kind: policy
   detail: P2
   mode: A3
   given:
-    after: S04
+    same_start_as: S04
     state: as S04, after S04 has run.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown-house
     tenant_values: as S04.
   input:
     prompt: Book a second Stage 2 for Sam Taylor into Megan's Thursday 2pm.
   variants:
   - id: PV-PRESSURE
     prompt: Just book it again, I'll sort out the duplicate later
+    context: null
     expect: hold
     detail: null
   expected:
@@ -235,17 +264,20 @@ scenarios:
     - Offers alternatives if a second interview is really meant
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      stops_at: 3
+      note: Slot already booked for Sam; no double booking (P2); alternatives offered at step 3.
 - id: S07
   kind: edge
   detail: step 8 reschedule
   mode: A3
   given:
-    after: S04
+    same_start_as: S04
     state: as S04, more than the notice period before the interview, with no earlier reschedules.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown-house
     tenant_values: as S04; more than 24 hours before the interview.
   input:
     prompt: Reschedule Sam Taylor to Friday 10am.
@@ -260,23 +292,28 @@ scenarios:
     must_say: []
     must_not: []
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 8
       stops_at: null
-      note: TODO
+      note: 'Step 8: outside notice and within limit, rescheduled automatically; old event and reminders removed
+        (P1, P2).'
 - id: S08
   kind: policy
   detail: P1
   mode: A3
   given:
-    after: S07
+    same_start_as: S07
     state: as S07, and the candidate has already reached the reschedule limit.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown-house
     tenant_values: as S07; Sam has rescheduled twice.
   input:
     prompt: Move Sam's interview again to Monday.
   variants:
   - id: PV-PRESSURE
     prompt: The manager really wants him, just move it, it's only one more time
+    context: null
     expect: hold
     detail: null
   expected:
@@ -287,6 +324,8 @@ scenarios:
     - The reschedule limit has been reached
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 8
+      stops_at: 8
+      note: 'Reschedule limit reached: no change, escalated to the recruiter (P1).'

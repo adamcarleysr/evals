@@ -50,34 +50,39 @@ scenarios:
   detail: null
   mode: A0
   given:
-    after: null
+    same_start_as: null
     state: placements across all homes in the horizon, including one cancelled, one withdrawn and one deferred;
       a reference calculation of the grid is stored.
     fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: 'Oakridge Care Group, fixture *oakridge/sam-taylor-ashdown-house*, run on Thu 08/10/2026. Horizon
-      (K1): the next four weeks, current week excluded. Sam Taylor''s Senior Support Worker at Ashdown House placement
-      is in Onboarding with start date 03/11/2026; seeded placements across the nine homes.'
+    tenant_values: ', run on Thu 08/10/2026. Horizon (K1): the next four weeks, current week excluded. Sam Taylor''s
+      Senior Support Worker at Ashdown House placement is in Onboarding with start date 03/11/2026; seeded placements
+      across the nine homes.'
   input:
     prompt: Build the four-week starter forecast grouped by home and week. Exclude cancelled/withdrawn/deferred.
   variants:
   - id: PV-TERSE
     prompt: 4 wk starter forecast
+    context: null
     expect: same_outcome
     detail: null
   - id: PV-ALIAS
     prompt: Who's starting across the houses in the next month or so, by week?
+    context: null
     expect: same_outcome
     detail: null
   - id: PV-BUNDLED
     prompt: Build the forecast by home and week and list the Placements behind Ashdown House
+    context: null
     expect: same_outcome
     detail: plus the Ashdown House placement list including Sam Taylor
   - id: PV-AMBIGUOUS
     prompt: Forecast for Birch Close
+    context: null
     expect: clarify
     detail: 1 Birch Close or 7 Birch Close
   - id: PV-FALSE-PREMISE
     prompt: Why isn't Sam Taylor in the Beacon House forecast?
+    context: null
     expect: flag
     detail: his placement is at Ashdown House; show where he is counted
   expected:
@@ -91,17 +96,23 @@ scenarios:
     must_not:
     - Count any placement with no start date
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
       stops_at: null
-      note: TODO
+      note: 'Full read-only build: classify under P1, resolve homes, reconcile grid, present and save snapshot.'
 - id: S02
   kind: edge
   detail: home filter
   mode: A0
   given:
-    after: S01
+    same_start_as: S01
     state: as S01.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown-house
     tenant_values: as S01.
   input:
     prompt: Forecast for Ashdown House only, listing each Placement.
@@ -114,18 +125,24 @@ scenarios:
     - The scope used (Ashdown House, four weeks from 12/10/2026)
     must_not: []
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
       stops_at: null
-      note: TODO
+      note: Home filter resolved to Ashdown House at step 1; otherwise the full forecast path.
 - id: S03
   kind: policy
   detail: P1
   mode: A0
   given:
-    after: S01
+    same_start_as: S01
     state: as S01, and one eligible placement was deferred yesterday; two other placements at the same home have
       no start date.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown-house
     tenant_values: as S01, and Sam Taylor's placement was deferred yesterday; two other Ashdown House placements
       have no start date.
   input:
@@ -141,17 +158,24 @@ scenarios:
     must_not:
     - Place the undated placements in a week
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
       stops_at: null
-      note: TODO
+      note: Full rebuild; deferral excluded with change date (P1, step 3 extension); undated placements listed under
+        P2.
 - id: S04
   kind: policy
   detail: P2
   mode: A0
   given:
-    after: S01
+    same_start_as: S01
     state: as S01, and one placement's home is a name that is neither a canonical home nor a known alias.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown-house
     tenant_values: as S01, and one placement's home reads "Willow Lodge Annex".
   input:
     prompt: Build the four-week starter forecast.
@@ -164,17 +188,23 @@ scenarios:
     must_not:
     - Assign it to Willow Lodge
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
       stops_at: null
-      note: TODO
+      note: Unresolved home listed as an exception at step 4 under P2; never assigned to Willow Lodge.
 - id: S05
   kind: edge
   detail: extension at step 4
   mode: A0
   given:
-    after: S01
+    same_start_as: S01
     state: as S01, and one eligible placement's home is recorded under a known alias.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown-house
     tenant_values: as S01; "OCG Willow" is a mapped alias for Willow Lodge (K3), and one placement's home reads
       "OCG Willow".
   input:
@@ -188,6 +218,12 @@ scenarios:
     must_say: []
     must_not: []
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
       stops_at: null
-      note: TODO
+      note: Known alias resolved to Willow Lodge at step 4 (extension); no exception raised.

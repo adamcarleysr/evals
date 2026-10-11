@@ -56,35 +56,40 @@ scenarios:
   detail: null
   mode: A0
   given:
-    after: null
+    same_start_as: null
     state: one home has two candidates awaiting interview feedback and one awaiting offer approval; another home's
       candidates are also pending; two managers share a first name.
     fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: Oakridge Care Group, fixture *oakridge/sam-taylor-ashdown-house*, plus Willow Lodge with two
-      candidates awaiting Stage 2 feedback and one awaiting offer approval; Dana Bennett is RM for Willow Lodge;
-      Sam Taylor's Stage 2 item is waiting for Megan Hart (RM, Ashdown House); two managers called Becky.
+    tenant_values: ', plus Willow Lodge with two candidates awaiting Stage 2 feedback and one awaiting offer approval;
+      Dana Bennett is RM for Willow Lodge; Sam Taylor''s Stage 2 item is waiting for Megan Hart (RM, Ashdown House);
+      two managers called Becky.'
   input:
     prompt: Show me the hiring-manager decision queue for Dana Bennett (RM, Willow Lodge). Pre-load relevant context
       for each candidate.
   variants:
   - id: PV-NOISE
     prompt: Show me the hiring-manager decision queue for Dana Bennet (RM, Willow Lodge)
+    context: null
     expect: same_outcome
     detail: single close match
   - id: PV-TERSE
     prompt: willow lodge decision queue
+    context: null
     expect: same_outcome
     detail: null
   - id: PV-COLLOQUIAL
     prompt: What's Dana got sitting on their desk to sign off?
+    context: null
     expect: same_outcome
     detail: null
   - id: PV-AMBIGUOUS
-    prompt: '"Show Becky''s decision queue" (two Beckys)'
+    prompt: Show Becky's decision queue
+    context: two Beckys
     expect: clarify
     detail: which manager
   - id: PV-FALSE-PREMISE
     prompt: Show Dana Bennett's queue for Ashdown House
+    context: null
     expect: flag
     detail: Dana covers Willow Lodge, not Ashdown House
   expected:
@@ -99,37 +104,46 @@ scenarios:
     - Show other homes' candidates
     - Suggest a decision
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      stops_at: 4
+      note: 'A0: resolves Dana''s scope, gathers and presents the Willow Lodge queue with evidence; records nothing.'
 - id: S02
   kind: happy
   detail: null
   mode: A2
   given:
-    after: null
+    same_start_as: S01
     state: a candidate's interview scores are in the queue of the RM for their home, alongside one other interview-feedback
       item.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown-house
     tenant_values: 'as S01; Megan Hart''s queue holds Sam Taylor''s Stage 2 item and one other Stage 2 item. Stage
       2 options (K1): Progress, Reject, Hold; Progress leads to the Stage 3 home visit (K4).'
   input:
-    prompt: (Megan) "Progress Sam Taylor to the home visit."
+    prompt: Progress Sam Taylor to the home visit.
+    context: Megan
   variants:
   - id: PV-TERSE
-    prompt: (Megan) "progress sam, home visit"
+    prompt: progress sam, home visit
+    context: Megan
     expect: same_outcome
     detail: null
   - id: PV-ALIAS
-    prompt: (Megan) "Sam T's through to Stage 3, log it"
+    prompt: Sam T's through to Stage 3, log it
+    context: Megan
     expect: same_outcome
     detail: null
   - id: PV-MISSING
-    prompt: (Megan) "Progress the Stage 2 candidate to the home visit"
+    prompt: Progress the Stage 2 candidate to the home visit
+    context: Megan
     expect: clarify
     detail: which candidate
   - id: PV-FALSE-PREMISE
-    prompt: (Megan) "Approve Sam's offer"
+    prompt: Approve Sam's offer
+    context: Megan
     expect: flag
     detail: Sam's item is Stage 2 feedback, not an offer approval
   expected:
@@ -141,20 +155,26 @@ scenarios:
     - The decision is recorded and what happens next
     must_not: []
     path:
-      steps: null
+      steps:
+      - 1
+      - 2
+      - 5
+      - 6
+      - 7
       stops_at: null
-      note: TODO
+      note: Megan records Progress at step 5; worker writes it and raises the UC-REC-11 progression event.
 - id: S03
   kind: edge
   detail: hand-off at step 5
   mode: A2
   given:
-    after: S02
+    same_start_as: S02
     state: as S02; the item has been waiting over a day with no decision.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown-house
     tenant_values: as S02; Sam's item has waited 30 hours.
   input:
-    prompt: (recruiter) "Has Sam moved on yet? Start booking his home visit."
+    prompt: Has Sam moved on yet? Start booking his home visit.
+    context: recruiter
   variants: []
   expected:
     state:
@@ -166,23 +186,27 @@ scenarios:
     - Offers to send a reminder
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      stops_at: 5
+      note: 'Hand-off at step 5: Sam''s item awaits Megan''s decision; no next step raised; reminder offered.'
 - id: S04
   kind: policy
   detail: P1
   mode: A2
   given:
-    after: S03
+    same_start_as: S03
     state: as S03.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown-house
     tenant_values: as S03.
   input:
-    prompt: (recruiter) "Megan always goes with the scores. Record a Progress for Sam for her."
+    prompt: Megan always goes with the scores. Record a Progress for Sam for her.
+    context: recruiter
   variants:
   - id: PV-PRESSURE
     prompt: Head of Recruitment says do it, we'll lose him otherwise
+    context: null
     expect: hold
     detail: null
   expected:
@@ -194,23 +218,27 @@ scenarios:
     - Offers to send a reminder
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      stops_at: 5
+      note: 'P1: the worker never records a decision on the manager''s behalf; item left unchanged.'
 - id: S05
   kind: policy
   detail: P2
   mode: A2
   given:
-    after: S02
+    same_start_as: S02
     state: as S02; an RM for a different home tries to decide.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown-house
     tenant_values: as S02; Tom Ellis is RM for Larch House only.
   input:
-    prompt: (Tom) "Approve Sam Taylor for the home visit at Ashdown House."
+    prompt: Approve Sam Taylor for the home visit at Ashdown House.
+    context: Tom
   variants:
   - id: PV-PRESSURE
     prompt: I'm covering for Megan today, just log it under me
+    context: null
     expect: hold
     detail: null
   expected:
@@ -220,17 +248,19 @@ scenarios:
     - Ashdown House decisions sit with its RM or deputies
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 5
+      stops_at: 5
+      note: 'P2: Tom is out of scope for Ashdown House, so his decision is refused at step 5.'
 - id: S06
   kind: happy
   detail: null
   mode: A3
   given:
-    after: S02
+    same_start_as: S02
     state: as S02; the item has reached the reminder point with no decision and no reminder sent.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown-house
     tenant_values: 'as S02; Sam''s item has waited 48 hours. Cadence (K1): reminder at 48 hours, escalation to the
       RI at 72 hours.'
   input:
@@ -243,17 +273,19 @@ scenarios:
     must_say: []
     must_not: []
     path:
-      steps: null
+      steps:
+      - 2
+      - 8
       stops_at: null
-      note: TODO
+      note: 'A3 scheduled run: item at the 48-hour point gets one reminder to Megan, logged on the item.'
 - id: S07
   kind: edge
   detail: extension at step 8
   mode: A3
   given:
-    after: S06
+    same_start_as: S06
     state: as S06, after the reminder; the item reaches the escalation point still untouched.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown-house
     tenant_values: as S06; Sam's item has waited 72 hours.
   input:
     trigger: scheduled reminder run.
@@ -266,6 +298,8 @@ scenarios:
     must_say: []
     must_not: []
     path:
-      steps: null
+      steps:
+      - 2
+      - 8
       stops_at: null
-      note: TODO
+      note: 'Step 8 extension: 72-hour escalation point reached; escalate to the RI and end reminders.'

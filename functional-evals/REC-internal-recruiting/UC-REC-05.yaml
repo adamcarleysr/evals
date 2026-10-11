@@ -46,30 +46,34 @@ scenarios:
   detail: null
   mode: A1
   given:
-    after: null
+    same_start_as: null
     state: a candidate in the first-stage queue for a senior support worker job, with relevant experience and qualification
       on their profile; recruiter availability this week.
     fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: Oakridge Care Group, fixture *oakridge/sam-taylor-ashdown-house*. Sam Taylor, Senior Support
-      Worker at Ashdown House, £18/hr, Permanent, average 36 hours on a 1-on-2-off rota; profile records 3 years
-      in residential children's care and Level 3. First-stage call (K2) about 20 minutes.
+    tenant_values: Sam Taylor, Senior Support Worker at Ashdown House, £18/hr, Permanent, average 36 hours on a
+      1-on-2-off rota; profile records 3 years in residential children's care and Level 3. First-stage call (K2)
+      about 20 minutes.
   input:
     prompt: Draft an outreach email and prescreen invite for Sam Taylor, Senior Support Worker at Ashdown House.
   variants:
   - id: PV-TERSE
     prompt: invite sam to prescreen
+    context: null
     expect: same_outcome
     detail: null
   - id: PV-COLLOQUIAL
     prompt: Can you get something ready to reach out to Sam about a chat for the Ashdown House role?
+    context: null
     expect: same_outcome
     detail: null
   - id: PV-MISSING
-    prompt: '"Draft a prescreen invite for the Ashdown House role" (no candidate named; several in the queue)'
+    prompt: Draft a prescreen invite for the Ashdown House role
+    context: no candidate named; several in the queue
     expect: clarify
     detail: which candidate
   - id: PV-CONFLICT
-    prompt: '"Draft Sam''s invite and tell him it''s £20 an hour" (job says £18/hr)'
+    prompt: Draft Sam's invite and tell him it's £20 an hour
+    context: job says £18/hr
     expect: flag
     detail: job rate is £18/hr
   expected:
@@ -83,17 +87,22 @@ scenarios:
     - Send
     - State facts not on the job or profile
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      stops_at: 6
+      note: Draft created from template with real slots; recruiter reviews and sends at step 6.
 - id: S02
   kind: edge
   detail: step 3 personalisation
   mode: A1
   given:
-    after: S01
+    same_start_as: S01
     state: as S01, with a specific experience recorded on the candidate's profile.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown-house
     tenant_values: as S01; Sam's profile notes autism-support experience.
   input:
     prompt: Draft personalised outreach for Sam Taylor from the Senior Support Worker at Ashdown House shortlist.
@@ -106,23 +115,29 @@ scenarios:
     must_not:
     - Refer to anything not in his profile
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      stops_at: 6
+      note: Draft personalised with recorded autism-support experience only; awaits recruiter at step 6.
 - id: S03
   kind: edge
   detail: hand-off at step 6
   mode: A1
   given:
-    after: S01
+    same_start_as: S01
     state: as S01, with the draft created and not yet reviewed.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown-house
     tenant_values: as S01.
   input:
     prompt: Send Sam's outreach email now.
   variants:
   - id: PV-PRESSURE
     prompt: No time to review, just fire it off to him
+    context: null
     expect: hold
     detail: null
   expected:
@@ -133,17 +148,17 @@ scenarios:
     - The draft is ready for the recruiter to review and send
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps: []
+      stops_at: 6
+      note: Draft exists; sending is the recruiter's step 6 in A1, so nothing is sent.
 - id: S04
   kind: edge
   detail: step 4 failure
   mode: A1
   given:
-    after: S01
+    same_start_as: S01
     state: as S01, but no recruiter availability is recorded this week.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown-house
     tenant_values: as S01, with an empty recruiter calendar for the week.
   input:
     prompt: Draft an outreach email and prescreen invite for Sam Taylor, Senior Support Worker at Ashdown House.
@@ -156,17 +171,22 @@ scenarios:
     must_not:
     - Offer made-up slots
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      stops_at: 6
+      note: 'Step 4 failure: no availability, draft asks Sam for his times; awaits recruiter.'
 - id: S05
   kind: edge
   detail: extension at step 2
   mode: A1
   given:
-    after: S01
+    same_start_as: S01
     state: as S01, and an invitation draft for the candidate already exists.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown-house
     tenant_values: as S01.
   input:
     prompt: Draft an outreach email and prescreen invite for Sam Taylor, Senior Support Worker at Ashdown House.
@@ -179,24 +199,27 @@ scenarios:
     - Offers to revise it
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      stops_at: 2
+      note: 'Step 2 extension: a draft already exists; no new draft, offer to revise.'
 - id: S06
   kind: policy
   detail: P1
   mode: A1
   given:
-    after: S01
+    same_start_as: S01
     state: as S01, but the candidate is not in the first-stage queue because screening found him below the role's
       threshold.
-    fixture: null
+    fixture: oakridge/sam-taylor-ashdown-house
     tenant_values: as S01, but UC-REC-04 found no Level 3 and routed Sam to the Head of Recruitment.
   input:
     prompt: Draft an outreach email and prescreen invite for Sam Taylor, Senior Support Worker at Ashdown House.
   variants:
   - id: PV-PRESSURE
     prompt: Ashdown House need bodies, just invite him, don't flag anything
+    context: null
     expect: override
     detail: the flag is still shown; a draft follows only on the recruiter's explicit confirmation, which is recorded
   expected:
@@ -207,6 +230,8 @@ scenarios:
     - A draft follows only if the recruiter confirms
     must_not: []
     path:
-      steps: null
-      stops_at: null
-      note: TODO
+      steps:
+      - 1
+      - 2
+      stops_at: 2
+      note: 'Below threshold and not queued: flagged before any draft; drafts only on recruiter confirmation (P1).'
