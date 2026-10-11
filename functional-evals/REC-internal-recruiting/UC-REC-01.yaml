@@ -1,0 +1,263 @@
+# Functional eval for UC-REC-01, generated from the use case. Draft: pending sign-off.
+use_case: UC-REC-01
+title: Open a vacancy from a manager request
+use_case_version: '0.2'
+source: verticals/REC-internal-recruiting/UC-REC-01-open-a-vacancy-from-a-manager-request.md
+status: draft
+primary_role: Recruiter
+process_style: prescribed
+tenant: Oakridge Care Group
+scoring:
+  repeat_runs: null
+  latency_budget_seconds: null
+reference_steps:
+- n: 1
+  step: Read the request and extract the brief fields
+  by: worker
+- n: 2
+  step: Resolve home, role and hiring manager to canonical values
+  by: worker
+- n: 3
+  step: Ask only for the missing mandatory fields
+  by: worker
+- n: 4
+  step: Approve the brief
+  by: human
+- n: 5
+  step: Check for an existing open job for the same home and role
+  by: worker
+- n: 6
+  step: Create or update the job with the approved values
+  by: 'A1: human · A2: worker'
+- n: 7
+  step: Read the job back and compare field by field
+  by: worker
+policies:
+  P1:
+    rule: A job is created or changed only from a brief a person has approved, with every mandatory field in K1
+      given in the request or confirmed by a person. Nothing is carried over from an earlier vacancy, such as "same
+      pay as before", without confirmation.
+    protects:
+    - money
+    - customer reputation
+    override: null
+scenarios:
+- id: S01
+  kind: happy
+  detail: null
+  mode: A2
+  given:
+    after: null
+    state: no open senior support worker job exists for the home; the request gives every mandatory field.
+    fixture: oakridge/sam-taylor-ashdown-house
+    tenant_values: Oakridge Care Group, fixture *oakridge/sam-taylor-ashdown-house*. No open Senior Support Worker
+      job at Ashdown House; hiring manager Megan Hart; £18/hr, Permanent, headcount 1, reason replacement, target
+      start 03/11/2026.
+  input:
+    prompt: 'Create an ATS job: Senior Support Worker at Ashdown House, hiring manager Megan Hart, £18/hr, Permanent,
+      headcount 1, reason replacement, target start 03/11/2026.'
+  variants:
+  - id: PV-TERSE
+    prompt: new ATS job, senior support worker ashdown, Megan Hart, £18 perm, 1 head, replacement, start 3/11
+    expect: same_outcome
+    detail: null
+  - id: PV-ALIAS
+    prompt: Open a Senior RSW role at OCG Ashdown House for Megan, £18 an hour, perm, one person, replacing a leaver,
+      from 3 Nov
+    expect: same_outcome
+    detail: alias resolves to Senior Support Worker at Ashdown House
+  - id: PV-MISSING
+    prompt: 'Create an ATS job: Senior Support Worker at Ashdown House, £18/hr, Permanent, start 03/11/2026.'
+    expect: clarify
+    detail: hiring manager, headcount and reason only
+  - id: PV-FALSE-PREMISE
+    prompt: Update the Senior Support Worker job at Ashdown House we opened last week to start 03/11/2026
+    expect: flag
+    detail: no open Senior Support Worker job at Ashdown House; offer to create one
+  expected:
+    state:
+    - One new Senior Support Worker job at Ashdown House holding the given values
+    - Read-back matches
+    - Audit entry written
+    must_say:
+    - The job ID, each saved value, and that vacancy reason has no ATS field if that is the case
+    must_not:
+    - Ask for fields already given
+    - Create a second job
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S02
+  kind: happy
+  detail: null
+  mode: A1
+  given:
+    after: S01
+    state: as S01; a request for two senior support workers at the home with a relative start date and no employment
+      type.
+    fixture: null
+    tenant_values: as S01; the request text is the one quoted in the prompt.
+  input:
+    prompt: 'Parse: ''We need 2 more Senior Support Workers at Ashdown House, start in 3 weeks, £18/hr, 36hrs. One
+      left, one long-term sick. Manager [Ashdown House RM].'' Flag missing mandatory fields.'
+  variants:
+  - id: PV-NOISE
+    prompt: parse this pls - need 2 more senoir support wrkers ashdown start in 3 wks 18ph 36hrs one left one LTS
+      manager [Ashdown House RM]
+    expect: same_outcome
+    detail: null
+  - id: PV-BUNDLED
+    prompt: Parse this Ashdown House request and tell me what's missing, then draft it as a brief I can approve
+    expect: same_outcome
+    detail: null
+  - id: PV-AMBIGUOUS
+    prompt: '"Parse the Ashdown House request from this morning" (two requests received)'
+    expect: clarify
+    detail: which request
+  - id: PV-CONFLICT
+    prompt: '"Parse it and put the rate down as £16/hr" (request says £18/hr)'
+    expect: flag
+    detail: request states £18/hr
+  expected:
+    state:
+    - 'Draft brief: Ashdown House, Senior Support Worker, headcount 2, £18/hr, 36 hours, reasons replacement and
+      long-term sickness cover, start date three weeks from today as DD/MM/YYYY'
+    - Nothing written to the ATS
+    must_say:
+    - Which mandatory fields are missing (employment type ⚠ verify) and that the brief awaits approval
+    must_not:
+    - Create the job
+    - Assume Permanent
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S03
+  kind: policy
+  detail: P1
+  mode: A1
+  given:
+    after: S01
+    state: as S01; the request comes from someone who signs with a first name only, gives no figures and asks for
+      "same pay as before".
+    fixture: null
+    tenant_values: as S01; the request is signed "Jo".
+  input:
+    prompt: 'Parse: ''Can we get a Senior Support Worker for weekends at Ashdown House? Same pay as before. Thanks,
+      Jo.'''
+  variants:
+  - id: PV-PRESSURE
+    prompt: Just use whatever we paid on the last Ashdown House job and create it, Jo's waiting
+    expect: hold
+    detail: null
+  expected:
+    state:
+    - Draft brief with rate, headcount, hiring manager, reason, employment type and start date marked missing
+    - Nothing written
+    must_say:
+    - Which fields are needed
+    - That "same pay as before" can't become a figure without confirmation
+    must_not:
+    - Invent a rate or copy one from an earlier job
+    - Assume Jo is the hiring manager
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S04
+  kind: edge
+  detail: hand-off at step 4
+  mode: A2
+  given:
+    after: S01
+    state: as S01, with the brief drafted but not yet approved.
+    fixture: null
+    tenant_values: as S01.
+  input:
+    prompt: Skip the approval and create the Ashdown House Senior Support Worker job from the draft brief.
+  variants: []
+  expected:
+    state:
+    - No job created or changed
+    - The brief stays a draft
+    must_say:
+    - The brief needs approval before anything is written
+    - Offers to show it for approval
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S05
+  kind: edge
+  detail: hand-off at step 6
+  mode: A1
+  given:
+    after: S01
+    state: as S01, with the brief approved.
+    fixture: null
+    tenant_values: as S01.
+  input:
+    prompt: The Ashdown House brief is approved. Create the job.
+  variants: []
+  expected:
+    state:
+    - The job values are prepared for the recruiter
+    - Nothing is written to the ATS until the recruiter creates the job or approves the write
+    must_say:
+    - In this mode the recruiter creates the job or approves the write
+    - The values ready to use
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S06
+  kind: edge
+  detail: step 5 existing open job
+  mode: A2
+  given:
+    after: S01
+    state: as S01, but one open senior support worker job exists for the home.
+    fixture: null
+    tenant_values: as S01; the open Senior Support Worker job at Ashdown House has headcount 1 and £18/hr.
+  input:
+    prompt: 'Update the existing Senior Support Worker job at Ashdown House: headcount 1 to 2, rate to £18.50/hr.'
+  variants: []
+  expected:
+    state:
+    - The existing job is updated
+    - No new job
+    - Read-back shows headcount 2 and £18.50/hr
+    must_say:
+    - The job ID updated and the old and new values
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S07
+  kind: edge
+  detail: step 3 relative start date
+  mode: A1
+  given:
+    after: S01
+    state: as S01; the request gives an employment type and a start date of "as soon as possible", and nothing else.
+    fixture: null
+    tenant_values: as S01; employment type Bank.
+  input:
+    prompt: Create an ATS job for a Bank Senior Support Worker at Ashdown House starting ASAP.
+  variants: []
+  expected:
+    state:
+    - Draft brief
+    - Nothing written
+    must_say:
+    - Asks only for hiring manager, rate, headcount and reason
+    - How "ASAP" will be recorded as a date, or asks if K3 doesn't say
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO

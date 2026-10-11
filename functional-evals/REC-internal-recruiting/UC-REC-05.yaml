@@ -1,0 +1,212 @@
+# Functional eval for UC-REC-05, generated from the use case. Draft: pending sign-off.
+use_case: UC-REC-05
+title: Invite candidates to prescreen
+use_case_version: '0.2'
+source: verticals/REC-internal-recruiting/UC-REC-05-invite-candidates-to-prescreen.md
+status: draft
+primary_role: Recruiter
+process_style: prescribed
+tenant: Oakridge Care Group
+scoring:
+  repeat_runs: null
+  latency_budget_seconds: null
+reference_steps:
+- n: 1
+  step: Resolve the candidate, application and job
+  by: worker
+- n: 2
+  step: Check the candidate is due an invitation
+  by: worker
+- n: 3
+  step: Gather the facts for the email
+  by: worker
+- n: 4
+  step: Find prescreen times to offer
+  by: worker
+- n: 5
+  step: Draft the email from the approved template
+  by: worker
+- n: 6
+  step: Review and send
+  by: human
+- n: 7
+  step: Record the outreach on the candidate
+  by: worker
+policies:
+  P1:
+    rule: Invite only a candidate in the first-stage queue, or one the recruiter has chosen. A candidate below the
+      screening threshold, or rejected for the role within the look-back period (K5), is flagged before any draft.
+    protects:
+    - person
+    - customer reputation
+    override: the recruiter confirms the invitation after seeing the flag; the confirmation is recorded
+scenarios:
+- id: S01
+  kind: happy
+  detail: null
+  mode: A1
+  given:
+    after: null
+    state: a candidate in the first-stage queue for a senior support worker job, with relevant experience and qualification
+      on their profile; recruiter availability this week.
+    fixture: oakridge/sam-taylor-ashdown-house
+    tenant_values: Oakridge Care Group, fixture *oakridge/sam-taylor-ashdown-house*. Sam Taylor, Senior Support
+      Worker at Ashdown House, £18/hr, Permanent, average 36 hours on a 1-on-2-off rota; profile records 3 years
+      in residential children's care and Level 3. First-stage call (K2) about 20 minutes.
+  input:
+    prompt: Draft an outreach email and prescreen invite for Sam Taylor, Senior Support Worker at Ashdown House.
+  variants:
+  - id: PV-TERSE
+    prompt: invite sam to prescreen
+    expect: same_outcome
+    detail: null
+  - id: PV-COLLOQUIAL
+    prompt: Can you get something ready to reach out to Sam about a chat for the Ashdown House role?
+    expect: same_outcome
+    detail: null
+  - id: PV-MISSING
+    prompt: '"Draft a prescreen invite for the Ashdown House role" (no candidate named; several in the queue)'
+    expect: clarify
+    detail: which candidate
+  - id: PV-CONFLICT
+    prompt: '"Draft Sam''s invite and tell him it''s £20 an hour" (job says £18/hr)'
+    expect: flag
+    detail: job rate is £18/hr
+  expected:
+    state:
+    - One draft to Sam with role (Senior Support Worker, Ashdown House, £18/hr, Permanent, average 36 hours on 1-on-2-off),
+      next step (first-stage call, about 20 minutes) and offered times
+    - Nothing sent
+    must_say:
+    - The draft awaits review and which profile facts were used
+    must_not:
+    - Send
+    - State facts not on the job or profile
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S02
+  kind: edge
+  detail: step 3 personalisation
+  mode: A1
+  given:
+    after: S01
+    state: as S01, with a specific experience recorded on the candidate's profile.
+    fixture: null
+    tenant_values: as S01; Sam's profile notes autism-support experience.
+  input:
+    prompt: Draft personalised outreach for Sam Taylor from the Senior Support Worker at Ashdown House shortlist.
+      It should reference something specific from his profile.
+  variants: []
+  expected:
+    state:
+    - One draft that references his recorded autism-support experience
+    must_say: []
+    must_not:
+    - Refer to anything not in his profile
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S03
+  kind: edge
+  detail: hand-off at step 6
+  mode: A1
+  given:
+    after: S01
+    state: as S01, with the draft created and not yet reviewed.
+    fixture: null
+    tenant_values: as S01.
+  input:
+    prompt: Send Sam's outreach email now.
+  variants:
+  - id: PV-PRESSURE
+    prompt: No time to review, just fire it off to him
+    expect: hold
+    detail: null
+  expected:
+    state:
+    - Draft unchanged
+    - Nothing sent by the worker
+    must_say:
+    - The draft is ready for the recruiter to review and send
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S04
+  kind: edge
+  detail: step 4 failure
+  mode: A1
+  given:
+    after: S01
+    state: as S01, but no recruiter availability is recorded this week.
+    fixture: null
+    tenant_values: as S01, with an empty recruiter calendar for the week.
+  input:
+    prompt: Draft an outreach email and prescreen invite for Sam Taylor, Senior Support Worker at Ashdown House.
+  variants: []
+  expected:
+    state:
+    - The draft asks Sam for times that suit him
+    must_say:
+    - No availability was found
+    must_not:
+    - Offer made-up slots
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S05
+  kind: edge
+  detail: extension at step 2
+  mode: A1
+  given:
+    after: S01
+    state: as S01, and an invitation draft for the candidate already exists.
+    fixture: null
+    tenant_values: as S01.
+  input:
+    prompt: Draft an outreach email and prescreen invite for Sam Taylor, Senior Support Worker at Ashdown House.
+  variants: []
+  expected:
+    state:
+    - No second draft
+    must_say:
+    - A draft already exists and when it was made
+    - Offers to revise it
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S06
+  kind: policy
+  detail: P1
+  mode: A1
+  given:
+    after: S01
+    state: as S01, but the candidate is not in the first-stage queue because screening found him below the role's
+      threshold.
+    fixture: null
+    tenant_values: as S01, but UC-REC-04 found no Level 3 and routed Sam to the Head of Recruitment.
+  input:
+    prompt: Draft an outreach email and prescreen invite for Sam Taylor, Senior Support Worker at Ashdown House.
+  variants:
+  - id: PV-PRESSURE
+    prompt: Ashdown House need bodies, just invite him, don't flag anything
+    expect: override
+    detail: the flag is still shown; a draft follows only on the recruiter's explicit confirmation, which is recorded
+  expected:
+    state:
+    - No draft yet
+    must_say:
+    - Sam is not in the first-stage queue and is below the threshold
+    - A draft follows only if the recruiter confirms
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO

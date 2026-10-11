@@ -1,0 +1,148 @@
+# Functional eval for UC-REC-31, generated from the use case. Draft: pending sign-off.
+use_case: UC-REC-31
+title: Monitor active onboarding cases in a pinned case view
+use_case_version: '0.2'
+source: verticals/REC-internal-recruiting/UC-REC-31-onboarding-case-view.md
+status: draft
+primary_role: Compliance Officer
+process_style: prescribed
+tenant: Oakridge Care Group
+scoring:
+  repeat_runs: null
+  latency_budget_seconds: null
+reference_steps:
+- n: 1
+  step: Resolve the viewer's scope
+  by: worker
+- n: 2
+  step: Load every active case in scope
+  by: worker
+- n: 3
+  step: Build each row
+  by: worker
+- n: 4
+  step: Highlight and filter
+  by: worker
+- n: 5
+  step: Open a case
+  by: worker
+- n: 6
+  step: Keep the view pinned and current
+  by: worker
+policies:
+  P1:
+    rule: 'A value the case doesn''t have is shown as missing, with its reason ("start date missing", "next chase:
+      none, stopped (reason)", "escalated"), never as a blank, a 0 or an estimate.'
+    protects:
+    - data
+    - customer reputation
+    override: null
+scenarios:
+- id: S01
+  kind: happy
+  detail: null
+  mode: A0
+  given:
+    after: null
+    state: twelve active cases in scope, two of them older than the age threshold; one case with two items outstanding.
+    fixture: oakridge/sam-taylor-ashdown
+    tenant_values: 'Oakridge Care Group, fixture *oakridge/sam-taylor-ashdown*, plus 11 other active cases; two
+      opened more than 30 days ago. Sam Taylor''s case at evidence collection with Reference 2 and the DBS outstanding.
+      Age threshold (K3): 30 days.'
+  input:
+    prompt: Show the compliance case view for all active onboarding cases. Highlight cases older than 30 days.
+  variants:
+  - id: PV-TERSE
+    prompt: case view, flag 30+ days
+    expect: same_outcome
+    detail: null
+  - id: PV-COLLOQUIAL
+    prompt: What's going on with all our new starters' paperwork?
+    expect: same_outcome
+    detail: null
+  - id: PV-MISSING
+    prompt: '"Highlight the old ones" (no view open, no age given)'
+    expect: clarify
+    detail: which view and what age
+  - id: PV-FALSE-PREMISE
+    prompt: Show me the 3 cases that are over 30 days old
+    expect: flag
+    detail: two cases are over 30 days
+  expected:
+    state:
+    - Nothing written
+    must_say:
+    - 12 cases, each with stage, outstanding items, case age, next chase, last contact, failures, pending approvals
+      and expected start
+    - The two older cases highlighted
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S02
+  kind: edge
+  detail: filter
+  mode: A0
+  given:
+    after: S01
+    state: as S01, with start dates spread over the coming weeks.
+    fixture: null
+    tenant_values: as S01; Sam starts 03/11/2026.
+  input:
+    prompt: Filter the case view to starters in the next 14 days with outstanding items.
+  variants: []
+  expected:
+    state: []
+    must_say:
+    - Only cases with a start date in the next 14 days and at least one outstanding item
+    - Cases with no start date listed separately
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S03
+  kind: edge
+  detail: drill-down
+  mode: A0
+  given:
+    after: S01
+    state: as S01.
+    fixture: null
+    tenant_values: as S01.
+  input:
+    prompt: Open Sam Taylor's case from the view.
+  variants: []
+  expected:
+    state: []
+    must_say:
+    - The full case history (handoff, classifications, filings, syncs, chases, stage changes, approvals, failures),
+      matching the audit trail entry for entry
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S04
+  kind: policy
+  detail: P1
+  mode: A0
+  given:
+    after: S01
+    state: as S01; one case has no expected start date and a chase series that stopped because the candidate responded.
+    fixture: null
+    tenant_values: as S01.
+  input:
+    prompt: Show the compliance case view.
+  variants: []
+  expected:
+    state: []
+    must_say:
+    - '"start date missing" and "next chase: none, stopped (candidate responded)" for that case'
+    must_not:
+    - Show a blank, 0 or an estimated date
+    path:
+      steps: null
+      stops_at: null
+      note: TODO

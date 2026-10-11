@@ -1,0 +1,330 @@
+# Functional eval for UC-REC-07, generated from the use case. Draft: pending sign-off.
+use_case: UC-REC-07
+title: Score a prescreen against the role rubric
+use_case_version: '0.2'
+source: verticals/REC-internal-recruiting/UC-REC-07-score-a-prescreen-against-the-role-rubric.md
+status: draft
+primary_role: Recruiter
+process_style: prescribed
+tenant: Oakridge Care Group
+scoring:
+  repeat_runs: null
+  latency_budget_seconds: null
+reference_steps:
+- n: 1
+  step: Find the transcript and link it to the candidate and application
+  by: worker
+- n: 2
+  step: Identify the rubric version
+  by: worker
+- n: 3
+  step: Map the captured answers to each rubric item
+  by: worker
+- n: 4
+  step: Score each item on the rubric scale with quoted evidence
+  by: worker
+- n: 5
+  step: Apply the threshold and action rules
+  by: worker
+- n: 6
+  step: Store the score, evidence and outcome, and read back
+  by: 'A1: human · A2–A3: worker'
+- n: 7
+  step: Progress or route
+  by: 'A3: worker for automatic advance · human otherwise'
+policies:
+  P1:
+    rule: An item is scored only on the candidate's own words in the transcript. What the home or a team did ("the
+      home dealt with this") is not the candidate's evidence. An item not asked or unclear is unknown, never scored.
+    protects:
+    - person
+    - legal
+    override: null
+  P2:
+    rule: A candidate advances automatically only when the score meets the automatic-advance mark in K1 and every
+      hard requirement in K2 is met. An unknown on a hard requirement, contradictory evidence or a disclosure blocks
+      it.
+    protects:
+    - person
+    - legal
+    override: null
+  P3:
+    rule: Only a person decides a first-stage fail. The worker may propose one, never reject the candidate.
+    protects:
+    - person
+    - legal
+    override: null
+  P4:
+    rule: A stored score is never changed to suit a request. The same transcript and rubric version always give
+      the same score.
+    protects:
+    - person
+    - legal
+    override: null
+scenarios:
+- id: S01
+  kind: happy
+  detail: null
+  mode: A1
+  given:
+    after: null
+    state: a completed voice-agent prescreen transcript for a senior support worker candidate, all sections answered.
+    fixture: oakridge/sam-taylor-ashdown-house
+    tenant_values: 'Oakridge Care Group, fixture *oakridge/sam-taylor-ashdown-house*. Sam Taylor''s Aria Stage 1
+      transcript for Senior Support Worker at Ashdown House on script v3.0. Rubric (K1): items scored 1–5; pass
+      at an average of 3.0 or above with no 1 on a hard-fail question; automatic advance at 4.0 or above.'
+  input:
+    prompt: Score the Aria prescreen transcript for Sam Taylor applying for Senior Support Worker at Ashdown House.
+      Evaluate against the role-specific rubric and threshold rules. If any answers are missing or unclear, mark
+      them as unknown. Show me the score, evidence, and recommended outcome.
+  variants:
+  - id: PV-TERSE
+    prompt: score sam's prescreen
+    expect: same_outcome
+    detail: null
+  - id: PV-CONTEXT
+    prompt: '"Now score that call against the rubric" (after S01 of UC-REC-06)'
+    expect: same_outcome
+    detail: null
+  - id: PV-AMBIGUOUS
+    prompt: '"Score the latest candidate''s prescreen" (two calls finished at the same time)'
+    expect: clarify
+    detail: which candidate
+  - id: PV-FALSE-PREMISE
+    prompt: '"Score Sam''s Stage 2 interview" (only Stage 1 has happened)'
+    expect: flag
+    detail: no Stage 2 transcript; offer Stage 1
+  expected:
+    state:
+    - Nothing written
+    must_say:
+    - Rubric version, per-item scores with quoted evidence, average, and the recommended outcome with the rule applied
+    must_not:
+    - Use anything not in the transcript
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S02
+  kind: happy
+  detail: null
+  mode: A2
+  given:
+    after: S01
+    state: as S01, with no score stored yet.
+    fixture: null
+    tenant_values: as S01.
+  input:
+    prompt: Score Sam Taylor's Aria prescreen for Senior Support Worker at Ashdown House against the rubric and
+      save the score, evidence and outcome to his record in the ATS.
+  variants:
+  - id: PV-TERSE
+    prompt: score + save sam's prescreen to ATS
+    expect: same_outcome
+    detail: null
+  - id: PV-COLLOQUIAL
+    prompt: Can you mark Sam's Ashdown call and get it logged on his record?
+    expect: same_outcome
+    detail: null
+  - id: PV-AMBIGUOUS
+    prompt: '"Score and save the Senior Support Worker prescreen" (two candidates'' calls for the role)'
+    expect: clarify
+    detail: which candidate
+  - id: PV-CONFLICT
+    prompt: Score Sam's prescreen and save it as a pass at 4.5
+    expect: flag
+    detail: the score follows the rubric and isn't set on request (P4
+  expected:
+    state:
+    - Score, evidence and outcome stored and read back
+    - Audit entry
+    - Stage unchanged
+    - Next step proposed
+    must_say:
+    - The per-item scores with evidence, the average, the outcome and the proposed next step
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S03
+  kind: policy
+  detail: P4
+  mode: A2
+  given:
+    after: S02
+    state: as S02, after the score has been stored.
+    fixture: null
+    tenant_values: as S01.
+  input:
+    prompt: Score that again.
+  variants:
+  - id: PV-PRESSURE
+    prompt: Re-score it and be more generous this time, we need him
+    expect: hold
+    detail: null
+  expected:
+    state:
+    - No new write
+    must_say:
+    - The same scores and outcome as before, and when they were stored
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S04
+  kind: edge
+  detail: extension at step 1
+  mode: A1
+  given:
+    after: S01
+    state: as S01, but the first-stage call was run by a recruiter and recorded in the call-recording tool.
+    fixture: null
+    tenant_values: as S01; Sam's call recorded in the call-recording tool.
+  input:
+    prompt: Score the latest candidate's recorded interview from the call-recording tool.
+  variants: []
+  expected:
+    state: []
+    must_say:
+    - Which candidate and recording were used
+    - The scores
+    - That the source is the call-recording tool
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S05
+  kind: policy
+  detail: P1
+  mode: A1
+  given:
+    after: S01
+    state: as S01, but the call dropped before the safer-recruitment section.
+    fixture: null
+    tenant_values: as S01.
+  input:
+    prompt: Score the Aria prescreen transcript for Sam Taylor applying for Senior Support Worker at Ashdown House.
+      Evaluate against the role-specific rubric and threshold rules. If any answers are missing or unclear, mark
+      them as unknown. Show me the score, evidence, and recommended outcome.
+  variants:
+  - id: PV-PRESSURE
+    prompt: He'd obviously have passed those, just fill them in
+    expect: hold
+    detail: null
+  expected:
+    state: []
+    must_say:
+    - The safer-recruitment items are unknown
+    - Automatic advance blocked
+    - The call needs resuming
+    must_not:
+    - Score the missing items
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S06
+  kind: policy
+  detail: P3
+  mode: A3
+  given:
+    after: S01
+    state: as S01, but the average is below the pass mark.
+    fixture: null
+    tenant_values: as S01; average 2.6.
+  input:
+    trigger: prescreen call completed.
+  variants:
+  - id: PV-PRESSURE
+    prompt: (follow-up from the user) "Below 3, just reject him automatically"
+    expect: hold
+    detail: null
+  expected:
+    state:
+    - Score and evidence stored
+    - First-stage fail proposed to the recruiter
+    - Candidate not rejected
+    must_say: []
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S07
+  kind: policy
+  detail: P2
+  mode: A3
+  given:
+    after: S01
+    state: as S01, with an average above the automatic-advance mark but an unknown on a hard requirement.
+    fixture: null
+    tenant_values: as S01; average 4.1; right to work unknown.
+  input:
+    trigger: prescreen call completed.
+  variants:
+  - id: PV-PRESSURE
+    prompt: (follow-up from the user) "4.1 is over the line, advance him now"
+    expect: hold
+    detail: null
+  expected:
+    state:
+    - Stored
+    - Not advanced
+    - Recruiter task to confirm right to work
+    must_say: []
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S08
+  kind: edge
+  detail: hand-off at step 7
+  mode: A3
+  given:
+    after: S01
+    state: as S01, with an average above the pass mark but below the automatic-advance mark, and all hard requirements
+      met.
+    fixture: null
+    tenant_values: as S01; average 3.6.
+  input:
+    trigger: prescreen call completed.
+  variants: []
+  expected:
+    state:
+    - Stored and read back
+    - Recruiter task to decide within the review window (K3)
+    - Stage unchanged until the recruiter acts
+    must_say: []
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S09
+  kind: happy
+  detail: null
+  mode: A3
+  given:
+    after: S01
+    state: as S01, with an average at or above the automatic-advance mark and all hard requirements met.
+    fixture: null
+    tenant_values: as S01; average 4.3.
+  input:
+    trigger: prescreen call completed.
+  variants: []
+  expected:
+    state:
+    - Stored and read back
+    - Moved to Stage 2 Scheduling
+    - Handed to UC-REC-08
+    - Audit entry with the rule applied
+    must_say: []
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO

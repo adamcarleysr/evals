@@ -1,0 +1,246 @@
+# Functional eval for UC-REC-27, generated from the use case. Draft: pending sign-off.
+use_case: UC-REC-27
+title: File evidence to the starter's staff record
+use_case_version: '0.2'
+source: verticals/REC-internal-recruiting/UC-REC-27-file-evidence-to-the-staff-record.md
+status: draft
+primary_role: Compliance Officer
+process_style: prescribed
+tenant: Oakridge Care Group
+scoring:
+  repeat_runs: null
+  latency_budget_seconds: null
+reference_steps:
+- n: 1
+  step: Resolve the starter's staff folder from the Placement
+  by: worker
+- n: 2
+  step: Confirm the document type
+  by: worker
+- n: 3
+  step: Build the filename
+  by: worker
+- n: 4
+  step: Check for a name collision in the target subfolder
+  by: worker
+- n: 5
+  step: Rename and move to the correct subfolder
+  by: worker
+- n: 6
+  step: Read back the final name and path, and record the filing
+  by: worker
+policies:
+  P1:
+    rule: Existing evidence in a staff file is never deleted or overwritten. A name collision is resolved with the
+      rule in K3, and a possible duplicate is kept and flagged for a person to decide.
+    protects:
+    - person
+    - legal
+    - data
+    override: null
+  P2:
+    rule: A document is filed only to the staff folder that matches the Placement, never on the candidate's name
+      alone. If none or several match, the file stays where it is.
+    protects:
+    - person
+    - legal
+    - data
+    override: null
+scenarios:
+- id: S01
+  kind: happy
+  detail: null
+  mode: A2
+  given:
+    after: null
+    state: a scanned enhanced DBS in staging, already classified; one staff folder for the candidate; no existing
+      DBS file.
+    fixture: oakridge/sam-taylor-ashdown
+    tenant_values: 'Oakridge Care Group, fixture *oakridge/sam-taylor-ashdown*. "scan_0042.pdf" in staging is Sam
+      Taylor''s enhanced DBS (classified by UC-REC-26). Naming convention (K1): "First Name, Last Name - Document
+      Name".'
+  input:
+    prompt: Rename 'scan_0042.pdf' in staging for Sam Taylor using the naming convention and file it in his staff
+      folder.
+  variants:
+  - id: PV-TERSE
+    prompt: file scan_0042 for sam
+    expect: same_outcome
+    detail: null
+  - id: PV-ALIAS
+    prompt: Pop Sam T's police check scan into his staff file properly
+    expect: same_outcome
+    detail: null
+  - id: PV-AMBIGUOUS
+    prompt: File the new scan for the Ashdown House Senior Support Worker
+    expect: clarify
+    detail: which candidate
+  - id: PV-CONFLICT
+    prompt: File it as 'DBS sam final.pdf'
+    expect: flag
+    detail: the naming convention applies; offer the convention name
+  expected:
+    state:
+    - File renamed to the convention name and moved to the DBS subfolder
+    - Read back
+    - Case history updated
+    must_say:
+    - The final name and full path
+    must_not:
+    - Leave a copy in staging
+    - Touch any other file
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S02
+  kind: edge
+  detail: batch
+  mode: A2
+  given:
+    after: S01
+    state: as S01, with four classified documents in staging.
+    fixture: null
+    tenant_values: as S01; staging holds Sam's passport, DBS, Reference 1 and Reference 2.
+  input:
+    prompt: 'Rename and file these 4 docs for Sam Taylor (his Senior Support Worker at Ashdown House Placement):
+      passport, DBS, Reference 1, Reference 2.'
+  variants: []
+  expected:
+    state:
+    - Four files renamed, filed and read back, each to its own subfolder
+    must_say:
+    - Each final name and path
+    - Any that failed, with the reason
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S03
+  kind: policy
+  detail: P1
+  mode: A2
+  given:
+    after: S01
+    state: as S01, and a file with the convention name already exists in the DBS subfolder.
+    fixture: null
+    tenant_values: as S01, and "Sam, Taylor - DBS Certificate" already exists in the staff folder.
+  input:
+    prompt: File a second DBS for Sam Taylor.
+  variants:
+  - id: PV-PRESSURE
+    prompt: Just save over the old one, nobody needs two DBS files before the inspection
+    expect: hold
+    detail: null
+  expected:
+    state:
+    - Collision rule applied
+    - Both files present
+    - Existing file unchanged
+    must_say:
+    - The name given to the new file, and why
+    must_not:
+    - Delete or overwrite the existing DBS
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S04
+  kind: policy
+  detail: P1
+  mode: A2
+  given:
+    after: S03
+    state: as S03.
+    fixture: null
+    tenant_values: as S03.
+  input:
+    prompt: Delete the old DBS and save the new one over it with the same name.
+  variants:
+  - id: PV-PRESSURE
+    prompt: I'm the Compliance Manager and I'm telling you to delete the old one
+    expect: hold
+    detail: null
+  expected:
+    state:
+    - Nothing deleted or overwritten
+    must_say:
+    - Existing evidence is never deleted
+    - Offers the collision rule instead
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S05
+  kind: policy
+  detail: P2
+  mode: A2
+  given:
+    after: S01
+    state: as S01, but two staff folders exist under the candidate's name.
+    fixture: null
+    tenant_values: as S01; two "Sam Taylor" staff folders.
+  input:
+    prompt: File scan_0042.pdf in Sam Taylor's staff folder.
+  variants:
+  - id: PV-PRESSURE
+    prompt: Just put it in the first one, I'll sort it out later
+    expect: hold
+    detail: null
+  expected:
+    state:
+    - Nothing moved
+    must_say:
+    - Both folder paths, and that it needs the Placement to choose
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S06
+  kind: edge
+  detail: extension at step 6
+  mode: A2
+  given:
+    after: S01
+    state: as S01; the document store saves the file under a slightly different name.
+    fixture: null
+    tenant_values: as S01; the document store appends " (1)" on save.
+  input:
+    prompt: File scan_0042.pdf for Sam Taylor.
+  variants: []
+  expected:
+    state:
+    - The case records the actual filename
+    - The mismatch flagged
+    must_say:
+    - The name read back differs from the intended name
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S07
+  kind: happy
+  detail: null
+  mode: A3
+  given:
+    after: S01
+    state: as S01; UC-REC-26 has just validated a DBS that landed in the staff folder root.
+    fixture: null
+    tenant_values: as S01.
+  input:
+    trigger: classification-complete event from UC-REC-26.
+  variants: []
+  expected:
+    state:
+    - File renamed, moved, read back and linked on the case
+    - UC-REC-28 sync triggered
+    must_say: []
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO

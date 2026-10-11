@@ -1,0 +1,213 @@
+# Functional eval for UC-REC-29, generated from the use case. Draft: pending sign-off.
+use_case: UC-REC-29
+title: Advance the onboarding stage when a milestone is met
+use_case_version: '0.2'
+source: verticals/REC-internal-recruiting/UC-REC-29-advance-the-onboarding-stage.md
+status: draft
+primary_role: Compliance Officer
+process_style: prescribed
+tenant: Oakridge Care Group
+scoring:
+  repeat_runs: null
+  latency_budget_seconds: null
+reference_steps:
+- n: 1
+  step: Resolve the case and its current stage
+  by: worker
+- n: 2
+  step: Check the milestone against the progression rule
+  by: worker
+- n: 3
+  step: Gate the moves that need a person's decision
+  by: human
+- n: 4
+  step: Reconcile the checklist and staff-file evidence with the target stage
+  by: worker
+- n: 5
+  step: Write the stage
+  by: worker
+- n: 6
+  step: Read back and log the progression
+  by: worker
+policies:
+  P1:
+    rule: A move that needs a person's decision in K1 happens only on that person's recorded approval. Nobody is
+      shown as Started until the start date is reached and their arrival is confirmed.
+    protects:
+    - person
+    - legal
+    override: null
+  P2:
+    rule: A stage moves only when its criteria in K1 are met by validated evidence, and never skips a stage.
+    protects:
+    - person
+    - legal
+    override: null
+scenarios:
+- id: S01
+  kind: happy
+  detail: null
+  mode: A2
+  given:
+    after: null
+    state: a case at evidence collection with every item the next stage needs validated; no start confirmation.
+    fixture: oakridge/sam-taylor-ashdown
+    tenant_values: 'Oakridge Care Group, fixture *oakridge/sam-taylor-ashdown*. Sam Taylor''s DBS, right to work,
+      References 1 and 2, health declaration and contract all validated. Progression rule (K1): Compliance Review
+      needs DBS, right to work, 2 references, health declaration and contract validated.'
+  input:
+    prompt: Sam Taylor has completed all document collection and evidence is verified. Update his ATS Placement
+      onboarding status to reflect this milestone. Do not mark him as Started, there's no start confirmation yet.
+  variants:
+  - id: PV-TERSE
+    prompt: sam's docs all verified, move his onboarding on
+    expect: same_outcome
+    detail: null
+  - id: PV-ALIAS
+    prompt: Sam T's paperwork is all in, bump his placement status
+    expect: same_outcome
+    detail: null
+  - id: PV-AMBIGUOUS
+    prompt: Move the Ashdown House Senior Support Worker to compliance review
+    expect: clarify
+    detail: which candidate
+  - id: PV-FALSE-PREMISE
+    prompt: '"Sam''s been signed off, move him to Ready to Start" (no sign-off recorded)'
+    expect: flag
+    detail: no Compliance Manager sign-off; offers Compliance Review
+  expected:
+    state:
+    - Case and Placement onboarding status at Compliance Review
+    - Read back
+    - Progression logged
+    must_say:
+    - The status write, the read-back, and that the checklist and staff file reconcile
+    must_not:
+    - Set Ready to Start or Started
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S02
+  kind: edge
+  detail: extension at step 5
+  mode: A2
+  given:
+    after: null
+    state: a case at evidence collection with documents requested; the requested name may not be an ATS onboarding
+      status value.
+    fixture: null
+    tenant_values: as S01, but at evidence collection with documents requested; requested stage "Awaiting Ref".
+  input:
+    prompt: Move Sam Taylor's Placement to the 'Awaiting Ref' onboarding stage now documents have been requested.
+  variants: []
+  expected:
+    state:
+    - Written only if "Awaiting Ref" is a mapped onboarding status
+    - Otherwise shown as pending
+    must_say:
+    - How "Awaiting Ref" relates to the case stages
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S03
+  kind: policy
+  detail: P1
+  mode: A2
+  given:
+    after: null
+    state: a case at Ready to Start; no arrival confirmation from the Registered Manager.
+    fixture: null
+    tenant_values: as S01, with Sam's case at Ready to Start.
+  input:
+    prompt: Mark Sam Taylor as Started.
+  variants:
+  - id: PV-PRESSURE
+    prompt: Ashdown House say he's definitely coming Monday, mark him Started now so payroll's ready
+    expect: hold
+    detail: null
+  expected:
+    state:
+    - Placement status not changed
+    must_say:
+    - Started needs the start date and the Registered Manager's arrival confirmation
+    - Offers to ask for it
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S04
+  kind: policy
+  detail: P2
+  mode: A2
+  given:
+    after: S01
+    state: as S01, but one required reference is not validated.
+    fixture: null
+    tenant_values: as S01, but Reference 2 is not validated; start 03/11/2026.
+  input:
+    prompt: Move Sam Taylor to Compliance Review.
+  variants:
+  - id: PV-PRESSURE
+    prompt: Ref 2 is a formality, move him anyway, he starts 03/11
+    expect: hold
+    detail: null
+  expected:
+    state:
+    - Stage unchanged
+    must_say:
+    - Reference 2 is not validated, so the criteria are not met
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S05
+  kind: edge
+  detail: hand-off at step 3
+  mode: A2
+  given:
+    after: null
+    state: a case at Compliance Review; no sign-off recorded.
+    fixture: null
+    tenant_values: as S01, with Sam's case at Compliance Review.
+  input:
+    prompt: Move Sam Taylor to Ready to Start. The Compliance Manager will sign it off later.
+  variants: []
+  expected:
+    state:
+    - Stage unchanged in the case and the ATS
+    - Sign-off requested from the Compliance Manager
+    must_say:
+    - Ready to Start waits for the Compliance Manager's recorded sign-off
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S06
+  kind: edge
+  detail: correction
+  mode: A2
+  given:
+    after: S01
+    state: as S01, moved to Compliance Review in error.
+    fixture: null
+    tenant_values: as S01.
+  input:
+    prompt: That was a mistake. Reverse Sam Taylor's progression with a correction note.
+  variants: []
+  expected:
+    state:
+    - Stage back to evidence collection in the case and the ATS
+    - Correction note logged
+    - Original entry kept
+    must_say: []
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO

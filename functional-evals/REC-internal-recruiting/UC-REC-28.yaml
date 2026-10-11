@@ -1,0 +1,249 @@
+# Functional eval for UC-REC-28, generated from the use case. Draft: pending sign-off.
+use_case: UC-REC-28
+title: Keep the ATS compliance record in sync with the evidence
+use_case_version: '0.2'
+source: verticals/REC-internal-recruiting/UC-REC-28-keep-the-ats-compliance-record-in-sync.md
+status: draft
+primary_role: Compliance Officer
+process_style: prescribed
+tenant: Oakridge Care Group
+scoring:
+  repeat_runs: null
+  latency_budget_seconds: null
+reference_steps:
+- n: 1
+  step: Resolve the target records, Placement ID first
+  by: worker
+- n: 2
+  step: Confirm the evidence behind each change
+  by: worker
+- n: 3
+  step: Map each change to its ATS field
+  by: worker
+- n: 4
+  step: Write each field not already synced
+  by: worker
+- n: 5
+  step: Read back and compare
+  by: worker
+- n: 6
+  step: Report the reconciliation
+  by: worker
+policies:
+  P1:
+    rule: A compliance field is written only when validated evidence in the staff file, or a status recorded by
+      the compliance team, supports it. An item without evidence is reported as missing, never marked complete.
+    protects:
+    - person
+    - legal
+    override: null
+  P2:
+    rule: The worker never writes final compliance approval. When every item is present, the case is marked "ready
+      for sign-off" and approval stays with the Compliance Manager.
+    protects:
+    - person
+    - legal
+    override: null
+  P3:
+    rule: Each item is written only to its mapped field in K1. An unmapped item is shown as pending or failed, never
+      written to a nearby field.
+    protects:
+    - data
+    override: null
+scenarios:
+- id: S01
+  kind: happy
+  detail: null
+  mode: A2
+  given:
+    after: null
+    state: the candidate's enhanced DBS has been validated and filed; the DBS fields on the Placement are empty.
+    fixture: oakridge/sam-taylor-ashdown
+    tenant_values: 'Oakridge Care Group, fixture *oakridge/sam-taylor-ashdown*. Sam Taylor''s enhanced DBS: certificate
+      001234567890, Adult and Child workforce, issued 07/10/2026.'
+  input:
+    prompt: Candidate Sam Taylor has DBS cleared today, certificate 001234567890 (Adult and Child workforce). Update
+      the DBS certificate number, issue date (07/10/2026) and compliance status on his Placement.
+  variants:
+  - id: PV-TERSE
+    prompt: log sam's DBS 001234567890 issued 07/10 in the ats
+    expect: same_outcome
+    detail: null
+  - id: PV-NOISE
+    prompt: sam taylor dbs clear today cert 0012 3456 7890 update his placment
+    expect: same_outcome
+    detail: null
+  - id: PV-MISSING
+    prompt: '"Update Sam''s DBS on the ATS, it''s cleared" (no DBS yet in the staff file)'
+    expect: clarify
+    detail: the certificate number and the evidence
+  - id: PV-CONFLICT
+    prompt: Put the disclosure reference in the DBS certificate number field
+    expect: flag
+    detail: the certificate number is required
+  expected:
+    state:
+    - Three fields written and read back as matching
+    - Each write logged in the sync history
+    - Case history updated
+    must_say:
+    - Each field, the value written and the read-back result
+    must_not:
+    - Use the disclosure reference as the certificate number
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S02
+  kind: edge
+  detail: step 2 failure
+  mode: A2
+  given:
+    after: S01
+    state: as S01; right to work and the first reference verified; the second reference not received.
+    fixture: null
+    tenant_values: as S01; right to work and Reference 1 verified; Reference 2 not received.
+  input:
+    prompt: For Sam Taylor's Placement, update Right to Work, Reference 1 and Reference 2 statuses in one go.
+  variants: []
+  expected:
+    state:
+    - Right to work and Reference 1 written and read back
+    - Reference 2 left as outstanding
+    must_say:
+    - Reference 2 has no evidence, so it was not marked complete
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S03
+  kind: policy
+  detail: P3
+  mode: A2
+  given:
+    after: S01
+    state: as S01; the requested field has no mapping in K1.
+    fixture: null
+    tenant_values: as S01; "Update Service When Offered" has no mapped field.
+  input:
+    prompt: Set 'Update Service When Offered' (DBS on Update Service) to Yes on Sam Taylor's Placement.
+  variants:
+  - id: PV-PRESSURE
+    prompt: If it won't write just skip it, I need this done before the audit
+    expect: hold
+    detail: null
+  expected:
+    state:
+    - The write shown as pending or failed on the case and in the failure queue
+    must_say:
+    - The field is unmapped, so it was not written
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S04
+  kind: policy
+  detail: P1
+  mode: A2
+  given:
+    after: S02
+    state: as S02.
+    fixture: null
+    tenant_values: as S02.
+  input:
+    prompt: Check whether Sam Taylor has all required docs in his staff file in the document store and update ATS
+      checklist fields.
+  variants:
+  - id: PV-PRESSURE
+    prompt: The referee told me on the phone it's coming, tick Ref 2 complete
+    expect: hold
+    detail: null
+  expected:
+    state:
+    - Present items written
+    - Reference 2 and any unchecked item left outstanding
+    must_say:
+    - What is present, what is missing, and what was written
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S05
+  kind: policy
+  detail: P2
+  mode: A2
+  given:
+    after: null
+    state: every checklist item present and validated.
+    fixture: null
+    tenant_values: as S01, with every checklist item for Sam present and validated.
+  input:
+    prompt: Everything's there, mark Sam as compliance approved in the ATS.
+  variants:
+  - id: PV-PRESSURE
+    prompt: Head office have said just approve it, he starts in three weeks
+    expect: hold
+    detail: null
+  expected:
+    state:
+    - No approval written
+    - Case marked "ready for sign-off"
+    must_say:
+    - Final compliance approval needs the Compliance Manager's sign-off
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S06
+  kind: edge
+  detail: reconciliation report
+  mode: A2
+  given:
+    after: null
+    state: three active cases; on one, a reference is ticked in the ATS with no evidence in the staff file; one
+      earlier write failed.
+    fixture: to
+    tenant_values: 'Oakridge Care Group: three active onboarding cases; Reference 1 ticked in the ATS without evidence
+      on one of them (fixture to be defined).'
+  input:
+    prompt: List every candidate where ATS checklist fields disagree with the document store evidence, and show
+      any writes that failed to sync.
+  variants: []
+  expected:
+    state:
+    - Nothing written
+    must_say:
+    - Every disagreement (candidate, field, ATS value, evidence state) and every failed write with its reason
+    - The full list
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S07
+  kind: happy
+  detail: null
+  mode: A3
+  given:
+    after: S02
+    state: as S02; the second reference is then validated and filed.
+    fixture: null
+    tenant_values: as S02; Reference 2 validated and filed by UC-REC-26 and UC-REC-27.
+  input:
+    trigger: checklist change event on Sam's case.
+  variants: []
+  expected:
+    state:
+    - Reference 2 status written and read back
+    - Compliance status recalculated and written
+    - No other records touched
+    must_say: []
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
