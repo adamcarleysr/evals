@@ -1,0 +1,222 @@
+# Functional eval for UC-CARE-13, generated from the use case. Draft: pending sign-off.
+use_case: UC-CARE-13
+title: Monitor the workforce from the Head of People dashboard
+use_case_version: '0.1'
+source: verticals/CARE-care-operations/UC-CARE-13-monitor-the-workforce-from-the-head-of-people-dashboard.md
+status: draft
+primary_role: Head of People
+process_style: prescribed
+tenant: Oakridge Care Group
+scoring:
+  repeat_runs: null
+  latency_budget_seconds: null
+reference_steps:
+- n: 1
+  step: Open the pinned view with the viewer's saved layout and filters
+  by: worker
+- n: 2
+  step: Apply the viewer's access scope
+  by: worker
+- n: 3
+  step: 'Load the tiles from the governed calculation path: retention, absence, starters and leavers, probation,
+    length of service, data quality'
+  by: worker
+- n: 4
+  step: Apply the filters and breakdowns the viewer chooses
+  by: worker
+- n: 5
+  step: Check freshness and label stale tiles and connector failures
+  by: worker
+- n: 6
+  step: Drill from any total to the employees behind it
+  by: worker
+policies:
+  P1:
+    rule: Every tile, filter, drill-down and chat answer uses the governed definitions in K1, so the same question
+      gives the same number for the same scope. No tile computes its own version of a metric.
+    protects:
+    - data
+    - customer reputation
+    override: null
+  P2:
+    rule: A tile older than the warning threshold in K3, or whose last refresh failed, shows its last refresh time
+      and is never presented as current.
+    protects:
+    - data
+    - customer reputation
+    override: null
+scenarios:
+- id: S01
+  kind: happy
+  detail: null
+  mode: A0
+  given:
+    same_start_as: null
+    state: calculation results refreshed within the warning threshold; several open data-quality items; employees
+      in several homes across two regions with mixed employment types; the viewer has full access.
+    fixture: oakridge/people-w41
+    tenant_values: 'Viewer Helen Marsh (Head of People, full access). North region: Ashdown House, Willow Lodge,
+      Larch House; South region: Rowan House, Beacon House, Hazel Lodge, Cedar House. Employment types: permanent,
+      bank, fixed-term. Last refresh 40 minutes ago; 5 open data-quality items.'
+  input:
+    prompt: Show me the Head of People dashboard with retention, absence, starters and leavers, probation, service
+      length and data quality. Filter to the North region, then switch to company-wide with a breakdown by employment
+      type.
+  variants:
+  - id: PV-TERSE
+    prompt: people dashboard, North, then all by employment type
+    context: null
+    expect: same_outcome
+    detail: null
+  - id: PV-ALIAS
+    prompt: Open my HR dash for the northern homes, then whole company split perm, bank and fixed-term
+    context: null
+    expect: same_outcome
+    detail: null
+  - id: PV-CONTEXT
+    prompt: Now the same but company-wide by contract type
+    context: after the North view
+    expect: same_outcome
+    detail: company-wide part
+  - id: PV-AMBIGUOUS
+    prompt: Show me the dashboard
+    context: the viewer has this and a compliance view pinned
+    expect: clarify
+    detail: which dashboard
+  - id: PV-FALSE-PREMISE
+    prompt: Why has the dashboard stopped showing data-quality issues?
+    context: 5 are shown
+    expect: flag
+    detail: 5 are open and shown
+  expected:
+    state:
+    - North tiles equal the governed calculation for Ashdown House, Willow Lodge and Larch House
+    - Company-wide tiles equal the calculation for all seven homes
+    - Each employment-type row sums to the company total
+    - 5 items in the data-quality tile
+    - Nothing written
+    must_say:
+    - The last refresh time, the scope of each view, and any tile showing "no definition" or "unavailable"
+    must_not:
+    - Show a missing value as 0
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S02
+  kind: policy
+  detail: P1
+  mode: A0
+  given:
+    same_start_as: S01
+    state: as S01, filtered to one home, one role and a date range.
+    fixture: oakridge/people-w41
+    tenant_values: as S01, filtered to Willow Lodge, Senior Coach, last 6 months.
+  input:
+    prompt: How many Senior Coaches are in post at Willow Lodge?
+    context: asked in chat after setting the filter
+  variants: []
+  expected:
+    state:
+    - The chat answer equals the filtered headcount tile exactly
+    - The drill-down lists that many employees
+    must_say: []
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S03
+  kind: policy
+  detail: P2
+  mode: A0
+  given:
+    same_start_as: S01
+    state: as S01, but the HR refreshes have failed for longer than the block threshold.
+    fixture: oakridge/people-w41
+    tenant_values: as S01; last successful refresh 2 days ago; warning threshold 8 hours, block threshold 24 hours
+      (K3); 3 failed refreshes, alert to the People team.
+  input:
+    prompt: Show me current headcount from the dashboard.
+  variants: []
+  expected:
+    state:
+    - Tiles keep their last values with a "Last refreshed [time]" banner
+    - Reports shown as blocked
+    - Alert raised to the People team
+    must_say:
+    - The data is 2 days old and the connector is failing
+    must_not:
+    - Present headcount as current
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S04
+  kind: edge
+  detail: extension at step 1
+  mode: A0
+  given:
+    same_start_as: S01
+    state: as S01, and the viewer has filtered and changed the layout.
+    fixture: oakridge/people-w41
+    tenant_values: as S01; filtered to Rowan House, last 3 months.
+  input:
+    prompt: Close and reopen the dashboard.
+  variants: []
+  expected:
+    state:
+    - Still pinned
+    - The Rowan House filter, date range and layout preserved
+    must_say: []
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S05
+  kind: edge
+  detail: extension at step 2
+  mode: A0
+  given:
+    same_start_as: S01
+    state: as S01, but the viewer is an RI mapped to one region.
+    fixture: oakridge/people-w41
+    tenant_values: as S01; viewer Aisha Khan, RI for the South region.
+  input:
+    prompt: Show the People dashboard for Willow Lodge.
+  variants: []
+  expected:
+    state:
+    - No Willow Lodge figures shown
+    - South region tiles available
+    must_say:
+    - Willow Lodge is outside the viewer's region
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S06
+  kind: edge
+  detail: extension at step 3
+  mode: A0
+  given:
+    same_start_as: S01
+    state: as S01; K1 defines turnover but no retention metric.
+    fixture: oakridge/people-w41
+    tenant_values: as S01.
+  input:
+    prompt: What's the retention figure on my dashboard?
+  variants: []
+  expected:
+    state:
+    - Retention tile shows "no definition"
+    - Turnover tile shows the governed figure
+    must_say: []
+    must_not:
+    - Show a derived retention figure
+    path:
+      steps: null
+      stops_at: null
+      note: TODO

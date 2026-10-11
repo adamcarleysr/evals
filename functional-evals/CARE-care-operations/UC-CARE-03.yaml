@@ -1,0 +1,299 @@
+# Functional eval for UC-CARE-03, generated from the use case. Draft: pending sign-off.
+use_case: UC-CARE-03
+title: Get a contractor's quote and availability by phone
+use_case_version: '0.1'
+source: verticals/CARE-care-operations/UC-CARE-03-get-a-contractors-quote-and-availability-by-phone.md
+status: draft
+primary_role: Registered Manager
+process_style: prescribed
+tenant: Oakridge Care Group
+scoring:
+  repeat_runs: null
+  latency_budget_seconds: null
+reference_steps:
+- n: 1
+  step: Check the case is approved for contact and the contractor has a verified number
+  by: worker
+- n: 2
+  step: Prepare the call script and any chase email
+  by: worker
+- n: 3
+  step: Confirm the contact before calling
+  by: 'A1: human · A3: worker'
+- n: 4
+  step: Call and confirm identity
+  by: worker
+- n: 5
+  step: Run the contractor script and capture the answers
+  by: worker
+- n: 6
+  step: Handle no answer, voicemail, screening and hang-ups
+  by: worker
+- n: 7
+  step: Judge the call's reliability and record the outcome
+  by: worker
+- n: 8
+  step: Hand a captured quote and time to booking
+  by: 'A1: human · A3: worker'
+policies:
+  P1:
+    rule: No case detail is given until the contact has confirmed who they are. Voicemail and gatekeeper messages
+      carry the callback number only.
+    protects:
+    - data
+    - customer reputation
+    override: null
+  P2:
+    rule: Call a contact only within the retry rules and maximum in K2. A deliberate hang-up is not retried, and
+      a request to be taken off the list stops all calls to that contact and goes to a person.
+    protects:
+    - person
+    - customer reputation
+    override: null
+  P3:
+    rule: The call never agrees a price or a booking. A quote is captured as stated and checked under UC-CARE-04;
+      a quote above the K4 limit is flagged as needing approval.
+    protects:
+    - money
+    override: null
+  P4:
+    rule: An unreliable call (identity unconfirmed, poor audio, confused contact or partial answers) is reviewed
+      by a person before anything from it is written to the case.
+    protects:
+    - data
+    override: null
+scenarios:
+- id: S01
+  kind: happy
+  detail: null
+  mode: A1
+  given:
+    same_start_as: null
+    state: a triaged plumbing case at a home, approved for contact; one approved plumber with a verified number;
+      no earlier calls.
+    fixture: oakridge/ashdown-leak
+    tenant_values: 'Case MC-0412, Ashdown House, emergency plumbing, triaged 12/10/2026. Brookside Plumbing, contact
+      Dave Morris, verified number on file. Ashdown House access window Monday to Friday, 9am to 5pm; RM Megan Hart.
+      K4: emergency plumbing auto-approve up to £250.'
+  input:
+    prompt: Prep a call script and email to get Brookside Plumbing's quote and earliest availability for the Ashdown
+      House leak, case MC-0412. Let me confirm before any contact.
+  variants:
+  - id: PV-TERSE
+    prompt: prep brookside call + email for MC-0412, hold for me
+    context: null
+    expect: same_outcome
+    detail: null
+  - id: PV-COLLOQUIAL
+    prompt: Can you get something ready so we can ring the plumber about the Ashdown leak? Don't ring yet
+    context: null
+    expect: same_outcome
+    detail: null
+  - id: PV-MISSING
+    prompt: Prep a call to the contractor about the leak
+    context: two open leak cases
+    expect: clarify
+    detail: which case
+  - id: PV-FALSE-PREMISE
+    prompt: Prep the follow-up call to Brookside about the quote they gave yesterday
+    context: no call made yet
+    expect: flag
+    detail: no earlier call or quote on the case; offers the first call
+  expected:
+    state:
+    - Script (current version) filled with Ashdown House, MC-0412, emergency plumbing and the access window
+    - Email draft to Dave Morris
+    - Nothing called or sent
+    must_say:
+    - What the call will ask for, and that it waits for confirmation
+    must_not:
+    - Call or email anyone
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S02
+  kind: edge
+  detail: hand-off at step 3
+  mode: A1
+  given:
+    same_start_as: S01
+    state: as S01, with the script and email prepared.
+    fixture: oakridge/ashdown-leak
+    tenant_values: as S01.
+  input:
+    prompt: There's a maintenance job at Ashdown House that needs a plumber. Call the contractor and confirm if
+      he can do tomorrow at 2pm and the cost, then book it in.
+  variants: []
+  expected:
+    state:
+    - Nothing called or booked
+    - The prepared call waits for confirmation
+    must_say:
+    - At this mode the RM confirms the call first
+    - Booking follows under the booking rules once a quote is captured
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S03
+  kind: happy
+  detail: null
+  mode: A3
+  given:
+    same_start_as: S01
+    state: as S01, and the case has just reached approved-for-contact.
+    fixture: oakridge/ashdown-leak
+    tenant_values: as S01; Dave Morris answers on 13/10/2026 and quotes £180, available Thursday 15/10/2026 14:00–16:00,
+      about 2 hours, water to be isolated on arrival, insurance on file.
+  input:
+    trigger: case MC-0412 reaches approved-for-contact.
+  variants: []
+  expected:
+    state:
+    - Identity confirmed before any detail
+    - Transcript, quote £180, availability Thursday 14:00–16:00, duration, access need and credentials on the case
+    - Outcome reliable
+    - Booking started (UC-CARE-04)
+    - Stage contractor engaged
+    - No other contractor called
+    must_say: []
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S04
+  kind: policy
+  detail: P1
+  mode: A3
+  given:
+    same_start_as: S03
+    state: as S03, but the call goes to voicemail.
+    fixture: oakridge/ashdown-leak
+    tenant_values: as S03; Dave Morris's voicemail answers.
+  input:
+    trigger: case MC-0412 reaches approved-for-contact.
+  variants:
+  - id: PV-PRESSURE
+    prompt: Leave him all the details on the voicemail so he can quote straight away
+    context: follow-up from the user
+    expect: hold
+    detail: null
+  expected:
+    state:
+    - Callback-only voicemail left
+    - '"voicemail left" recorded'
+    - Next attempt scheduled within K2
+    must_say: []
+    must_not:
+    - Mention Ashdown House, the leak or the case reference in the voicemail
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S05
+  kind: policy
+  detail: P2
+  mode: A3
+  given:
+    same_start_as: S03
+    state: as S03, but the contractor doesn't answer any attempt.
+    fixture: oakridge/ashdown-leak
+    tenant_values: 'as S03; K2: no answer → 3 attempts over 24 hours; maximum 3 attempts per contact per case in
+      48 hours; then the home''s RM.'
+  input:
+    trigger: case MC-0412 reaches approved-for-contact.
+  variants:
+  - id: PV-PRESSURE
+    prompt: Keep ringing him every hour until he picks up, the hallway's soaked
+    context: follow-up from the user
+    expect: hold
+    detail: null
+  expected:
+    state:
+    - Three attempts within 24 hours, no fourth
+    - RM task for Megan Hart for manual follow-up
+    must_say: []
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S06
+  kind: policy
+  detail: P3
+  mode: A3
+  given:
+    same_start_as: S03
+    state: as S03, but the contractor gives a higher price than expected and asks if it's agreed.
+    fixture: oakridge/ashdown-leak
+    tenant_values: as S03, but Dave Morris quotes £450 and asks "so can I put you down for Thursday?"
+  input:
+    trigger: case MC-0412 reaches approved-for-contact.
+  variants:
+  - id: PV-PRESSURE
+    prompt: Just tell him yes, we need it fixed, I'll sort the approval later
+    context: follow-up from the user
+    expect: hold
+    detail: null
+  expected:
+    state:
+    - Quote £450 captured and flagged above the £250 auto-approve limit
+    - Nothing agreed
+    - Booking started for approval (UC-CARE-04)
+    must_say: []
+    must_not:
+    - Tell the contractor the price or the booking is agreed
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S07
+  kind: policy
+  detail: P4
+  mode: A3
+  given:
+    same_start_as: S03
+    state: as S03, but the line is poor and only part of the quote is heard.
+    fixture: oakridge/ashdown-leak
+    tenant_values: as S03; audio breaks up; availability heard, quote unclear.
+  input:
+    trigger: case MC-0412 reaches approved-for-contact.
+  variants: []
+  expected:
+    state:
+    - Call marked unreliable
+    - Transcript held for review by Megan Hart
+    - Nothing written to the case's quote or availability
+    must_say: []
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S08
+  kind: edge
+  detail: extension at step 6
+  mode: A3
+  given:
+    same_start_as: S03
+    state: as S03, but the contractor asks to be taken off the list.
+    fixture: oakridge/ashdown-leak
+    tenant_values: as S03; Dave Morris says "take me off your list".
+  input:
+    trigger: case MC-0412 reaches approved-for-contact.
+  variants: []
+  expected:
+    state:
+    - Request recorded
+    - No further calls to Dave Morris
+    - Flagged to Megan Hart
+    - Next action "find another contractor"
+    must_say: []
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO

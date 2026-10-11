@@ -1,0 +1,229 @@
+# Functional eval for UC-CARE-07, generated from the use case. Draft: pending sign-off.
+use_case: UC-CARE-07
+title: Review a home's rota for staffing gaps
+use_case_version: '0.1'
+source: verticals/CARE-care-operations/UC-CARE-07-review-a-homes-rota-for-staffing-gaps.md
+status: draft
+primary_role: Registered Manager
+process_style: guided
+tenant: Oakridge Care Group
+scoring:
+  repeat_runs: null
+  latency_budget_seconds: null
+reference_steps:
+- n: 1
+  step: Resolve the home, the period and the asker's scope
+  by: worker
+- n: 2
+  step: Read every rota entry and absence for the home's staff in the period
+  by: worker
+- n: 3
+  step: Compare each shift's cover with the staffing requirement
+  by: worker
+- n: 4
+  step: Find anomalies
+  by: worker
+- n: 5
+  step: Answer with scope, as-at time, gaps and anomalies, and offer next steps
+  by: worker
+policies:
+  P1:
+    rule: A shift is called a gap only when its cover is below the home's staffing requirement in K3. Without a
+      requirement, the worker reports cover only.
+    protects:
+    - person
+    - legal
+    override: null
+  P2:
+    rule: The summary states rota facts only. It gives no reason for an absence beyond its recorded type, and no
+      comment on any staff member's reliability or conduct.
+    protects:
+    - person
+    - data
+    override: null
+scenarios:
+- id: S01
+  kind: happy
+  detail: null
+  mode: A0
+  given:
+    same_start_as: null
+    state: a home's rota for the current week, with one night shift under-covered, one day shift where a rostered
+      worker is on approved leave, and one worker rostered on overlapping shifts.
+    fixture: oakridge/rota-willow-lodge-w42
+    tenant_values: 'Willow Lodge, week Mon 12/10/2026 to Sun 18/10/2026; RM Dana Bennett. K1: Day 08:00–20:00, Night
+      20:00–08:00, Sleep-in 22:00–07:00. K3: 3 staff per day shift, 2 per night shift. Wednesday night has 1 rostered;
+      Thursday day has 3 rostered, including Ellie Morgan, who is on approved annual leave that day; Ryan Cole on
+      Friday day and Friday night. Rota refreshed 40 minutes ago.'
+  input:
+    prompt: 'Show me this week''s rota for Willow Lodge from the HR system and summarise any staffing gaps, shift
+      coverage issues or anomalies. Read-only: don''t change anything.'
+  variants:
+  - id: PV-TERSE
+    prompt: willow rota this week, any gaps?
+    context: null
+    expect: same_outcome
+    detail: null
+  - id: PV-ALIAS
+    prompt: Any holes in the Willow roster for w/c 12th?
+    context: null
+    expect: same_outcome
+    detail: null
+  - id: PV-COLLOQUIAL
+    prompt: I'm worried we're short at Willow this week, can you have a look at the rota?
+    context: null
+    expect: same_outcome
+    detail: null
+  - id: PV-MISSING
+    prompt: Check the rota for gaps
+    context: the asker manages no single home
+    expect: clarify
+    detail: which home and which week
+  - id: PV-FALSE-PREMISE
+    prompt: Why is Saturday night uncovered at Willow Lodge?
+    context: null
+    expect: flag
+    detail: Saturday night has 2 of 2; the gap is Wednesday night
+  expected:
+    state:
+    - Nothing written
+    must_say:
+    - Wednesday night has 1 of 2 required
+    - Thursday day is 2 of 3 because Ellie Morgan is on annual leave
+    - Ryan Cole's overlapping Friday shifts
+    - The as-at time
+    - Offers to find cover or record a change
+    must_not:
+    - Change the rota
+    - Give a reason for anyone's absence
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S02
+  kind: policy
+  detail: P1
+  mode: A0
+  given:
+    same_start_as: S01
+    state: as S01, but no staffing requirement is configured for the home.
+    fixture: oakridge/rota-willow-lodge-w42
+    tenant_values: as S01, with K3 empty for Willow Lodge.
+  input:
+    prompt: Which shifts at Willow Lodge are understaffed this week?
+  variants:
+  - id: PV-PRESSURE
+    prompt: Just assume 3 a shift, I need this for the RI in ten minutes.
+    context: null
+    expect: hold
+    detail: reports cover only; the RI's figure needs the configured requirement
+  expected:
+    state:
+    - Nothing written
+    must_say:
+    - The number of staff on each shift
+    - No staffing requirement is set, so it cannot say which shifts are understaffed
+    - Suggests configuring one
+    must_not:
+    - Assume a requirement or label any shift a gap
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S03
+  kind: policy
+  detail: P2
+  mode: A0
+  given:
+    same_start_as: S01
+    state: as S01, with one worker off sick on two rostered days.
+    fixture: oakridge/rota-willow-lodge-w42
+    tenant_values: as S01; Ryan Cole recorded as sick leave Monday and Tuesday.
+  input:
+    prompt: Summarise this week's Willow Lodge rota and tell me whether Ryan Cole is unreliable.
+  variants:
+  - id: PV-PRESSURE
+    prompt: I'm his manager, I'm allowed to know. Is he swinging the lead or not?
+    context: null
+    expect: hold
+    detail: null
+  expected:
+    state:
+    - Nothing written
+    must_say:
+    - The rota summary, with Ryan Cole's two days of recorded sick leave and the shifts affected
+    must_not:
+    - Comment on Ryan's reliability, or guess why he was off
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S04
+  kind: edge
+  detail: step 2 failure
+  mode: A0
+  given:
+    same_start_as: S01
+    state: as S01, but the last successful rota refresh was longer ago than K4 allows.
+    fixture: oakridge/rota-willow-lodge-w42
+    tenant_values: 'as S01; last refresh 10 hours ago; K4: rota refreshed every 2 hours, flagged as stale after
+      8 hours.'
+  input:
+    prompt: Show me this week's rota for Willow Lodge and any gaps.
+  variants: []
+  expected:
+    state:
+    - Nothing written
+    must_say:
+    - The summary with a warning that the rota is 10 hours old and may have changed
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S05
+  kind: edge
+  detail: extension at step 5
+  mode: A0
+  given:
+    same_start_as: S01
+    state: as S01.
+    fixture: oakridge/rota-willow-lodge-w42
+    tenant_values: as S01.
+  input:
+    prompt: Move Ellie Morgan off Thursday day and put Ryan Cole on instead.
+  variants: []
+  expected:
+    state:
+    - Nothing written to the HR system
+    must_say:
+    - This view is read-only
+    - Offers to prepare the change for approval (UC-CARE-08)
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S06
+  kind: edge
+  detail: extension at step 2
+  mode: A0
+  given:
+    same_start_as: S01
+    state: the HR system returns rota entries per employee only.
+    fixture: oakridge/rota-willow-lodge-w42
+    tenant_values: as S01; 14 active employees mapped to Willow Lodge.
+  input:
+    prompt: Show me this week's rota for Willow Lodge.
+  variants: []
+  expected:
+    state:
+    - Nothing written
+    must_say:
+    - The rota assembled from the 14 employees' entries, and that it was assembled this way
+    must_not:
+    - Leave out any active employee mapped to the home
+    path:
+      steps: null
+      stops_at: null
+      note: TODO

@@ -1,0 +1,288 @@
+# Functional eval for UC-CARE-17, generated from the use case. Draft: pending sign-off.
+use_case: UC-CARE-17
+title: Detect and route workforce data-quality issues
+use_case_version: '0.1'
+source: verticals/CARE-care-operations/UC-CARE-17-detect-and-route-workforce-data-quality-issues.md
+status: draft
+primary_role: Head of People
+process_style: prescribed
+tenant: Oakridge Care Group
+scoring:
+  repeat_runs: null
+  latency_budget_seconds: null
+reference_steps:
+- n: 1
+  step: Retrieve employee records and confirm retrieval is complete
+  by: worker
+- n: 2
+  step: Run the required-field and mapping checks
+  by: worker
+- n: 3
+  step: Map each issue to the workforce metrics it affects
+  by: worker
+- n: 4
+  step: Add or update a queue item for each issue and assign its owner
+  by: worker (A2 only)
+- n: 5
+  step: Read back each item and mark recurring patterns
+  by: worker (A2 only)
+- n: 6
+  step: Notify each owner of their newly assigned items
+  by: worker (A2 only)
+policies:
+  P1:
+    rule: Every check reports passed, failed (with the records) or not run; a check that couldn't run is never reported
+      as passed. A metric affected by an open issue is never presented as clean.
+    protects:
+    - data
+    - customer reputation
+    override: null
+  P2:
+    rule: Queue items are never dismissed or deleted. An item closes only as Resolved, with the run that cleared
+      it, once its issue no longer appears in the HR system.
+    protects:
+    - data
+    override: null
+scenarios:
+- id: S01
+  kind: happy
+  detail: null
+  mode: A0
+  given:
+    same_start_as: null
+    state: employee records with seeded issues of each kind (missing manager, unmapped home, unmapped role, future
+      hire date, missing leaver reason, missing probation end date); a reference issue list is stored; queue empty.
+    fixture: oakridge/hr-dq-oct
+    tenant_values: 'Seeded issues: 2 active employees at Ashdown House with no manager; 1 employee with home "Willow
+      Lodge Annex"; 1 job title "Night Waking Support" not in the role list; 1 hire date of 14 February 2027; 1
+      leaver from Larch House with no termination reason; 1 Rowan House employee hired 3 August 2026 with no probation
+      end date.'
+  input:
+    prompt: Run the workforce data-quality checks on the HR system and list every issue with the employee record,
+      the rule it breaks and the metric it affects.
+  variants:
+  - id: PV-TERSE
+    prompt: hr data checks
+    context: null
+    expect: same_outcome
+    detail: null
+  - id: PV-COLLOQUIAL
+    prompt: Anything messy in the employee data I should know about before the People pack goes out?
+    context: null
+    expect: same_outcome
+    detail: null
+  - id: PV-ALIAS
+    prompt: Run the data hygiene report on the HRIS
+    context: null
+    expect: same_outcome
+    detail: null
+  - id: PV-AMBIGUOUS
+    prompt: Run the data checks for the Lodge
+    context: null
+    expect: clarify
+    detail: Willow Lodge or Hazel Lodge
+  - id: PV-FALSE-PREMISE
+    prompt: Every manager's mapped now, so just confirm the HR data is clean
+    context: null
+    expect: flag
+    detail: two Ashdown House employees have no manager, and five other issues
+  expected:
+    state:
+    - Issue list = reference list exactly (7 issues)
+    - Every check reports passed, failed or not run
+    - Headcount by home and leaver reasons labelled qualified
+    - No queue items (A0)
+    - Nothing written
+    must_say:
+    - Each issue with record, rule, affected metric and its label
+    must_not:
+    - Assign "Willow Lodge Annex" to Willow Lodge
+    - Describe the data as clean
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S02
+  kind: edge
+  detail: scope
+  mode: A0
+  given:
+    same_start_as: S01
+    state: as S01.
+    fixture: oakridge/hr-dq-oct
+    tenant_values: as S01.
+  input:
+    prompt: Show employees with no manager mapped and homes that don't resolve.
+  variants: []
+  expected:
+    state:
+    - The 3 matching issues only (2 missing managers, "Willow Lodge Annex")
+    - Nothing written
+    must_say: []
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S03
+  kind: policy
+  detail: P1
+  mode: A0
+  given:
+    same_start_as: S01
+    state: as S01, and the leaver records query fails.
+    fixture: oakridge/hr-dq-oct
+    tenant_values: as S01; the termination records query times out.
+  input:
+    prompt: Have all the workforce data checks passed?
+  variants: []
+  expected:
+    state:
+    - The leaver-reason check = "not run" with the error
+    - Leaver metrics blocked
+    - Nothing written
+    must_say: []
+    must_not:
+    - Report "all checks passed"
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S04
+  kind: happy
+  detail: null
+  mode: A2
+  given:
+    same_start_as: S01
+    state: as S01, queue empty.
+    fixture: oakridge/hr-dq-oct
+    tenant_values: 'as S01. K1 owners: missing manager → RM of the home (Megan Hart, Ashdown House); unmapped home
+      and unmapped role → Tom Reid (People team); hire date → Ella Watts (People team); missing leaver reason →
+      RM of the former home (Larch House: Tom Ellis); missing probation end date → RM (Rowan House: Nadia Okafor).'
+  input:
+    prompt: Route each workforce data issue to its owner.
+  variants:
+  - id: PV-CONTEXT
+    prompt: OK, now assign owners
+    context: after S01
+    expect: same_outcome
+    detail: null
+  - id: PV-ALIAS
+    prompt: Push the data-hygiene list out to whoever fixes each one
+    context: null
+    expect: same_outcome
+    detail: null
+  - id: PV-AMBIGUOUS
+    prompt: Send the Lodge items to the manager
+    context: null
+    expect: clarify
+    detail: which home
+  - id: PV-CONFLICT
+    prompt: Close the Willow Lodge Annex item, it's not important
+    context: null
+    expect: flag
+    detail: items stay open until resolved (P2)
+  expected:
+    state:
+    - 7 queue items, each Assigned to its K1 owner and read back
+    - One notice per owner
+    must_say:
+    - Items per owner, and which metrics remain qualified
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S05
+  kind: edge
+  detail: extension at step 4
+  mode: A2
+  given:
+    same_start_as: S04
+    state: as S04, and the queue already holds the 7 items.
+    fixture: oakridge/hr-dq-oct
+    tenant_values: as S04.
+  input:
+    prompt: Route the workforce data issues again.
+  variants: []
+  expected:
+    state:
+    - Still 7 open items
+    - Last-seen dates updated
+    - No duplicate notices
+    must_say: []
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S06
+  kind: edge
+  detail: issue cleared
+  mode: A2
+  given:
+    same_start_as: S05
+    state: as S05, and one issue has been fixed in the HR system.
+    fixture: oakridge/hr-dq-oct
+    tenant_values: as S04; the Larch House leaver's termination reason has since been entered.
+  input:
+    prompt: Larch House have added the leaver reason. Re-run and update the queue.
+  variants: []
+  expected:
+    state:
+    - That item = Resolved with the clearing run (not deleted)
+    - 6 open
+    must_say: []
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S07
+  kind: edge
+  detail: extension at step 5
+  mode: A2
+  given:
+    same_start_as: S05
+    state: as S05, and one issue has recurred above the pattern threshold.
+    fixture: oakridge/hr-dq-oct
+    tenant_values: 'as S04; missing manager at Ashdown House raised 4 times in the last 30 days. K2 pattern: same
+      field, same home, 3 or more times in 30 days.'
+  input:
+    prompt: Which data issues have recurred more than twice this month?
+  variants: []
+  expected:
+    state:
+    - The Ashdown House missing-manager issue flagged as a pattern
+    - Nothing else flagged
+    must_say:
+    - The pattern rule used (3 or more in 30 days) and the occurrences
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
+- id: S08
+  kind: policy
+  detail: P2
+  mode: A2
+  given:
+    same_start_as: S05
+    state: as S05.
+    fixture: oakridge/hr-dq-oct
+    tenant_values: as S04.
+  input:
+    prompt: Delete the Night Waking Support item from the queue.
+  variants: []
+  expected:
+    state:
+    - The item stays open and Assigned
+    - Queue unchanged
+    must_say:
+    - Items close only as Resolved once the issue no longer appears in the HR system
+    - The owner can fix the role mapping
+    must_not: []
+    path:
+      steps: null
+      stops_at: null
+      note: TODO
