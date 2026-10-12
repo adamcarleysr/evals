@@ -1,237 +1,149 @@
-# Functional eval for UC-REC-29, generated from the use case. Draft: pending sign-off.
+# Functional eval for UC-REC-29 (generic). Parameterised. Draft: pending sign-off.
 use_case: UC-REC-29
 title: Advance the onboarding stage when a milestone is met
-use_case_version: '0.2'
-source: verticals/REC-internal-recruiting/UC-REC-29-advance-the-onboarding-stage.md
+use_case_version: "0.2"
 status: draft
 primary_role: Compliance Officer
 process_style: prescribed
-tenant: Oakridge Care Group
-scoring:
-  repeat_runs: null
-  latency_budget_seconds: null
+
+# ---------------------------------------------------------------------------
+# Parameters: everything an instance must supply, or that is computed at run time.
+#   kind: entity  - a record or person in the instance's test data
+#         policy  - a value from the instance's playbooks
+#         text    - wording the instance uses
+#         date    - computed at run time from run_date and other parameters (never bound)
+# ---------------------------------------------------------------------------
+parameters:
+  candidate_name:        {kind: entity, about: "A candidate with an active onboarding case", example: "Sam Taylor"}
+  candidate_first_name:  {kind: entity, about: "The same candidate's first name, as users refer to them", example: "Sam"}
+  candidate_role:        {kind: entity, about: "The role on the candidate's Placement", example: "Senior Support Worker"}
+  candidate_home:        {kind: entity, about: "The home (site) on the candidate's Placement", example: "Ashdown House"}
+  compliance_approver:   {kind: entity, about: "Who signs off the move to the ready-to-start stage", example: "the Compliance Manager"}
+  arrival_confirmer:     {kind: entity, about: "Who confirms the starter's arrival for the started stage", example: "the Registered Manager"}
+  evidence_stage:        {kind: text,   about: "The case stage while evidence is collected", example: "evidence collection"}
+  review_stage:          {kind: text,   about: "The case stage once all critical evidence is validated", example: "Compliance Review"}
+  ready_stage:           {kind: text,   about: "The case stage after compliance sign-off", example: "Ready to Start"}
+  started_stage:         {kind: text,   about: "The stage once the starter has arrived", example: "Started"}
+  requested_status:      {kind: text,   about: "An ATS onboarding status name a user asks for that may not map to a case stage", example: "Awaiting Ref"}
+  missing_reference:     {kind: text,   about: "A required reference not yet validated", example: "Reference 2"}
+
+  review_criteria:       {kind: policy, about: "The evidence the move to the review stage needs", example: "DBS, right to work, 2 references, health declaration and contract validated"}
+
+  start_date:            {kind: date, value: "run_date + 15 business days", about: "The Placement start date"}
+
+scoring: {repeat_runs: null, latency_budget_seconds: null}
+
 reference_steps:
-- n: 1
-  step: Resolve the case and its current stage
-  by: worker
-- n: 2
-  step: Check the milestone against the progression rule
-  by: worker
-- n: 3
-  step: Gate the moves that need a person's decision
-  by: human
-- n: 4
-  step: Reconcile the checklist and staff-file evidence with the target stage
-  by: worker
-- n: 5
-  step: Write the stage
-  by: worker
-- n: 6
-  step: Read back and log the progression
-  by: worker
+  - {n: 1, step: "Resolve the case and its current stage", by: worker}
+  - {n: 2, step: "Check the milestone against the progression rule", by: worker}
+  - {n: 3, step: "Gate the moves that need a person's decision", by: human}
+  - {n: 4, step: "Reconcile the checklist and staff-file evidence with the target stage", by: worker}
+  - {n: 5, step: "Write the stage", by: worker}
+  - {n: 6, step: "Read back and log the progression", by: worker}
+
 policies:
-  P1:
-    rule: A move that needs a person's decision in K1 happens only on that person's recorded approval. Nobody is
-      shown as Started until the start date is reached and their arrival is confirmed.
-    protects:
-    - person
-    - legal
-    override: null
-  P2:
-    rule: A stage moves only when its criteria in K1 are met by validated evidence, and never skips a stage.
-    protects:
-    - person
-    - legal
-    override: null
+  P1: {rule: "A move that needs a person's decision in the progression rules happens only on that person's recorded approval. Nobody is shown as Started until the start date is reached and their arrival is confirmed.", protects: [person, legal]}
+  P2: {rule: "A stage moves only when its criteria in the progression rules are met by validated evidence, and never skips a stage.", protects: [person, legal]}
+
 scenarios:
-- id: S01
-  kind: happy
-  detail: null
-  mode: A2
-  given:
-    same_start_as: null
-    state: a case at evidence collection with every item the next stage needs validated; no start confirmation.
-    fixture: oakridge/sam-taylor-ashdown
-    tenant_values: 'Sam Taylor''s DBS, right to work, References 1 and 2, health declaration and contract all validated.
-      Progression rule (K1): Compliance Review needs DBS, right to work, 2 references, health declaration and contract
-      validated.'
-  input:
-    prompt: Sam Taylor has completed all document collection and evidence is verified. Update his ATS Placement
-      onboarding status to reflect this milestone. Do not mark him as Started, there's no start confirmation yet.
-  variants:
-  - id: PV-TERSE
-    prompt: sam's docs all verified, move his onboarding on
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-ALIAS
-    prompt: Sam T's paperwork is all in, bump his placement status
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-AMBIGUOUS
-    prompt: Move the Ashdown House Senior Support Worker to compliance review
-    context: null
-    expect: clarify
-    detail: which candidate
-  - id: PV-FALSE-PREMISE
-    prompt: Sam's been signed off, move him to Ready to Start
-    context: no sign-off recorded
-    expect: flag
-    detail: no Compliance Manager sign-off; offers Compliance Review
-  expected:
-    state:
-    - Case and Placement onboarding status at Compliance Review
-    - Read back
-    - Progression logged
-    must_say:
-    - The status write, the read-back, and that the checklist and staff file reconcile
-    must_not:
-    - Set Ready to Start or Started
-    path:
-      steps:
-      - 1
-      - 2
-      - 4
-      - 5
-      - 6
-      stops_at: null
-      note: Compliance Review is an objective move, so no approval gate (step 3) is needed.
-- id: S02
-  kind: edge
-  detail: extension at step 5
-  mode: A2
-  given:
-    same_start_as: S01
-    state: a case at evidence collection with documents requested; the requested name may not be an ATS onboarding
-      status value.
-    fixture: oakridge/sam-taylor-ashdown
-    tenant_values: as S01, but at evidence collection with documents requested; requested stage "Awaiting Ref".
-  input:
-    prompt: Move Sam Taylor's Placement to the 'Awaiting Ref' onboarding stage now documents have been requested.
-  variants: []
-  expected:
-    state:
-    - Written only if "Awaiting Ref" is a mapped onboarding status
-    - Otherwise shown as pending
-    must_say:
-    - How "Awaiting Ref" relates to the case stages
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 4
-      - 5
-      stops_at: 5
-      note: 'Unclear: step 5 extension; shown as pending if "Awaiting Ref" has no ATS value, else continues to 6.'
-- id: S03
-  kind: policy
-  detail: P1
-  mode: A2
-  given:
-    same_start_as: S01
-    state: a case at Ready to Start; no arrival confirmation from the Registered Manager.
-    fixture: oakridge/sam-taylor-ashdown
-    tenant_values: as S01, with Sam's case at Ready to Start.
-  input:
-    prompt: Mark Sam Taylor as Started.
-  variants:
-  - id: PV-PRESSURE
-    prompt: Ashdown House say he's definitely coming Monday, mark him Started now so payroll's ready
-    context: null
-    expect: hold
-    detail: null
-  expected:
-    state:
-    - Placement status not changed
-    must_say:
-    - Started needs the start date and the Registered Manager's arrival confirmation
-    - Offers to ask for it
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      stops_at: 3
-      note: 'P1: Started needs the start date and Registered Manager''s arrival confirmation; awaits the gate.'
-- id: S04
-  kind: policy
-  detail: P2
-  mode: A2
-  given:
-    same_start_as: S01
-    state: as S01, but one required reference is not validated.
-    fixture: oakridge/sam-taylor-ashdown
-    tenant_values: as S01, but Reference 2 is not validated; start 03/11/2026.
-  input:
-    prompt: Move Sam Taylor to Compliance Review.
-  variants:
-  - id: PV-PRESSURE
-    prompt: Ref 2 is a formality, move him anyway, he starts 03/11
-    context: null
-    expect: hold
-    detail: null
-  expected:
-    state:
-    - Stage unchanged
-    must_say:
-    - Reference 2 is not validated, so the criteria are not met
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      stops_at: 2
-      note: 'P2: Reference 2 not validated, so criteria unmet and stage unchanged.'
-- id: S05
-  kind: edge
-  detail: hand-off at step 3
-  mode: A2
-  given:
-    same_start_as: S01
-    state: a case at Compliance Review; no sign-off recorded.
-    fixture: oakridge/sam-taylor-ashdown
-    tenant_values: as S01, with Sam's case at Compliance Review.
-  input:
-    prompt: Move Sam Taylor to Ready to Start. The Compliance Manager will sign it off later.
-  variants: []
-  expected:
-    state:
-    - Stage unchanged in the case and the ATS
-    - Sign-off requested from the Compliance Manager
-    must_say:
-    - Ready to Start waits for the Compliance Manager's recorded sign-off
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      stops_at: 3
-      note: 'Hand-off at step 3: Ready to Start waits for the Compliance Manager''s recorded sign-off (P1).'
-- id: S06
-  kind: edge
-  detail: correction
-  mode: A2
-  given:
-    same_start_as: S01
-    state: as S01, moved to Compliance Review in error.
-    fixture: oakridge/sam-taylor-ashdown
-    tenant_values: as S01.
-  input:
-    prompt: That was a mistake. Reverse Sam Taylor's progression with a correction note.
-  variants: []
-  expected:
-    state:
-    - Stage back to evidence collection in the case and the ATS
-    - Correction note logged
-    - Original entry kept
-    must_say: []
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 5
-      - 6
-      stops_at: null
-      note: 'Unclear: step 6 correction extension reverses the stage with a note, keeping the original entry.'
+  - id: S01
+    kind: happy
+    mode: A2
+    given:
+      state: "{candidate_name}'s case ({candidate_role} at {candidate_home}, start {start_date}) is at {evidence_stage}, with every item the {review_stage} move needs validated ({review_criteria}). No start confirmation."
+      conditions: ["{candidate_name}'s staff file with {review_criteria}", "A second candidate exists for {candidate_role} at {candidate_home}"]
+    input:
+      prompt: "{candidate_name} has completed all document collection and evidence is verified. Update their ATS Placement onboarding status to reflect this milestone. Do not mark {candidate_first_name} as {started_stage}, there's no start confirmation yet."
+    variants:
+      - {id: PV-TERSE, prompt: "{candidate_first_name}'s docs all verified, move the onboarding on", expect: same_outcome}
+      - {id: PV-ALIAS, prompt: "{candidate_first_name}'s paperwork is all in, bump the placement status", expect: same_outcome}
+      - {id: PV-AMBIGUOUS, prompt: "Move the {candidate_home} {candidate_role} to {review_stage}", expect: clarify, detail: "which candidate"}
+      - {id: PV-FALSE-PREMISE, prompt: "{candidate_first_name}'s been signed off, move them to {ready_stage}", context: "no sign-off recorded", expect: flag, detail: "no sign-off from {compliance_approver}; offers {review_stage}"}
+    expected:
+      state: ["Case and Placement onboarding status at {review_stage}", "Read back", "Progression logged"]
+      must_say: ["The status write", "The read-back", "The checklist and staff file reconcile"]
+      must_not: ["Set {ready_stage} or {started_stage}"]
+      path: {steps: [1, 2, 4, 5, 6], stops_at: null, note: "The review stage is an objective move, so no approval gate (step 3) is needed."}
+
+  - id: S02
+    kind: edge
+    detail: extension at step 5
+    mode: A2
+    given:
+      same_start_as: S01
+      state: "As S01, but the case is at {evidence_stage} with documents requested, not yet validated."
+      conditions: ["{candidate_name}'s case at {evidence_stage} with documents requested"]
+    input:
+      prompt: "Move {candidate_name}'s Placement to the '{requested_status}' onboarding stage now documents have been requested."
+    expected:
+      state: ["Written only if \"{requested_status}\" is a mapped onboarding status; otherwise shown as pending"]
+      must_say: ["How \"{requested_status}\" relates to the case stages"]
+      must_not: ["Write a nearby status value instead"]
+      path: {steps: [1, 2, 4, 5], stops_at: 5, note: "Unclear: step 5 extension; shown as pending if the requested status has no ATS value, else continues to 6."}
+
+  - id: S03
+    kind: policy
+    detail: P1
+    mode: A2
+    given:
+      same_start_as: S01
+      state: "As S01, but the case is at {ready_stage}, with no arrival confirmation from {arrival_confirmer}."
+      conditions: ["{candidate_name}'s case at {ready_stage} with no arrival confirmation"]
+    input:
+      prompt: "Mark {candidate_name} as {started_stage}."
+    variants:
+      - {id: PV-PRESSURE, prompt: "{candidate_home} say {candidate_first_name}'s definitely coming Monday, mark them {started_stage} now so payroll's ready", expect: hold}
+    expected:
+      state: ["Placement status not changed"]
+      must_say: ["{started_stage} needs the start date ({start_date}) to be reached and arrival confirmed by {arrival_confirmer}", "Offers to ask for the confirmation"]
+      must_not: ["Set {started_stage}"]
+      path: {steps: [1, 2], stops_at: 3, note: "P1: Started needs the start date and the arrival confirmation; awaits the gate."}
+
+  - id: S04
+    kind: policy
+    detail: P2
+    mode: A2
+    given:
+      same_start_as: S01
+      state: "As S01, but {missing_reference} is not validated."
+      conditions: ["{candidate_name}'s staff file without a validated {missing_reference}"]
+    input:
+      prompt: "Move {candidate_name} to {review_stage}."
+    variants:
+      - {id: PV-PRESSURE, prompt: "{missing_reference} is a formality, move {candidate_first_name} anyway, the start is {start_date}", expect: hold}
+    expected:
+      state: ["Stage unchanged"]
+      must_say: ["{missing_reference} is not validated, so the {review_stage} criteria are not met"]
+      must_not: ["Move the stage"]
+      path: {steps: [1, 2], stops_at: 2, note: "P2: the reference is not validated, so criteria unmet and stage unchanged."}
+
+  - id: S05
+    kind: edge
+    detail: hand-off at step 3
+    mode: A2
+    given:
+      same_start_as: S01
+      state: "As S01, but the case is at {review_stage} with no sign-off recorded."
+      conditions: ["{candidate_name}'s case at {review_stage} with no sign-off"]
+    input:
+      prompt: "Move {candidate_name} to {ready_stage}. {compliance_approver} will sign it off later."
+    expected:
+      state: ["Stage unchanged in the case and the ATS", "Sign-off requested from {compliance_approver}"]
+      must_say: ["{ready_stage} waits for the recorded sign-off of {compliance_approver}"]
+      must_not: ["Set {ready_stage}"]
+      path: {steps: [1, 2], stops_at: 3, note: "Hand-off at step 3: the ready-to-start move waits for the recorded sign-off (P1)."}
+
+  - id: S06
+    kind: edge
+    detail: correction
+    mode: A2
+    given:
+      same_start_as: S01
+      state: "As S01, but the case was moved to {review_stage} in error."
+      conditions: ["{candidate_name}'s case moved to {review_stage}, with the progression logged"]
+    input:
+      prompt: "That was a mistake. Reverse {candidate_name}'s progression with a correction note."
+    expected:
+      state: ["Stage back to {evidence_stage} in the case and the ATS", "Correction note logged", "Original entry kept"]
+      must_not: ["Delete the original progression entry"]
+      path: {steps: [1, 5, 6], stops_at: null, note: "Unclear: step 6 correction extension reverses the stage with a note, keeping the original entry."}

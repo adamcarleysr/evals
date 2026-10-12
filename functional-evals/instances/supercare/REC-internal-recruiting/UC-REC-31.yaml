@@ -1,0 +1,29 @@
+# SuperCare binding for UC-REC-31 (eval v0.2). Draft. Values checked against ClickUp (P1/P2 Proof list, playbooks, test prompts).
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-REC-31
+eval_version: "0.2"
+
+values:
+  candidate_name: Joshua Woodman
+  active_case_count: "<to supply>"
+  old_case_count: "<to supply>"
+  outstanding_document: DBS certificate
+  outstanding_reference: Reference 2
+  evidence_stage: Evidence Collection
+
+  age_threshold: 30
+  start_window: 14
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: a set of active onboarding cases in one compliance user's scope (count to supply), some opened more than 30 days ago (count to supply)"
+  - "S01: Joshua Woodman's Norwood Senior Coach case at Evidence Collection with Reference 2 and the DBS certificate outstanding, start date set to the computed start_date"
+  - "S02: active cases with start dates both inside and beyond 14 days, and at least one with no start date"
+  - "S03: Joshua's case history with a handoff, classifications, filings, syncs, chases, stage changes, approvals and at least one failure in the audit trail"
+  - "S04: one active case with no start date and a chase series stopped by a candidate reply"

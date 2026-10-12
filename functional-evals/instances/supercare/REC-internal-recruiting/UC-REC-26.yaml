@@ -1,0 +1,39 @@
+# SuperCare binding for UC-REC-26 (eval v0.2). Draft. Values checked against ClickUp (P1/P2 Proof list, playbooks, test prompts).
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-REC-26
+eval_version: "0.2"
+
+values:
+  candidate_name: Joshua Woodman
+  candidate_first_name: Joshua
+  candidate_role: Senior Coach
+  candidate_home: Norwood
+  disclosure_reviewer: the Registered Manager of Norwood
+  compliance_approver: Michal Kibilko (Compliance Manager)
+  dbs_document: Enhanced DBS certificate
+  received_reference: Reference 1
+  missing_reference: Reference 2
+  review_stage: Compliance Review
+
+  role_qualification: Level 3
+  dbs_max_age: 3
+  address_proof_max_age: 3
+  reference_verified_rule: "only after verbal verification by the compliance team and a signed Reference Verification Form"
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: five new documents in Joshua Woodman's staff folder: passport, Enhanced DBS certificate, signed Reference 1 on letterhead, council tax bill, Level 3 certificate"
+  - "S01: a second staff folder named for Joshua Woodman (for the ambiguity variant; as in the SR-13378 test prompts)"
+  - "S02: a utility bill named \"DBS.pdf\" in Joshua's staff folder"
+  - "S03: a blurry phone photo of a reference and a password-protected PDF in Joshua's staff folder"
+  - "S04: a Reference 2 for Joshua whose comments raise a safeguarding concern"
+  - "S05: Joshua's staff folder with every Ofsted-critical document classified and valid, references not verbally verified"
+  - "S07: Joshua's case with the DBS outstanding and an open DBS chase series"
+  - "S08: an Enhanced DBS certificate for Joshua older than 3 years, not on the Update Service"
+  - "S09: an unsigned Reference 2 for Joshua"

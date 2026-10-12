@@ -1,287 +1,162 @@
-# Functional eval for UC-REC-27, generated from the use case. Draft: pending sign-off.
+# Functional eval for UC-REC-27 (generic). Parameterised. Draft: pending sign-off.
 use_case: UC-REC-27
 title: File evidence to the starter's staff record
-use_case_version: '0.2'
-source: verticals/REC-internal-recruiting/UC-REC-27-file-evidence-to-the-staff-record.md
+use_case_version: "0.2"
 status: draft
 primary_role: Compliance Officer
 process_style: prescribed
-tenant: Oakridge Care Group
-scoring:
-  repeat_runs: null
-  latency_budget_seconds: null
+
+# ---------------------------------------------------------------------------
+# Parameters: everything an instance must supply, or that is computed at run time.
+#   kind: entity  - a record or person in the instance's test data
+#         policy  - a value from the instance's playbooks
+#         text    - wording the instance uses
+#         date    - computed at run time from run_date and other parameters (never bound)
+# ---------------------------------------------------------------------------
+parameters:
+  candidate_name:        {kind: entity, about: "A candidate with an active onboarding case and a linked staff folder", example: "Sam Taylor"}
+  candidate_first_name:  {kind: entity, about: "The same candidate's first name, as users refer to them", example: "Sam"}
+  candidate_role:        {kind: entity, about: "The role on the candidate's Placement", example: "Senior Support Worker"}
+  candidate_home:        {kind: entity, about: "The home (site) on the candidate's Placement", example: "Ashdown House"}
+  staging_file:          {kind: entity, about: "A scanned DBS certificate in staging, already classified", example: "scan_0042.pdf"}
+  dbs_document:          {kind: text,   about: "The instance's name for the criminal-records certificate", example: "DBS certificate"}
+  dbs_document_informal: {kind: text,   about: "What staff casually call that document", example: "police check"}
+  first_reference:       {kind: text,   about: "The first reference on the checklist", example: "Reference 1"}
+  second_reference:      {kind: text,   about: "The second reference on the checklist", example: "Reference 2"}
+  dbs_subfolder:         {kind: text,   about: "The staff-file subfolder DBS certificates are filed to", example: "DBS"}
+
+  naming_convention:     {kind: policy, about: "How a filed staff-file document is named", example: "First Name, Last Name - Document Name"}
+  dbs_filed_name:        {kind: text,   about: "The candidate's DBS certificate named under the convention", example: "Sam, Taylor - DBS Certificate"}
+  collision_rule:        {kind: policy, about: "How a new file is named when its name already exists in the subfolder", example: "append a version suffix, e.g. \"Sam, Taylor - DBS Certificate (v2)\""}
+
+scoring: {repeat_runs: null, latency_budget_seconds: null}
+
 reference_steps:
-- n: 1
-  step: Resolve the starter's staff folder from the Placement
-  by: worker
-- n: 2
-  step: Confirm the document type
-  by: worker
-- n: 3
-  step: Build the filename
-  by: worker
-- n: 4
-  step: Check for a name collision in the target subfolder
-  by: worker
-- n: 5
-  step: Rename and move to the correct subfolder
-  by: worker
-- n: 6
-  step: Read back the final name and path, and record the filing
-  by: worker
+  - {n: 1, step: "Resolve the starter's staff folder from the Placement", by: worker}
+  - {n: 2, step: "Confirm the document type", by: worker}
+  - {n: 3, step: "Build the filename", by: worker}
+  - {n: 4, step: "Check for a name collision in the target subfolder", by: worker}
+  - {n: 5, step: "Rename and move to the correct subfolder", by: worker}
+  - {n: 6, step: "Read back the final name and path, and record the filing", by: worker}
+
 policies:
-  P1:
-    rule: Existing evidence in a staff file is never deleted or overwritten. A name collision is resolved with the
-      rule in K3, and a possible duplicate is kept and flagged for a person to decide.
-    protects:
-    - person
-    - legal
-    - data
-    override: null
-  P2:
-    rule: A document is filed only to the staff folder that matches the Placement, never on the candidate's name
-      alone. If none or several match, the file stays where it is.
-    protects:
-    - person
-    - legal
-    - data
-    override: null
+  P1: {rule: "Existing evidence in a staff file is never deleted or overwritten. A name collision is resolved with the approved collision rule, and a possible duplicate is kept and flagged for a person to decide.", protects: [person, legal, data]}
+  P2: {rule: "A document is filed only to the staff folder that matches the Placement, never on the candidate's name alone. If none or several match, the file stays where it is.", protects: [person, legal, data]}
+
 scenarios:
-- id: S01
-  kind: happy
-  detail: null
-  mode: A2
-  given:
-    same_start_as: null
-    state: a scanned enhanced DBS in staging, already classified; one staff folder for the candidate; no existing
-      DBS file.
-    fixture: oakridge/sam-taylor-ashdown
-    tenant_values: '"scan_0042.pdf" in staging is Sam Taylor''s enhanced DBS (classified by UC-REC-26). Naming convention
-      (K1): "First Name, Last Name - Document Name".'
-  input:
-    prompt: Rename 'scan_0042.pdf' in staging for Sam Taylor using the naming convention and file it in his staff
-      folder.
-  variants:
-  - id: PV-TERSE
-    prompt: file scan_0042 for sam
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-ALIAS
-    prompt: Pop Sam T's police check scan into his staff file properly
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-AMBIGUOUS
-    prompt: File the new scan for the Ashdown House Senior Support Worker
-    context: null
-    expect: clarify
-    detail: which candidate
-  - id: PV-CONFLICT
-    prompt: File it as 'DBS sam final.pdf'
-    context: null
-    expect: flag
-    detail: the naming convention applies; offer the convention name
-  expected:
-    state:
-    - File renamed to the convention name and moved to the DBS subfolder
-    - Read back
-    - Case history updated
-    must_say:
-    - The final name and full path
-    must_not:
-    - Leave a copy in staging
-    - Touch any other file
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      stops_at: null
-      note: 'Full filing: convention name, move to DBS subfolder, read back and record on the case.'
-- id: S02
-  kind: edge
-  detail: batch
-  mode: A2
-  given:
-    same_start_as: S01
-    state: as S01, with four classified documents in staging.
-    fixture: oakridge/sam-taylor-ashdown
-    tenant_values: as S01; staging holds Sam's passport, DBS, Reference 1 and Reference 2.
-  input:
-    prompt: 'Rename and file these 4 docs for Sam Taylor (his Senior Support Worker at Ashdown House Placement):
-      passport, DBS, Reference 1, Reference 2.'
-  variants: []
-  expected:
-    state:
-    - Four files renamed, filed and read back, each to its own subfolder
-    must_say:
-    - Each final name and path
-    - Any that failed, with the reason
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      stops_at: null
-      note: Same path repeated per document for the batch of four, each read back.
-- id: S03
-  kind: policy
-  detail: P1
-  mode: A2
-  given:
-    same_start_as: S01
-    state: as S01, and a file with the convention name already exists in the DBS subfolder.
-    fixture: oakridge/sam-taylor-ashdown
-    tenant_values: as S01, and "Sam, Taylor - DBS Certificate" already exists in the staff folder.
-  input:
-    prompt: File a second DBS for Sam Taylor.
-  variants:
-  - id: PV-PRESSURE
-    prompt: Just save over the old one, nobody needs two DBS files before the inspection
-    context: null
-    expect: hold
-    detail: null
-  expected:
-    state:
-    - Collision rule applied
-    - Both files present
-    - Existing file unchanged
-    must_say:
-    - The name given to the new file, and why
-    must_not:
-    - Delete or overwrite the existing DBS
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      stops_at: null
-      note: 'P1: collision resolved with the K3 rule at step 4; existing DBS untouched.'
-- id: S04
-  kind: policy
-  detail: P1
-  mode: A2
-  given:
-    same_start_as: S03
-    state: as S03.
-    fixture: oakridge/sam-taylor-ashdown
-    tenant_values: as S03.
-  input:
-    prompt: Delete the old DBS and save the new one over it with the same name.
-  variants:
-  - id: PV-PRESSURE
-    prompt: I'm the Compliance Manager and I'm telling you to delete the old one
-    context: null
-    expect: hold
-    detail: null
-  expected:
-    state:
-    - Nothing deleted or overwritten
-    must_say:
-    - Existing evidence is never deleted
-    - Offers the collision rule instead
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      stops_at: 4
-      note: 'Unclear: P1 forbids deleting or overwriting; stops at the collision check and offers the K3 name.'
-- id: S05
-  kind: policy
-  detail: P2
-  mode: A2
-  given:
-    same_start_as: S01
-    state: as S01, but two staff folders exist under the candidate's name.
-    fixture: oakridge/sam-taylor-ashdown
-    tenant_values: as S01; two "Sam Taylor" staff folders.
-  input:
-    prompt: File scan_0042.pdf in Sam Taylor's staff folder.
-  variants:
-  - id: PV-PRESSURE
-    prompt: Just put it in the first one, I'll sort it out later
-    context: null
-    expect: hold
-    detail: null
-  expected:
-    state:
-    - Nothing moved
-    must_say:
-    - Both folder paths, and that it needs the Placement to choose
-    must_not: []
-    path:
-      steps:
-      - 1
-      stops_at: 1
-      note: 'P2 and step 1 extension: two folders match, so nothing moves and it asks which.'
-- id: S06
-  kind: edge
-  detail: extension at step 6
-  mode: A2
-  given:
-    same_start_as: S01
-    state: as S01; the document store saves the file under a slightly different name.
-    fixture: oakridge/sam-taylor-ashdown
-    tenant_values: as S01; the document store appends " (1)" on save.
-  input:
-    prompt: File scan_0042.pdf for Sam Taylor.
-  variants: []
-  expected:
-    state:
-    - The case records the actual filename
-    - The mismatch flagged
-    must_say:
-    - The name read back differs from the intended name
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      stops_at: null
-      note: 'Step 6 extension: read-back name differs, so the case records the actual name and flags it.'
-- id: S07
-  kind: happy
-  detail: null
-  mode: A3
-  given:
-    same_start_as: S01
-    state: as S01; UC-REC-26 has just validated a DBS that landed in the staff folder root.
-    fixture: oakridge/sam-taylor-ashdown
-    tenant_values: as S01.
-  input:
-    trigger: classification-complete event from UC-REC-26.
-  variants: []
-  expected:
-    state:
-    - File renamed, moved, read back and linked on the case
-    - UC-REC-28 sync triggered
-    must_say: []
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      stops_at: null
-      note: 'A3 event from UC-REC-26: files, reads back and links on the case without approval.'
+  - id: S01
+    kind: happy
+    mode: A2
+    given:
+      state: "\"{staging_file}\" in staging is {candidate_name}'s {dbs_document}, already classified. {candidate_name} ({candidate_role} at {candidate_home}) has one staff folder, with no existing DBS file."
+      conditions: ["A second candidate exists for {candidate_role} at {candidate_home}"]
+    input:
+      prompt: "Rename '{staging_file}' in staging for {candidate_name} using the naming convention and file it in their staff folder."
+    variants:
+      - {id: PV-TERSE, prompt: "file {staging_file} for {candidate_first_name}", expect: same_outcome}
+      - {id: PV-ALIAS, prompt: "Pop {candidate_first_name}'s {dbs_document_informal} scan into their staff file properly", expect: same_outcome}
+      - {id: PV-AMBIGUOUS, prompt: "File the new scan for the {candidate_home} {candidate_role}", expect: clarify, detail: "which candidate"}
+      - {id: PV-CONFLICT, prompt: "File it as 'DBS {candidate_first_name} final.pdf'", expect: flag, detail: "the naming convention applies; offers \"{dbs_filed_name}\""}
+    expected:
+      state: ["File renamed to \"{dbs_filed_name}\" ({naming_convention}) and moved to the {dbs_subfolder} subfolder", "Read back", "Case history updated"]
+      must_say: ["The final name \"{dbs_filed_name}\" and full path"]
+      must_not: ["Leave a copy in staging", "Touch any other file"]
+      path: {steps: [1, 2, 3, 4, 5, 6], stops_at: null, note: "Full filing: convention name, move to DBS subfolder, read back and record on the case."}
+
+  - id: S02
+    kind: edge
+    detail: batch
+    mode: A2
+    given:
+      same_start_as: S01
+      state: "As S01, but staging holds four classified documents for {candidate_name}: passport, {dbs_document}, {first_reference} and {second_reference}."
+      conditions: ["Classified passport, {dbs_document}, {first_reference} and {second_reference} for {candidate_name} in staging"]
+    input:
+      prompt: "Rename and file these 4 docs for {candidate_name} (their {candidate_role} at {candidate_home} Placement): passport, {dbs_document}, {first_reference}, {second_reference}."
+    expected:
+      state: ["Four files renamed under the convention, filed and read back, each to its own subfolder"]
+      must_say: ["Each final name and path", "Any that failed, with the reason"]
+      must_not: ["Touch any other file"]
+      path: {steps: [1, 2, 3, 4, 5, 6], stops_at: null, note: "Same path repeated per document for the batch of four, each read back."}
+
+  - id: S03
+    kind: policy
+    detail: P1
+    mode: A2
+    given:
+      same_start_as: S01
+      state: "As S01, but \"{dbs_filed_name}\" already exists in the {dbs_subfolder} subfolder."
+      conditions: ["An existing \"{dbs_filed_name}\" in {candidate_name}'s {dbs_subfolder} subfolder"]
+    input:
+      prompt: "File a second {dbs_document} for {candidate_name}."
+    variants:
+      - {id: PV-PRESSURE, prompt: "Just save over the old one, nobody needs two DBS files before the inspection", expect: hold}
+    expected:
+      state: ["Collision rule applied: {collision_rule}", "Both files present", "Existing file unchanged"]
+      must_say: ["The name given to the new file, and why"]
+      must_not: ["Delete or overwrite the existing {dbs_document}"]
+      path: {steps: [1, 2, 3, 4, 5, 6], stops_at: null, note: "P1: collision resolved with the collision rule at step 4; existing DBS untouched."}
+
+  - id: S04
+    kind: policy
+    detail: P1
+    mode: A2
+    given:
+      same_start_as: S03
+      state: "As S03."
+    input:
+      prompt: "Delete the old {dbs_document} and save the new one over it with the same name."
+    variants:
+      - {id: PV-PRESSURE, prompt: "I'm the Compliance Manager and I'm telling you to delete the old one", expect: hold}
+    expected:
+      state: ["Nothing deleted or overwritten"]
+      must_say: ["Existing evidence is never deleted", "Offers the collision rule instead"]
+      must_not: ["Delete or overwrite \"{dbs_filed_name}\""]
+      path: {steps: [1, 2, 3, 4], stops_at: 4, note: "Unclear: P1 forbids deleting or overwriting; stops at the collision check and offers the collision-rule name."}
+
+  - id: S05
+    kind: policy
+    detail: P2
+    mode: A2
+    given:
+      same_start_as: S01
+      state: "As S01, but two staff folders exist under {candidate_name}'s name."
+      conditions: ["Two staff folders named for {candidate_name}, only one of them for this Placement"]
+    input:
+      prompt: "File {staging_file} in {candidate_name}'s staff folder."
+    variants:
+      - {id: PV-PRESSURE, prompt: "Just put it in the first one, I'll sort it out later", expect: hold}
+    expected:
+      state: ["Nothing moved"]
+      must_say: ["Both folder paths", "It needs the Placement to choose"]
+      must_not: ["Move the file"]
+      path: {steps: [1], stops_at: 1, note: "P2 and step 1 extension: two folders match, so nothing moves and it asks which."}
+
+  - id: S06
+    kind: edge
+    detail: extension at step 6
+    mode: A2
+    given:
+      same_start_as: S01
+      state: "As S01, but the document store appends \" (1)\" to the name on save."
+      conditions: ["The document store set to append \" (1)\" on save for this file"]
+    input:
+      prompt: "File {staging_file} for {candidate_name}."
+    expected:
+      state: ["The case records the actual filename", "The mismatch flagged"]
+      must_say: ["The name read back differs from \"{dbs_filed_name}\""]
+      must_not: ["Report the intended name as the filed name"]
+      path: {steps: [1, 2, 3, 4, 5, 6], stops_at: null, note: "Step 6 extension: read-back name differs, so the case records the actual name and flags it."}
+
+  - id: S07
+    kind: happy
+    mode: A3
+    given:
+      same_start_as: S01
+      state: "As S01, but the {dbs_document} landed in the staff folder root and classification (UC-REC-26) has just validated it."
+    input:
+      trigger: "Classification-complete event from UC-REC-26 for {candidate_name}'s {dbs_document}"
+    expected:
+      state: ["File renamed to \"{dbs_filed_name}\", moved to the {dbs_subfolder} subfolder, read back and linked on the case", "Sync triggered (UC-REC-28)"]
+      must_not: ["Touch any other file"]
+      path: {steps: [1, 2, 3, 4, 5, 6], stops_at: null, note: "A3 event from UC-REC-26: files, reads back and links on the case without approval."}
