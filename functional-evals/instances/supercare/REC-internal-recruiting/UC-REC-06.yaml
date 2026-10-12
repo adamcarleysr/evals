@@ -19,6 +19,7 @@ values:
   disclosure_reviewer: Registered Manager
   retry_cadence: once within 2 hours, then once the next business day
   max_call_attempts: 3
+  ats_name: Bullhorn
 
 calendar:
   locale: en-GB

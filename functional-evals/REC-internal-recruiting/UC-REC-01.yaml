@@ -22,6 +22,7 @@ parameters:
   employment_type:           {kind: text,   about: "The organisation's term for a permanent contract", example: "Permanent"}
   alternative_employment_type: {kind: text, about: "Another employment type the organisation uses", example: "Bank"}
   vacancy_reason:            {kind: text,   about: "The organisation's term for a vacancy that replaces a leaver", example: "replacement"}
+  ats_name:                  {kind: text,   about: "What staff call the applicant tracking system", example: "Bullhorn"}
   date_format:               {kind: policy, about: "The format dates are recorded in (K3)", example: "DD/MM/YYYY"}
 
   target_start:              {kind: date, value: "run_date + 4 weeks", about: "The target start date given in the request"}
@@ -47,9 +48,10 @@ scenarios:
     given:
       state: "No open {role} job exists at {home}; the request gives every mandatory field."
     input:
-      prompt: "Create an ATS job: {role} at {home}, hiring manager {hiring_manager}, {pay_rate}, {employment_type}, headcount 1, reason {vacancy_reason}, target start {target_start}."
+      prompt: "Create a job in {ats_name}: {role} at {home}, hiring manager {hiring_manager}, {pay_rate}, {employment_type}, headcount 1, reason {vacancy_reason}, target start {target_start}."
     variants:
       - {id: PV-TERSE, prompt: "new ATS job, {role} {home}, {hiring_manager}, {pay_rate} {employment_type}, 1 head, {vacancy_reason}, start {target_start}", expect: same_outcome}
+      - {id: PV-GENERIC, prompt: "Set up a new job in the ATS: {role} at {home}, hiring manager {hiring_manager}, {pay_rate}, {employment_type}, headcount 1, reason {vacancy_reason}, start {target_start}", expect: same_outcome, detail: "generic name for the ATS"}
       - {id: PV-ALIAS, prompt: "Open a {role_alias} role at {home_alias} for {hiring_manager_first_name}, {pay_rate}, {employment_type}, one person, {vacancy_reason}, from {target_start}", expect: same_outcome, detail: "aliases resolve to {role} at {home}"}
       - {id: PV-MISSING, prompt: "Create an ATS job: {role} at {home}, {pay_rate}, {employment_type}, start {target_start}.", expect: clarify, detail: "hiring manager, headcount and reason only"}
       - {id: PV-FALSE-PREMISE, prompt: "Update the {role} job at {home} we opened last week to start {target_start}", expect: flag, detail: "no open {role} job at {home}; offers to create one"}
@@ -158,7 +160,7 @@ scenarios:
       same_start_as: S01
       state: "As S01; the request gives employment type {alternative_employment_type} and a start date of \"as soon as possible\", and nothing else."
     input:
-      prompt: "Create an ATS job for a {alternative_employment_type} {role} at {home} starting ASAP."
+      prompt: "Create a {ats_name} job for a {alternative_employment_type} {role} at {home} starting ASAP."
     expected:
       state: ["Draft brief", "Nothing written"]
       must_say: ["Asks only for hiring manager, rate, headcount and reason", "How \"ASAP\" will be recorded as a date, or asks if K3 doesn't say"]

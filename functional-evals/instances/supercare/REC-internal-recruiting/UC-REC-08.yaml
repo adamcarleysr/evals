@@ -17,6 +17,8 @@ values:
   third_stage: Stage 3 Home Visit
   scheduling_stage: Stage 2 Scheduling
   scheduled_status: Interview Scheduled
+  ats_name: Bullhorn
+  calendar_name: "<to supply>"
 
   preferred_slots: Monday to Friday, 10am to 4pm
   second_stage_length: 30

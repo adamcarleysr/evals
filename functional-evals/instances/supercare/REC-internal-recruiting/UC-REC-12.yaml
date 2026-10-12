@@ -18,6 +18,7 @@ values:
   next_stage_informal: Home Visit
   rejection_feedback: limited night-shift experience
   rejection_feedback_informal: "<to supply>"
+  ats_name: Bullhorn
 
   rejection_content_rule: "<to supply>"
 

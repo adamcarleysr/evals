@@ -22,6 +22,7 @@ values:
   offer_status: Onboarding
   negotiating_status: Negotiating
   region_term: Satellite
+  ats_name: Bullhorn
 
   first_chase_day: 3
   second_chase_day: 5

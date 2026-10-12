@@ -21,6 +21,8 @@ values:
   next_stage_informal: Home Visit
   prescreen_next_stage: Stage 2 Scheduling
   failed_minimum_question: Q6
+  ats_name: Bullhorn
+  calendar_name: "<to supply>"
 
   safeguarding_minimum: 3
   question_max_score: 5

@@ -16,7 +16,8 @@ parameters:
   first_stage:          {kind: text,   about: "The organisation's name for the first-stage telephone qualification", example: "Stage 1"}
   second_stage:         {kind: text,   about: "The organisation's name for the stage after it", example: "Stage 2"}
   advance_stage:        {kind: text,   about: "The pipeline stage a candidate moves to on automatic advance", example: "Stage 2 Scheduling"}
-  call_recording_tool:  {kind: text,   about: "The tool that records recruiter-run calls", example: "the call-recording tool"}
+  call_recording_name:  {kind: text,   about: "What staff call the tool that records recruiter-run calls", example: "Fathom"}
+  ats_name:             {kind: text,   about: "What staff call the applicant tracking system", example: "Bullhorn"}
 
   script_version:       {kind: policy, about: "The script and rubric version the call used (K1)", example: "v3.0"}
   rubric_scale:         {kind: policy, about: "The scale each rubric item is scored on (K1)", example: "1–5"}
@@ -71,9 +72,10 @@ scenarios:
       state: "As S01, with no score stored yet."
       conditions: ["A second candidate's prescreen call for {role} (for the ambiguity variant)"]
     input:
-      prompt: "Score {candidate_name}'s Aria prescreen for {role} at {home} against the rubric and save the score, evidence and outcome to their record in the ATS."
+      prompt: "Score {candidate_name}'s Aria prescreen for {role} at {home} against the rubric and save the score, evidence and outcome to their record in {ats_name}."
     variants:
       - {id: PV-TERSE, prompt: "score + save {candidate_first_name}'s prescreen to ATS", expect: same_outcome}
+      - {id: PV-GENERIC, prompt: "Score {candidate_name}'s Aria prescreen for {role} at {home} and save it to their record in the ATS", expect: same_outcome, detail: "generic name for the ATS"}
       - {id: PV-COLLOQUIAL, prompt: "Can you mark {candidate_first_name}'s {home} call and get it logged on their record?", expect: same_outcome}
       - {id: PV-AMBIGUOUS, prompt: "Score and save the {role} prescreen", context: "two candidates' calls for the role", expect: clarify, detail: "which candidate"}
       - {id: PV-CONFLICT, prompt: "Score {candidate_first_name}'s prescreen and save it as a pass with full marks", expect: flag, detail: "the score follows the rubric and isn't set on request (P4)"}
@@ -106,12 +108,14 @@ scenarios:
     mode: A1
     given:
       same_start_as: S01
-      state: "As S01, but the {first_stage} call was run by a recruiter and recorded in {call_recording_tool}."
-      conditions: ["{candidate_name}'s recruiter-run {first_stage} call recorded in {call_recording_tool}, the latest recording"]
+      state: "As S01, but the {first_stage} call was run by a recruiter and recorded by the call-recording tool."
+      conditions: ["{candidate_name}'s recruiter-run {first_stage} call recorded by the call-recording tool, the latest recording"]
     input:
-      prompt: "Score the latest candidate's recorded interview from {call_recording_tool}."
+      prompt: "Score the latest candidate's recorded interview from {call_recording_name}."
+    variants:
+      - {id: PV-GENERIC, prompt: "Score the most recent recorded call from the call recorder", expect: same_outcome, detail: "generic name for the call-recording tool"}
     expected:
-      must_say: ["Which candidate and recording were used", "The scores", "That the source is {call_recording_tool}"]
+      must_say: ["Which candidate and recording were used", "The scores", "That the source is the recorded call, not an Aria transcript"]
       must_not: ["Write to the ATS"]
       path: {steps: [1, 2, 3, 4, 5], stops_at: 6, note: "Step 1 extension: recorded call scored the same way, source noted; A1 writes nothing."}
 

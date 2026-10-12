@@ -12,7 +12,8 @@ values:
   first_stage: Stage 1
   second_stage: Stage 2
   advance_stage: Stage 2 Scheduling
-  call_recording_tool: Fathom
+  call_recording_name: Fathom
+  ats_name: Bullhorn
 
   script_version: v3.0
   rubric_scale: "1–5"

@@ -25,6 +25,8 @@ parameters:
   later_stage:           {kind: text, about: "What the instance calls the stage after the interview", example: "Stage 3 home visit"}
   unanswered_question:   {kind: text, about: "A safeguarding-critical rubric question, used as the one left unanswered", example: "Q6"}
   failed_minimum_question: {kind: text, about: "A safeguarding-critical rubric question, used as the one scored below its minimum", example: "Q4"}
+  ats_name:              {kind: text, about: "What staff call the applicant tracking system", example: "Bullhorn"}
+  call_recording_name:   {kind: text, about: "What staff call the tool that records and transcribes interviews", example: "Fathom"}
 
   rubric_question_count: {kind: policy, unit: questions, about: "Number of questions in the interview rubric for the role", example: 7}
   rubric_max_total:      {kind: policy, unit: points,    about: "Maximum rubric total for the role", example: 35}
@@ -61,9 +63,10 @@ scenarios:
       state: "{candidate_name}'s {interview_stage} video interview for {candidate_role} at {candidate_home} ended on {interview_on}. One transcript is linked to the appointment and every rubric question is answered."
       conditions: ["A second candidate for {candidate_role} at {candidate_home} had an {interview_stage} interview on {interview_on}"]
     input:
-      prompt: "Score {candidate_name}'s {interview_stage} interview for {candidate_role} at {candidate_home} using yesterday's recorded transcript. Map each answer to the rubric, flag any missing or unclear answers as unknown, and write the structured scores to the ATS. Keep the hiring manager's decision separate."
+      prompt: "Score {candidate_name}'s {interview_stage} interview for {candidate_role} at {candidate_home} using yesterday's {call_recording_name} transcript. Map each answer to the rubric, flag any missing or unclear answers as unknown, and write the structured scores to {ats_name}. Keep the hiring manager's decision separate."
     variants:
       - {id: PV-TERSE, prompt: "score the latest recorded transcript against the rubric and write it to the ATS", expect: same_outcome}
+      - {id: PV-GENERIC, prompt: "Score {candidate_name}'s {interview_stage} interview for {candidate_role} at {candidate_home} from yesterday's call recording and write the scores to the ATS", expect: same_outcome, detail: "generic names for the call recorder and the ATS"}
       - {id: PV-ALIAS, prompt: "Mark up {candidate_first_name}'s video interview against the {interview_stage} questions", expect: same_outcome}
       - {id: PV-NOISE, prompt: "scor {candidate_first_name}s interveiw from yday, the recorded one, put it in the ATS", expect: same_outcome}
       - {id: PV-AMBIGUOUS, prompt: "Score the {candidate_home} {candidate_role} interview from yesterday", expect: clarify, detail: "which candidate (two held)"}
@@ -85,10 +88,11 @@ scenarios:
       same_start_as: S01
       state: "As S01."
     input:
-      prompt: "Score {candidate_name}'s {interview_stage} interview for {candidate_role} at {candidate_home} from yesterday's recorded transcript and show me the proposed scores with the evidence. Don't write anything to the ATS until I confirm."
+      prompt: "Score {candidate_name}'s {interview_stage} interview for {candidate_role} at {candidate_home} from yesterday's {call_recording_name} transcript and show me the proposed scores with the evidence. Don't write anything to {ats_name} until I confirm."
     variants:
       - {id: PV-TERSE, prompt: "propose scores for {candidate_first_name}'s {interview_stage}, don't save yet", expect: same_outcome}
       - {id: PV-COLLOQUIAL, prompt: "Before anything goes in the ATS, can you show me how {candidate_first_name}'s interview scores up?", expect: same_outcome}
+      - {id: PV-GENERIC, prompt: "Score {candidate_first_name}'s {interview_stage} interview from the call recording and show me first, nothing into the ATS until I say", expect: same_outcome, detail: "generic names for the call recorder and the ATS"}
       - {id: PV-MISSING, prompt: "Score yesterday's {candidate_role} interview at {candidate_home} and show me first", expect: clarify, detail: "which candidate (two held)"}
       - {id: PV-FALSE-PREMISE, prompt: "Show me the proposed scores for {candidate_first_name}'s second {interview_stage} interview", expect: flag, detail: "only one {interview_stage} interview is recorded"}
     expected:
@@ -211,7 +215,7 @@ scenarios:
       state: "As S01, but no recording is linked to the appointment; one unlinked recording exists from the same hour."
       conditions: ["An unlinked recording from the same hour as {candidate_name}'s interview, with no recording linked to the appointment"]
     input:
-      prompt: "Pull and score the interview recording for {candidate_name}."
+      prompt: "Pull the {call_recording_name} recording of {candidate_name}'s interview and score it."
     expected:
       state: ["No scores", "The unmatched recording listed with the reason"]
       must_say: ["No recording matches the appointment, and what is needed to match it"]

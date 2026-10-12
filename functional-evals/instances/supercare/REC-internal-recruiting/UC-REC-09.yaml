@@ -17,6 +17,8 @@ values:
   later_stage: Stage 3 Home Visit
   unanswered_question: Q6
   failed_minimum_question: Q4
+  ats_name: Bullhorn
+  call_recording_name: Fathom
 
   rubric_question_count: 7
   rubric_max_total: 35

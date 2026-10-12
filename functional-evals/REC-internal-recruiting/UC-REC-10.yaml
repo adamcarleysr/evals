@@ -30,6 +30,7 @@ parameters:
   interview_stage:       {kind: text, about: "What the instance calls the interview stage whose feedback is queued", example: "Stage 2"}
   later_stage:           {kind: text, about: "What the instance calls the stage a Progress decision leads to", example: "home visit"}
   later_stage_short:     {kind: text, about: "The short label staff use for that later stage", example: "Stage 3"}
+  ats_name:              {kind: text, about: "What staff call the applicant tracking system", example: "Bullhorn"}
 
   interview_decision_options: {kind: policy, about: "Decision options for interview feedback in the queue configuration", example: "Progress, Reject, Hold"}
   reminder_after_hours:  {kind: policy, unit: hours, about: "Time an item waits before the manager is reminded", example: 48}
@@ -86,10 +87,11 @@ scenarios:
       state: "{hiring_manager_name}'s queue holds {candidate_name}'s {interview_stage} item and one other {interview_stage} item. Options are {interview_decision_options}; Progress leads to the {later_stage}."
       conditions: ["A second {interview_stage} feedback item in {hiring_manager_name}'s queue"]
     input:
-      prompt: "({hiring_manager_name}) Progress {candidate_name} to the {later_stage}."
+      prompt: "({hiring_manager_name}) Progress {candidate_name} to the {later_stage} and update {ats_name}."
     variants:
       - {id: PV-TERSE, prompt: "({hiring_manager_name}) progress {candidate_first_name}, {later_stage}", expect: same_outcome}
       - {id: PV-ALIAS, prompt: "({hiring_manager_name}) {candidate_first_name}'s through to {later_stage_short}, log it", expect: same_outcome}
+      - {id: PV-GENERIC, prompt: "({hiring_manager_name}) Progress {candidate_name} to the {later_stage} and update the ATS", expect: same_outcome, detail: "generic name for the ATS"}
       - {id: PV-MISSING, prompt: "({hiring_manager_name}) Progress the {interview_stage} candidate to the {later_stage}", expect: clarify, detail: "which candidate"}
       - {id: PV-FALSE-PREMISE, prompt: "({hiring_manager_name}) Approve {candidate_first_name}'s offer", expect: flag, detail: "the item is {interview_stage} feedback, not an offer approval"}
     expected:

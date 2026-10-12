@@ -20,6 +20,7 @@ values:
   dimension_count: 5
   first_stage_threshold: 4.0
   rejection_threshold: 2.0
+  ats_name: Bullhorn
 
 calendar:
   locale: en-GB

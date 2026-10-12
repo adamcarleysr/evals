@@ -18,6 +18,8 @@ parameters:
   hours_and_rota:         {kind: text,   about: "The hours and rota recorded on the job, as the organisation describes them", example: "average 36 hours on a 1-on-2-off rota"}
   required_qualification: {kind: text,   about: "The qualification the role requires", example: "Level 3"}
   personal_point:         {kind: entity, about: "A specific experience recorded on the candidate's profile", example: "autism-support experience"}
+  ats_name:               {kind: text,   about: "What staff call the applicant tracking system", example: "Bullhorn"}
+  calendar_name:          {kind: text,   about: "What staff call the calendar system", example: "Outlook"}
   first_stage:            {kind: text,   about: "The organisation's name for the first-stage prescreen call", example: "first-stage call"}
   first_stage_call_length: {kind: policy, unit: minutes, about: "How long the first-stage call lasts for the role (K2)", example: 20}
 
@@ -46,10 +48,11 @@ scenarios:
         - "Recruiter availability this week in the calendar"
         - "Several candidates in the first-stage queue for {role} at {home} (for the missing-detail variant)"
     input:
-      prompt: "Draft an outreach email and prescreen invite for {candidate_name}, {role} at {home}."
+      prompt: "Draft an outreach email and prescreen invite for {candidate_name}, {role} at {home}, with times from my {calendar_name} calendar."
     variants:
       - {id: PV-TERSE, prompt: "invite {candidate_first_name} to prescreen", expect: same_outcome}
       - {id: PV-COLLOQUIAL, prompt: "Can you get something ready to reach out to {candidate_first_name} about a chat for the {home} role?", expect: same_outcome}
+      - {id: PV-GENERIC, prompt: "Draft {candidate_first_name}'s prescreen invite for {role} at {home} from their ATS profile, with times from my calendar", expect: same_outcome, detail: "generic names for the ATS and calendar"}
       - {id: PV-MISSING, prompt: "Draft a prescreen invite for the {home} role", context: "no candidate named; several in the queue", expect: clarify, detail: "which candidate"}
       - {id: PV-CONFLICT, prompt: "Draft {candidate_first_name}'s invite and say it pays £2 an hour more", context: "the job records {pay_rate}", expect: flag, detail: "the job rate is {pay_rate}"}
     expected:
@@ -69,7 +72,7 @@ scenarios:
       state: "As S01; {candidate_name}'s profile notes {personal_point}."
       conditions: ["{candidate_name}'s profile records {personal_point}"]
     input:
-      prompt: "Draft personalised outreach for {candidate_name} from the {role} at {home} shortlist. It should reference something specific from their profile."
+      prompt: "Draft personalised outreach for {candidate_name} from the {role} at {home} shortlist in {ats_name}. It should reference something specific from their profile."
     expected:
       state: ["One draft that references the recorded {personal_point}"]
       must_not: ["Refer to anything not in the profile"]

@@ -26,6 +26,7 @@ parameters:
   talk_time_kpi:         {kind: policy, about: "The KPI measuring time on calls", example: "talk time"}
   week_boundaries:       {kind: policy, about: "The days, times and time zone that bound a reporting week", example: "Monday 00:00 to Sunday 23:59 Europe/London"}
 
+  ats_name:              {kind: text, about: "What staff call the applicant tracking system", example: "Bullhorn"}
   week_start:            {kind: date, value: "start of week of run_date", about: "Start of the current reporting week"}
   week_end:              {kind: date, value: "week_start + 6 days"}
 
@@ -52,8 +53,9 @@ scenarios:
       state: "The recruitment team's week from {week_start} to {week_end} is part-complete. Every recruiter has targets, last week's snapshot is frozen, and a reference calculation using the same governed definitions is stored."
       conditions: ["Activity, placement and job records for every recruiter in the current week and a frozen snapshot of last week", "A reference calculation of the {kpi_list} KPIs for the current week"]
     input:
-      prompt: "Calculate this week's team KPIs ({kpi_list}) vs target with trend vs last week."
+      prompt: "Calculate this week's team KPIs ({kpi_list}) from {ats_name} vs target with trend vs last week."
     variants:
+      - {id: PV-GENERIC, prompt: "Pull this week's team KPIs from the ATS against target, with the trend vs last week", expect: same_outcome, detail: "generic name for the ATS"}
       - {id: PV-TERSE, prompt: "team KPIs this week", expect: same_outcome}
       - {id: PV-ALIAS, prompt: "How is the team doing on {kpi_abbreviations} this week vs target?", expect: same_outcome, detail: "those three KPIs only"}
       - {id: PV-NOISE, prompt: "calc this wks kpis - {kpi_list}", expect: same_outcome}

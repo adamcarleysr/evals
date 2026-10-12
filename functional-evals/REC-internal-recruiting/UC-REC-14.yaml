@@ -29,6 +29,7 @@ parameters:
   offer_status:          {kind: text, about: "The ATS record status that represents an open or accepted offer", example: "Onboarding"}
   negotiating_status:    {kind: text, about: "The ATS status for an offer under negotiation", example: "Negotiating"}
   region_term:           {kind: text, about: "What the instance calls the region field on a placement", example: "region"}
+  ats_name:              {kind: text, about: "What staff call the applicant tracking system", example: "Bullhorn"}
 
   first_chase_day:       {kind: policy, unit: days, about: "Day after issue of the first offer chase", example: 3}
   second_chase_day:      {kind: policy, unit: days, about: "Day after issue of the second offer chase", example: 5}
@@ -122,10 +123,11 @@ scenarios:
       same_start_as: S01
       state: "{candidate_name} accepted on {accepted_on}, confirming {vacancy_rate}, {vacancy_contract_type}, {vacancy_hours} and a start date of {offer_start_date}."
     input:
-      prompt: "{candidate_name} accepted {candidate_role} at {candidate_home} today, {vacancy_rate}, {vacancy_contract_type}, {vacancy_hours}, start {offer_start_date}. Create the ATS Placement."
+      prompt: "{candidate_name} accepted {candidate_role} at {candidate_home} today, {vacancy_rate}, {vacancy_contract_type}, {vacancy_hours}, start {offer_start_date}. Create the Placement in {ats_name}."
     variants:
       - {id: PV-CONTEXT, prompt: "What's next for {candidate_first_name} now they've accepted?", expect: same_outcome, detail: "onboarding started; in the forecast"}
       - {id: PV-NOISE, prompt: "{candidate_first_name} acepted {candidate_home}, set up placment", expect: same_outcome}
+      - {id: PV-GENERIC, prompt: "{candidate_name} has accepted {candidate_role} at {candidate_home}: {vacancy_rate}, {vacancy_contract_type}, {vacancy_hours}, starting {offer_start_date}. Set up the placement in the ATS", expect: same_outcome, detail: "generic name for the ATS"}
       - {id: PV-AMBIGUOUS, prompt: "The {candidate_home} candidate accepted, set up the placement", expect: clarify, detail: "which candidate (two open offers)"}
       - {id: PV-FALSE-PREMISE, prompt: "{candidate_first_name} accepted the {other_home} offer", expect: flag, detail: "the offer is for {candidate_home}"}
     expected:

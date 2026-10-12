@@ -22,6 +22,7 @@ values:
   interview_stage: Stage 2
   later_stage: Home Visit
   later_stage_short: Stage 3
+  ats_name: Bullhorn
 
   interview_decision_options: "Progress to Home Visit, Reject, Hold"
   reminder_after_hours: 48

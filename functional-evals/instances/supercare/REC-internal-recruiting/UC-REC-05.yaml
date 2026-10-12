@@ -16,6 +16,10 @@ values:
   personal_point: "<to supply>"
   first_stage: Stage 1 Telephone Qualification
   first_stage_call_length: 20
+  ats_name: Bullhorn
+  calendar_name: "<to supply>"
+  ats_name: Bullhorn
+  calendar_name: "<to supply>"
 
 calendar:
   locale: en-GB

@@ -16,6 +16,7 @@ parameters:
   home:                   {kind: entity, about: "The home of the job applied for", example: "Ashdown House"}
   home_alias:             {kind: entity, about: "Another name people use for that home", example: "OCG Ashdown House"}
   other_role:             {kind: entity, about: "A role at the home the applicant has not applied for", example: "Team Leader"}
+  ats_name:               {kind: text,   about: "What staff call the applicant tracking system", example: "Bullhorn"}
   first_stage:            {kind: text,   about: "The organisation's name for the first screening stage after CV scoring", example: "the prescreen"}
 
   required_qualification: {kind: policy, about: "The qualification the role requires (K1)", example: "Level 3"}
@@ -52,9 +53,10 @@ scenarios:
         - "{candidate_name}'s CV shows more than {minimum_experience}, {required_qualification}, right to work stated and an enhanced DBS on the Update Service"
         - "A second candidate with the first name {candidate_first_name} on an open job (for the ambiguity variant)"
     input:
-      prompt: "Score {candidate_name}'s latest CV for {role} at {home}. Summary table, write the score to their submission in the ATS."
+      prompt: "Score {candidate_name}'s latest CV for {role} at {home}. Summary table, write the score to their submission in {ats_name}."
     variants:
       - {id: PV-TERSE, prompt: "score {candidate_first_name} cv {home} {role}, write to ATS", expect: same_outcome}
+      - {id: PV-GENERIC, prompt: "Score {candidate_name}'s CV for {role} at {home} and write the result to their submission in the ATS", expect: same_outcome, detail: "generic name for the ATS"}
       - {id: PV-ALIAS, prompt: "Screen {candidate_first_name}'s CV for the {role_alias} job at {home_alias} and log it on their submission", expect: same_outcome}
       - {id: PV-AMBIGUOUS, prompt: "Score {candidate_first_name}'s CV", context: "two candidates called {candidate_first_name} on open jobs", expect: clarify, detail: "which candidate and which job"}
       - {id: PV-FALSE-PREMISE, prompt: "Score {candidate_first_name}'s CV for the {other_role} job at {home}", context: "no {other_role} application", expect: flag, detail: "no {other_role} application; offers {role}"}
@@ -171,7 +173,7 @@ scenarios:
       state: "As S01."
       conditions: ["Several applicants for {role} at {home} (for the missing-detail variant)"]
     input:
-      prompt: "Score {candidate_name}'s CV for {role} at {home} and show me the evidence. Don't write anything to the ATS yet."
+      prompt: "Score {candidate_name}'s CV for {role} at {home} and show me the evidence. Don't write anything to {ats_name} yet."
     variants:
       - {id: PV-TERSE, prompt: "{candidate_name} cv vs {role} {home}, just show me", expect: same_outcome}
       - {id: PV-COLLOQUIAL, prompt: "Before I log anything, how does {candidate_first_name}'s CV stack up for the {home} {role} job?", expect: same_outcome}

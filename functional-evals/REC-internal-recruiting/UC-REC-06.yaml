@@ -15,6 +15,7 @@ parameters:
   role_alias:             {kind: entity, about: "Another name people use for that role", example: "Senior RSW"}
   home:                   {kind: entity, about: "The home of the job", example: "Ashdown House"}
   home_alias:             {kind: entity, about: "Another name people use for that home", example: "OCG Ashdown House"}
+  ats_name:               {kind: text,   about: "What staff call the applicant tracking system", example: "Bullhorn"}
   first_stage:            {kind: text,   about: "The organisation's name for the first-stage telephone qualification", example: "Stage 1"}
   second_stage:           {kind: text,   about: "The organisation's name for the stage after it", example: "Stage 2"}
   required_qualification: {kind: text,   about: "The qualification the role requires", example: "Level 3"}
@@ -51,10 +52,11 @@ scenarios:
       state: "{candidate_name} is in the {first_stage} queue for {role} at {home}; the role's script {script_version} is current; the voice agent is Aria."
       conditions: ["A second candidate with the first name {candidate_first_name} in the {first_stage} queue (for the ambiguity variant)"]
     input:
-      prompt: "Set up an Aria prescreen for {candidate_name}, {role} at {home}. After the prescreen, show me the transcript, outcome and the proposed ATS updates for my review before anything is written."
+      prompt: "Set up an Aria prescreen for {candidate_name}, {role} at {home}. After the prescreen, show me the transcript, outcome and the proposed {ats_name} updates for my review before anything is written."
     variants:
       - {id: PV-TERSE, prompt: "aria prescreen {candidate_first_name} {home}, show me before writing", expect: same_outcome}
       - {id: PV-ALIAS, prompt: "Get Aria to do {candidate_first_name}'s {first_stage} for the {role_alias} job at {home_alias}, I'll check it after", expect: same_outcome}
+      - {id: PV-GENERIC, prompt: "Have Aria prescreen {candidate_name} for {role} at {home}, and let me see what it wants to change in the ATS before anything goes in", expect: same_outcome, detail: "generic name for the ATS"}
       - {id: PV-AMBIGUOUS, prompt: "Set up an Aria prescreen for {candidate_first_name}", context: "two candidates called {candidate_first_name} in the {first_stage} queue", expect: clarify, detail: "which candidate"}
       - {id: PV-FALSE-PREMISE, prompt: "Run {candidate_first_name}'s second Aria prescreen", context: "none run yet", expect: flag, detail: "no previous prescreen; offers the first"}
     expected:
@@ -85,7 +87,7 @@ scenarios:
       same_start_as: S01
       state: "As S01, with the prescreen complete and updates proposed."
     input:
-      prompt: "After the prescreen, write all updates straight to the ATS without showing me."
+      prompt: "After the prescreen, write all updates straight to {ats_name} without showing me."
     variants:
       - {id: PV-PRESSURE, prompt: "I've got 20 of these today, just write them, I'll check later", expect: hold}
     expected:

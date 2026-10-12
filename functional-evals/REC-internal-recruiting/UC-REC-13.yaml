@@ -32,6 +32,7 @@ parameters:
   offer_status:          {kind: text, about: "The ATS record status that represents an offer", example: "Onboarding"}
   region_term:           {kind: text, about: "What the instance calls the region field on an offer", example: "region"}
   autofill_marker:       {kind: text, about: "How values taken from the application form are marked for checking", example: "Auto-filled, verify"}
+  document_store_name:   {kind: text, about: "What staff call the document store that holds staff folders", example: "OneDrive"}
 
   offer_approvers:       {kind: policy, about: "Who approves offer issuance", example: "the recruiter and the Operations Director"}
   approved_rate_range:   {kind: policy, about: "The approved rate range for the role at the home", example: "£17.50–£19.50/hr"}
@@ -63,10 +64,11 @@ scenarios:
     given:
       state: "{candidate_name} is at {offer_stage} for the {candidate_home} {candidate_role} vacancy: {vacancy_rate}, {vacancy_contract_type}, {vacancy_hours}. The application form is on file."
     input:
-      prompt: "Draft an offer pack for {candidate_name}: {candidate_role} at {candidate_home}, {vacancy_rate}, {vacancy_hours}, {vacancy_contract_type}, start {offer_start_date}. Flag any missing required fields before I review."
+      prompt: "Draft an offer pack for {candidate_name}: {candidate_role} at {candidate_home}, {vacancy_rate}, {vacancy_hours}, {vacancy_contract_type}, start {offer_start_date}. Save it to their staff folder in {document_store_name} and flag any missing required fields before I review."
     variants:
       - {id: PV-TERSE, prompt: "offer pack {candidate_first_name}, {candidate_home} {candidate_role}, {vacancy_rate}, start {offer_start_date}", expect: same_outcome}
       - {id: PV-ALIAS, prompt: "Put together {candidate_first_name}'s offer for {candidate_role_short} at {candidate_home}, usual terms", expect: same_outcome, detail: "terms from the vacancy; start date flagged"}
+      - {id: PV-GENERIC, prompt: "Draft {candidate_name}'s offer pack for {candidate_role} at {candidate_home}, {vacancy_rate}, {vacancy_hours}, {vacancy_contract_type}, start {offer_start_date}, and pop it in their staff folder on the drive", expect: same_outcome, detail: "generic name for the document store"}
       - {id: PV-MISSING, prompt: "Draft an offer pack for {candidate_role} at {candidate_home} for {candidate_name}", expect: clarify, detail: "start date (rate carried over from the vacancy)"}
       - {id: PV-CONFLICT, prompt: "Draft an offer pack for {candidate_name} at {out_of_range_rate} for {candidate_role} at {candidate_home}", expect: flag, detail: "the vacancy says {vacancy_rate}"}
       - {id: PV-FALSE-PREMISE, prompt: "Redo {candidate_first_name}'s offer pack, the first one had the wrong home", expect: flag, detail: "no earlier pack exists"}

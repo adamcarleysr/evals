@@ -29,6 +29,8 @@ parameters:
   next_stage_informal:   {kind: text, about: "What staff casually call that next stage", example: "home visit"}
   prescreen_next_stage:  {kind: text, about: "The stage a prescreen pass moves the candidate to", example: "Stage 2 Scheduling"}
   failed_minimum_question: {kind: text, about: "A safeguarding-critical interview question, used as the one scored below its minimum", example: "Q6"}
+  ats_name:              {kind: text, about: "What staff call the applicant tracking system", example: "Bullhorn"}
+  calendar_name:         {kind: text, about: "What staff call the calendar system", example: "Outlook"}
 
   safeguarding_minimum:  {kind: policy, unit: points, about: "Minimum score on each safeguarding-critical interview question", example: 3}
   question_max_score:    {kind: policy, unit: points, about: "Top of the per-question interview scoring scale", example: 5}
@@ -59,11 +61,12 @@ scenarios:
       state: "{candidate_name} is at {interview_stage_status} for {candidate_role} at {candidate_home}. Their interview scores pass, with every safeguarding-critical answer at or above {safeguarding_minimum}/{question_max_score}. {hiring_manager_name} has recorded Progress."
       conditions: ["A second candidate for {candidate_role} at {candidate_home} also awaiting progression after a decision by {hiring_manager_name}"]
     input:
-      prompt: "{hiring_manager_name} approved {candidate_name} after their {interview_stage} interview for {candidate_role} at {candidate_home}. Advance their case and schedule the next stage. Confirm the progression is reversible with a correction note."
+      prompt: "{hiring_manager_name} approved {candidate_name} after their {interview_stage} interview for {candidate_role} at {candidate_home}. Advance their case in {ats_name} and schedule the next stage from the {calendar_name} calendars. Confirm the progression is reversible with a correction note."
     variants:
       - {id: PV-TERSE, prompt: "{hiring_manager_first_name} ok'd {candidate_first_name} after {interview_stage}, move them on", expect: same_outcome}
       - {id: PV-ALIAS, prompt: "{candidate_home} RM signed off {candidate_first_name}'s video interview, push them to the {next_stage_informal}", expect: same_outcome}
       - {id: PV-BUNDLED, prompt: "Advance {candidate_first_name} after {hiring_manager_first_name}'s approval and draft their {next_stage_informal} invite", expect: same_outcome}
+      - {id: PV-GENERIC, prompt: "{hiring_manager_name} approved {candidate_name} after {interview_stage}; move them on in the ATS and find {next_stage_informal} slots in the calendar", expect: same_outcome, detail: "generic names for the ATS and calendar"}
       - {id: PV-AMBIGUOUS, prompt: "{hiring_manager_first_name} approved the {candidate_role} candidate, advance them", expect: clarify, detail: "which candidate (two pending)"}
       - {id: PV-FALSE-PREMISE, prompt: "{candidate_first_name} passed the {next_stage_informal}, move them to offer", expect: flag, detail: "they are at {interview_stage_status}; no {next_stage_informal} recorded"}
     expected:

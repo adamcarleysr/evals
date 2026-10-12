@@ -15,6 +15,7 @@ values:
   board_c: CV-Library
   first_stage: Stage 1
   rejection_lookback: 6
+  ats_name: Bullhorn
 
 calendar:
   locale: en-GB

@@ -25,6 +25,7 @@ values:
   offer_status: Onboarding
   region_term: Satellite
   autofill_marker: Auto-filled, verify
+  document_store_name: OneDrive
 
   offer_approvers: "the recruiter and Damian Williams (Operations Director)"
   approved_rate_range: "<to supply>"

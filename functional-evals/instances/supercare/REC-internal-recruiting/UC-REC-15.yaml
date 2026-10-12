@@ -14,6 +14,7 @@ values:
   candidate_role: Senior Coach
   candidate_home: Norwood
   other_home: "<to supply>"
+  ats_name: Bullhorn
 
   stalled_after_days: 14
   rm_decision_overdue_hours: 48

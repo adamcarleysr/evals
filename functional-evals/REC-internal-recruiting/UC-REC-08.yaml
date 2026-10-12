@@ -21,6 +21,8 @@ parameters:
   third_stage:            {kind: text,   about: "The organisation's name for the stage after that", example: "Stage 3 home visit"}
   scheduling_stage:       {kind: text,   about: "The pipeline stage a candidate is at while their interview is being scheduled", example: "Stage 2 Scheduling"}
   scheduled_status:       {kind: text,   about: "The ATS status for a booked interview (K5)", example: "Interview Scheduled"}
+  ats_name:               {kind: text,   about: "What staff call the applicant tracking system", example: "Bullhorn"}
+  calendar_name:          {kind: text,   about: "What staff call the calendar system", example: "Outlook"}
 
   preferred_slots:        {kind: policy, about: "The interviewer's preferred interview slots at the home (K1)", example: "Monday to Friday, 10am to 4pm"}
   second_stage_length:    {kind: policy, unit: minutes, about: "How long the interview at that stage lasts", example: 30}
@@ -58,10 +60,11 @@ scenarios:
       state: "{candidate_name} has passed {first_stage} for {role} at {home} and is at {scheduling_stage}; interviewer {interviewer}, preferred slots {preferred_slots}, has three free windows this week. Scheduling (K2, K3): {buffer_minutes}-minute buffer around events, {proposal_count} proposals, reminders {reminder_timings}, reschedules need more than {reschedule_notice} hours' notice, at most {max_reschedules}."
       conditions: ["{interviewer}'s calendar has three free windows this week within {preferred_slots}, with other events nearby"]
     input:
-      prompt: "Coordinate a 45-min face-to-face interview this week between {candidate_name} and the {home} hiring manager for {role}. Propose {proposal_count} slots, don't book."
+      prompt: "Coordinate a 45-min face-to-face interview this week between {candidate_name} and the {home} hiring manager for {role}. Propose {proposal_count} slots from their {calendar_name} calendars, don't book."
     variants:
       - {id: PV-TERSE, prompt: "{proposal_count} slots this wk, {candidate_first_name} + {home} RM, 45 min f2f, no booking", expect: same_outcome}
       - {id: PV-COLLOQUIAL, prompt: "When could {candidate_first_name} and the {home} manager meet face to face this week? Don't lock anything in", expect: same_outcome}
+      - {id: PV-GENERIC, prompt: "Find {proposal_count} 45-minute face-to-face slots this week for {candidate_first_name} and the {home} hiring manager from the calendar, don't book", expect: same_outcome, detail: "generic name for the calendar"}
       - {id: PV-MISSING, prompt: "Find some interview slots for {candidate_first_name}", context: "no type, duration or week", expect: clarify, detail: "type, duration and week"}
       - {id: PV-FALSE-PREMISE, prompt: "Find slots for {candidate_first_name}'s {third_stage}", context: "{second_stage} not yet passed", expect: flag, detail: "{candidate_first_name} is at {scheduling_stage}"}
     expected:
@@ -109,10 +112,11 @@ scenarios:
       state: "As S01; {candidate_name} is at {scheduling_stage} and {interviewer} is free at {requested_slot}."
       conditions: ["{interviewer} free at {requested_slot}"]
     input:
-      prompt: "{candidate_name} passed {first_stage} for {role} at {home}. Book {second_stage} {second_stage_type} ({second_stage_length} min) with {interviewer} {requested_slot}, send invite and reminders."
+      prompt: "{candidate_name} passed {first_stage} for {role} at {home}. Book {second_stage} {second_stage_type} ({second_stage_length} min) with {interviewer} {requested_slot}, send invite and reminders, and log it in {ats_name}."
     variants:
       - {id: PV-TERSE, prompt: "book {candidate_first_name} {second_stage} {second_stage_type} {second_stage_length}m w/ {interviewer_first_name} {requested_slot}, invite + reminders", expect: same_outcome}
       - {id: PV-ALIAS, prompt: "Lock in {candidate_first_name}'s {second_stage_type} with the {home} RM at {requested_slot}, {second_stage_length} minutes, and send them the invite and reminders", expect: same_outcome}
+      - {id: PV-GENERIC, prompt: "Book {candidate_first_name}'s {second_stage} {second_stage_type} with {interviewer_first_name} at {requested_slot}, {second_stage_length} minutes, send the invite and reminders and log it in the ATS", expect: same_outcome, detail: "generic name for the ATS"}
       - {id: PV-MISSING, prompt: "Book {candidate_first_name}'s {second_stage} with {interviewer_first_name} and send the invite", context: "no day, time or length", expect: clarify, detail: "day, time and length, or offers to propose slots"}
       - {id: PV-FALSE-PREMISE, prompt: "Book {candidate_first_name}'s {third_stage} with {interviewer_first_name} {requested_slot}", context: "{candidate_first_name} is at {scheduling_stage}", expect: flag, detail: "{second_stage} hasn't happened yet; offers the {second_stage} booking"}
     expected:

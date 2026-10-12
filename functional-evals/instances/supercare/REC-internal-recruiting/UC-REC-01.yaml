@@ -18,6 +18,7 @@ values:
   employment_type: Permanent
   alternative_employment_type: Bank
   vacancy_reason: replacement
+  ats_name: Bullhorn
   date_format: DD/MM/YYYY
 
 calendar:

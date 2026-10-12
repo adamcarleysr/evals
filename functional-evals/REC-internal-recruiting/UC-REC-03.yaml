@@ -17,6 +17,7 @@ parameters:
   board_a:              {kind: policy, about: "A connected job board", example: "Job Board A"}
   board_b:              {kind: policy, about: "A second connected job board", example: "Job Board B"}
   board_c:              {kind: policy, about: "A third connected job board", example: "Job Board C"}
+  ats_name:             {kind: text,   about: "What staff call the applicant tracking system", example: "Bullhorn"}
   first_stage:          {kind: text,   about: "The organisation's name for the first screening stage after CV scoring", example: "Stage 1"}
   rejection_lookback:   {kind: policy, unit: months, about: "How far back a rejection for the same role counts as recent (K1)", example: 6}
 
@@ -46,10 +47,11 @@ scenarios:
       state: "{board_a}, {board_b} and {board_c} connected. {candidate_name} applied for {role} at {home} via {board_a} today and has no ATS record; two other new {board_a} applicants applied for other open jobs."
       conditions: ["Two other new {board_a} applicants for other open jobs, neither an existing candidate", "No open {unopened_role} job at {home} (for the false-premise variant)"]
     input:
-      prompt: "Pull new applicants from {board_a} for all active ATS vacancies. Deduplicate against existing candidates, link each application to the correct vacancy, and tell me how many new applicants were ingested and for which roles."
+      prompt: "Pull new applicants from {board_a} for all active {ats_name} vacancies. Deduplicate against existing candidates, link each application to the correct vacancy, and tell me how many new applicants were ingested and for which roles."
     variants:
       - {id: PV-TERSE, prompt: "pull {board_a} applicants", expect: same_outcome}
       - {id: PV-COLLOQUIAL, prompt: "Anything new come in on {board_a}? Get it into the ATS", expect: same_outcome}
+      - {id: PV-GENERIC, prompt: "Pull new {board_a} applicants for every open job in the ATS, de-dupe them and tell me how many came in per role", expect: same_outcome, detail: "generic name for the ATS"}
       - {id: PV-MISSING, prompt: "Pull the new applicants into the ATS", context: "no board or job named; several boards connected", expect: clarify, detail: "which boards, or all"}
       - {id: PV-FALSE-PREMISE, prompt: "Pull new {board_a} applicants for the {home} {unopened_role} job", context: "no such open job", expect: flag, detail: "no open {unopened_role} job at {home}"}
     expected:

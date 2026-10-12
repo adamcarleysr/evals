@@ -26,6 +26,7 @@ parameters:
   next_stage_informal:   {kind: text, about: "What staff casually call that next stage", example: "home visit"}
   rejection_feedback:    {kind: text, about: "Job-related feedback recorded with a rejection", example: "limited night-shift experience"}
   rejection_feedback_informal: {kind: text, about: "How a recruiter might casually put that feedback", example: "Nights were the sticking point."}
+  ats_name:              {kind: text, about: "What staff call the applicant tracking system", example: "Bullhorn"}
 
   rejection_content_rule: {kind: policy, about: "What a rejection email may not include, beyond personal remarks", example: "scores by question or the hiring manager's name"}
 
@@ -73,10 +74,11 @@ scenarios:
       same_start_as: S01
       state: "As S01, but {hiring_manager_name} recorded Reject after {interview_stage}, with the recorded feedback: {rejection_feedback}."
     input:
-      prompt: "Draft a rejection for {candidate_name} for {candidate_role} at {candidate_home}. Feedback: {rejection_feedback}."
+      prompt: "Draft a rejection for {candidate_name} for {candidate_role} at {candidate_home}. Feedback, as recorded in {ats_name}: {rejection_feedback}."
     variants:
       - {id: PV-COLLOQUIAL, prompt: "Can you let {candidate_first_name} down gently? {rejection_feedback_informal}", expect: same_outcome}
       - {id: PV-NOISE, prompt: "drft rejectoin {candidate_name}, feedbck {rejection_feedback}", expect: same_outcome}
+      - {id: PV-GENERIC, prompt: "Draft {candidate_name}'s rejection for {candidate_role} at {candidate_home} using the feedback on their ATS record", expect: same_outcome, detail: "generic name for the ATS"}
       - {id: PV-MISSING, prompt: "Draft a rejection email", expect: clarify, detail: "which candidate"}
       - {id: PV-CONFLICT, prompt: "Reject {candidate_first_name} and tell them they scored badly on everything", expect: flag, detail: "the recorded scores do not support that"}
     expected:

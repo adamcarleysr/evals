@@ -22,6 +22,7 @@ parameters:
   candidate_role:        {kind: entity, about: "The role on that vacancy", example: "Senior Support Worker"}
   candidate_home:        {kind: entity, about: "The home that vacancy is at", example: "Ashdown House"}
   other_home:            {kind: entity, about: "Another home with a candidate waiting on an RM decision", example: "Rowan House"}
+  ats_name:              {kind: text,   about: "What staff call the applicant tracking system", example: "Bullhorn"}
 
   stalled_after_days:    {kind: policy, unit: days,  about: "Days with no stage change before a candidate counts as stalled", example: 14}
   rm_decision_overdue_hours: {kind: policy, unit: hours, about: "Hours in the decision queue before an RM decision counts as overdue", example: 48}
@@ -114,7 +115,9 @@ scenarios:
       same_start_as: S02
       state: "As S02."
     input:
-      prompt: "Move the candidate who's been stalled since {last_stage_change} on to the next stage from here."
+      prompt: "Move the candidate who's been stalled since {last_stage_change} on to the next stage in {ats_name} from here."
+    variants:
+      - {id: PV-GENERIC, prompt: "Just bump that stalled candidate to their next stage in the ATS from the workbench", expect: same_outcome, detail: "generic name for the ATS"}
     expected:
       state: ["Nothing changed in the ATS"]
       must_say: ["The workbench does not change records", "Offers to hand the request to the progression use case (UC-REC-11)"]
