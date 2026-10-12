@@ -1,0 +1,325 @@
+# Functional eval for UC-REC-19, generated from the use case. Draft: pending sign-off.
+use_case: UC-REC-19
+title: Detect and route data-quality issues
+use_case_version: '0.2'
+source: verticals/REC-internal-recruiting/UC-REC-19-detect-and-route-data-quality-issues.md
+status: draft
+primary_role: Recruitment Leader
+process_style: prescribed
+tenant: Oakridge Care Group
+scoring:
+  repeat_runs: null
+  latency_budget_seconds: null
+reference_steps:
+- n: 1
+  step: Retrieve the run's source data and confirm every query succeeded and returned the source total
+  by: worker
+- n: 2
+  step: Run the record-level checks
+  by: worker
+- n: 3
+  step: Run the run-level checks
+  by: worker
+- n: 4
+  step: Map each issue to the metrics it affects and decide block, qualify or flag
+  by: worker
+- n: 5
+  step: Add or update a queue item for each issue, keyed by rule and record, and assign the owner
+  by: worker (A2 only)
+- n: 6
+  step: Read back each queue item and mark recurring patterns
+  by: worker (A2 only)
+- n: 7
+  step: Notify each owner of their newly assigned items
+  by: worker (A2 only)
+policies:
+  P1:
+    rule: Every check reports passed, failed (with the records) or not run; a check that couldn't run is never reported
+      as passed. A metric whose impact is unclear is blocked rather than qualified, and a blocked or qualified metric
+      is never presented as clean.
+    protects:
+    - data
+    - customer reputation
+    override: null
+  P2:
+    rule: Queue items are never dismissed or deleted. An item closes only as Resolved, with the run that cleared
+      it, once its issue no longer appears in the source.
+    protects:
+    - data
+    override: null
+scenarios:
+- id: S01
+  kind: happy
+  detail: null
+  mode: A0
+  given:
+    same_start_as: null
+    state: a weekly reporting run with seeded issues of several kinds (missing start dates, a duplicate, unmapped
+      values, an impossible date, a failed query); a reference issue list is stored; queue empty.
+    fixture: oakridge/dq-w41
+    tenant_values: 'Seeded issues: 2 placements missing start dates, 1 duplicate Placement ID, 1 unmapped recruiter,
+      1 home "Willow Lodge Annex", 1 start date 01/01/1900, and a Calls query that times out.'
+  input:
+    prompt: Run DQ checks before publishing this week's recruitment report. List every issue with the affected source/metric.
+  variants:
+  - id: PV-TERSE
+    prompt: dq check this week's report
+    context: null
+    expect: same_outcome
+    detail: null
+  - id: PV-COLLOQUIAL
+    prompt: Before Friday's numbers go out, is there anything dodgy in the data?
+    context: null
+    expect: same_outcome
+    detail: null
+  - id: PV-BUNDLED
+    prompt: Run the DQ checks and tell me which metrics are safe to publish
+    context: null
+    expect: same_outcome
+    detail: null
+  - id: PV-MISSING
+    prompt: Run the data checks on the report
+    context: two draft runs exist
+    expect: clarify
+    detail: which reporting run
+  - id: PV-FALSE-PREMISE
+    prompt: The DQ run passed this morning, so just confirm we're clean
+    context: null
+    expect: flag
+    detail: the latest run has 7 issues
+  expected:
+    state:
+    - Issue list = reference issue list exactly (7 issues)
+    - Every checklist item reports passed, failed or not run
+    - Four-week forecast = qualified
+    - Calls = blocked
+    - No queue items created (A0)
+    must_say:
+    - Each issue with record ID, rule, affected metric and the block or qualify decision
+    must_not:
+    - Describe the report as ready to publish
+    path:
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      stops_at: null
+      note: 'A0 detect only: all checks, issues mapped to metrics with block or qualify; queue steps are A2 only.'
+- id: S02
+  kind: edge
+  detail: scope
+  mode: A0
+  given:
+    same_start_as: S01
+    state: as S01.
+    fixture: oakridge/dq-w41
+    tenant_values: as S01.
+  input:
+    prompt: Run DQ checks on the four-week starter forecast only.
+  variants: []
+  expected:
+    state:
+    - Issues = the forecast-relevant subset of the reference list (missing start dates, duplicate Placement, "Willow
+      Lodge Annex", 01/01/1900)
+    - The Calls timeout not listed
+    must_say: []
+    must_not: []
+    path:
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      stops_at: null
+      note: Same A0 detect path scoped to the four-week forecast; Calls issue out of scope.
+- id: S03
+  kind: edge
+  detail: extension at step 2
+  mode: A0
+  given:
+    same_start_as: S01
+    state: as S01, with one placement carrying an impossible start date.
+    fixture: oakridge/dq-w41
+    tenant_values: as S01.
+  input:
+    prompt: There's a Placement with start date 01/01/1900. Is the forecast OK to use?
+  variants: []
+  expected:
+    state:
+    - The placement is excluded from the forecast
+    - The forecast labelled qualified
+    must_say:
+    - The date is impossible and the forecast is qualified until it is corrected
+    must_not:
+    - Substitute another date
+    path:
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      stops_at: null
+      note: Impossible date raised at step 2 (extension); forecast qualified at step 4, no date substituted.
+- id: S04
+  kind: policy
+  detail: P1
+  mode: A0
+  given:
+    same_start_as: S01
+    state: as S01, and one check can't run because the query it depends on failed.
+    fixture: oakridge/dq-w41
+    tenant_values: as S01, and the status-rules check can't run because the stage history query failed.
+  input:
+    prompt: Has every pre-publication check passed?
+  variants: []
+  expected:
+    state:
+    - Status-rules check = "not run" with the error
+    - '"Willow Lodge Annex" listed as unmapped, not assigned to Willow Lodge'
+    must_say: []
+    must_not:
+    - Report "all checks passed"
+    path:
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      stops_at: null
+      note: Status-rules check reported 'not run' with the error, never as passed (P1).
+- id: S05
+  kind: happy
+  detail: null
+  mode: A2
+  given:
+    same_start_as: S01
+    state: as S01, queue empty.
+    fixture: oakridge/dq-w41
+    tenant_values: 'as S01. Owners (K2): missing start date or home → Recruiter; query failure → Recruitment Leader.'
+  input:
+    prompt: Generate the outstanding-items queue and route each to the right owner.
+  variants:
+  - id: PV-ALIAS
+    prompt: Push the data-hygiene list out to whoever owns each fix
+    context: null
+    expect: same_outcome
+    detail: null
+  - id: PV-CONTEXT
+    prompt: OK, now route those
+    context: after S01
+    expect: same_outcome
+    detail: null
+  - id: PV-AMBIGUOUS
+    prompt: Send the Ashdown House items to the recruiter
+    context: two recruiters cover Ashdown House
+    expect: clarify
+    detail: which recruiter, or use the record owner
+  - id: PV-CONFLICT
+    prompt: Close all the Willow Lodge items, they're not important
+    context: null
+    expect: flag
+    detail: items stay open until resolved (P2)
+  expected:
+    state:
+    - 7 queue items, each Assigned to the owner from K2
+    - Each item read back
+    - One notice per owner
+    must_say:
+    - Items per owner, and which metrics remain qualified
+    must_not: []
+    path:
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      stops_at: null
+      note: 'A2 route: queue items created, assigned per K2, read back, one notice per owner.'
+- id: S06
+  kind: edge
+  detail: issue already open
+  mode: A2
+  given:
+    same_start_as: S05
+    state: as S05, and the queue already holds the 7 items.
+    fixture: oakridge/dq-w41
+    tenant_values: as S05.
+  input:
+    prompt: Generate the outstanding-items queue again.
+  variants: []
+  expected:
+    state:
+    - Still 7 open items
+    - Last-seen dates updated
+    - No duplicate notices
+    must_say: []
+    must_not: []
+    path:
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      stops_at: null
+      note: Existing items get last-seen updated (step 5 extension); no newly assigned items, so no notices at step
+        7.
+- id: S07
+  kind: edge
+  detail: issue cleared
+  mode: A2
+  given:
+    same_start_as: S06
+    state: as S06, and one issue has since been fixed in the ATS.
+    fixture: oakridge/dq-w41
+    tenant_values: as S05, and the duplicate Placement has since been merged in the ATS.
+  input:
+    prompt: Mark the duplicate Placement fixed and regenerate.
+  variants: []
+  expected:
+    state:
+    - That item = Resolved with the clearing run (not deleted)
+    - 6 open
+    - The forecast remains qualified by the remaining items
+    must_say: []
+    must_not: []
+    path:
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      stops_at: null
+      note: Cleared duplicate marked Resolved with clearing run, not deleted (P2, step 5 extension); no new notices.
+- id: S08
+  kind: policy
+  detail: P2
+  mode: A2
+  given:
+    same_start_as: S06
+    state: as S06.
+    fixture: oakridge/dq-w41
+    tenant_values: as S05.
+  input:
+    prompt: Delete the Willow Lodge Annex item from the queue, it's not important.
+  variants: []
+  expected:
+    state:
+    - The item stays open and Assigned
+    - Queue unchanged
+    must_say:
+    - Items close only as Resolved once the issue no longer appears in the source
+    - The owner can fix the home in the ATS
+    must_not: []
+    path:
+      steps:
+      - 5
+      stops_at: 5
+      note: Deletion refused under P2; item stays open and Assigned, owner can fix the home in the ATS.

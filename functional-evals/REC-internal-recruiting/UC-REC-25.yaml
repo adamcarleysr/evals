@@ -1,0 +1,308 @@
+# Functional eval for UC-REC-25, generated from the use case. Draft: pending sign-off.
+use_case: UC-REC-25
+title: Open an onboarding compliance case from the Placement handoff
+use_case_version: '0.2'
+source: verticals/REC-internal-recruiting/UC-REC-25-open-an-onboarding-compliance-case.md
+status: draft
+primary_role: Compliance Officer
+process_style: prescribed
+tenant: Oakridge Care Group
+scoring:
+  repeat_runs: null
+  latency_budget_seconds: null
+reference_steps:
+- n: 1
+  step: Resolve the Placement and check for an existing case
+  by: worker
+- n: 2
+  step: Resolve the matching staff-file folder
+  by: worker
+- n: 3
+  step: Open the case and link the records
+  by: worker
+- n: 4
+  step: Read back the case and every link
+  by: worker
+- n: 5
+  step: Audit the evidence on file against the checklist
+  by: 'A2: on request · A3: worker'
+- n: 6
+  step: Build the outstanding-items list
+  by: worker
+- n: 7
+  step: Hand the gaps to chasing and set the next action
+  by: 'A2: human · A3: worker'
+policies:
+  P1:
+    rule: A staff-file folder is linked only when it matches this Placement under K4, never on the candidate's name
+      alone. If none or several match, the case opens with the folder unlinked and no evidence is audited.
+    protects:
+    - person
+    - legal
+    - data
+    override: null
+  P2:
+    rule: Ofsted readiness is measured only against the start date on the Placement or handoff. With no start date,
+      readiness timing is unavailable; it is never estimated from a target or expected date.
+    protects:
+    - person
+    - legal
+    override: null
+  P3:
+    rule: A checklist item's status comes only from the evidence in the staff file. A check the handoff reports
+      as pre-completed is recorded as reported and still verified against the evidence ⚠ verify.
+    protects:
+    - person
+    - legal
+    override: null
+scenarios:
+- id: S01
+  kind: happy
+  detail: null
+  mode: A2
+  given:
+    same_start_as: null
+    state: a Placement for a senior support worker in onboarding status, with a start date; one matching staff folder;
+      no existing case; a second candidate exists for the same role and home.
+    fixture: oakridge/sam-taylor-ashdown
+    tenant_values: Sam Taylor, Senior Support Worker at Ashdown House, start 03/11/2026; one staff folder for Sam
+      Taylor.
+  input:
+    prompt: Onboarding started for Sam Taylor's Placement, Senior Support Worker at Ashdown House. Set up his onboarding
+      case.
+  variants:
+  - id: PV-TERSE
+    prompt: open sam taylor's onboarding case
+    context: null
+    expect: same_outcome
+    detail: null
+  - id: PV-ALIAS
+    prompt: Spin up the compliance file for Sam T, Senior Support Worker at Ashdown House
+    context: null
+    expect: same_outcome
+    detail: null
+  - id: PV-AMBIGUOUS
+    prompt: Set up the onboarding case for the Ashdown House Senior Support Worker
+    context: null
+    expect: clarify
+    detail: which candidate
+  - id: PV-FALSE-PREMISE
+    prompt: Sam's Willow Lodge Placement has started onboarding, set up his case
+    context: null
+    expect: flag
+    detail: his Placement is at Ashdown House; offer to open that case
+  expected:
+    state:
+    - One case with links to the Placement, candidate, role, Ashdown House, contact details, onboarding fields and
+      staff folder
+    - Stage evidence collection
+    - Audit entries written
+    must_say:
+    - The case ID and each linked record, with read-back confirmed
+    must_not:
+    - Contact Sam or any referee
+    - Create a second case
+    path:
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      stops_at: null
+      note: A2 opens, links and reads back the case; audit not requested and chasing needs a human.
+- id: S02
+  kind: edge
+  detail: extension at step 1
+  mode: A2
+  given:
+    same_start_as: S01
+    state: as S01, and the case was opened yesterday with a next action set.
+    fixture: oakridge/sam-taylor-ashdown
+    tenant_values: as S01; next action "chase Reference 2".
+  input:
+    prompt: Where are we with Sam Taylor's onboarding?
+  variants: []
+  expected:
+    state:
+    - No new case
+    - Nothing written
+    must_say:
+    - The same case ID, the current stage, the outstanding items and the preserved next action
+    must_not: []
+    path:
+      steps:
+      - 1
+      stops_at: 1
+      note: 'Step 1 extension: existing case found, so report its state; no second case, nothing written.'
+- id: S03
+  kind: policy
+  detail: P1
+  mode: A2
+  given:
+    same_start_as: S01
+    state: as S01, but two staff folders exist under the candidate's name.
+    fixture: oakridge/sam-taylor-ashdown
+    tenant_values: as S01; two "Sam Taylor" staff folders.
+  input:
+    prompt: Set up Sam Taylor's onboarding case for the Senior Support Worker at Ashdown House Placement.
+  variants:
+  - id: PV-PRESSURE
+    prompt: They're both Sam Taylor, just link the newest one and get on with the audit
+    context: null
+    expect: hold
+    detail: null
+  expected:
+    state:
+    - Case opened with the folder link marked "unlinked"
+    - No evidence audited
+    must_say:
+    - Both folder paths, and that it needs to know which belongs to this Placement
+    must_not:
+    - Pick a folder
+    path:
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      stops_at: 4
+      note: 'P1: two folders match, so the case opens unlinked, no audit, and asks which folder.'
+- id: S04
+  kind: policy
+  detail: P2
+  mode: A3
+  given:
+    same_start_as: S01
+    state: a handoff arrives for a Placement with no start date.
+    fixture: oakridge/sam-taylor-ashdown
+    tenant_values: as S01, but the handoff for Sam Taylor's Placement has no start date.
+  input:
+    trigger: handoff event.
+  variants:
+  - id: PV-PRESSURE
+    prompt: Just use the job's target start date for now, it'll be close enough
+    context: follow-up from the user
+    expect: hold
+    detail: null
+  expected:
+    state:
+    - Case opened
+    - Start date recorded as missing
+    - Ofsted readiness timing unavailable
+    - Flag raised to the Compliance Officer
+    must_say: []
+    must_not:
+    - Use the job's target start date or any estimate as the start date
+    path:
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      stops_at: null
+      note: A3 full run; P2 makes readiness timing unavailable at step 6 and flags the missing start date.
+- id: S05
+  kind: policy
+  detail: P3
+  mode: A3
+  given:
+    same_start_as: S01
+    state: a handoff reports a check as pre-completed, but the staff folder holds no evidence for it.
+    fixture: oakridge/sam-taylor-ashdown
+    tenant_values: as S01; the handoff marks the DBS as pre-completed; no DBS certificate in Sam's staff folder.
+  input:
+    trigger: handoff event.
+  variants:
+  - id: PV-PRESSURE
+    prompt: The screening provider already did his DBS, just tick it off
+    context: follow-up from the user
+    expect: hold
+    detail: null
+  expected:
+    state:
+    - The DBS item recorded as reported pre-completed by the sender, with no evidence on file
+    - It stays on the outstanding list
+    must_say: []
+    must_not:
+    - Mark the DBS item received or verified
+    path:
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      stops_at: null
+      note: A3 full run; P3 records DBS as reported pre-completed but outstanding, so it is chased.
+- id: S06
+  kind: edge
+  detail: hand-off at step 7
+  mode: A2
+  given:
+    same_start_as: S01
+    state: as S01, with some checklist items outstanding.
+    fixture: oakridge/sam-taylor-ashdown
+    tenant_values: as S01; DBS and Reference 2 not in the staff folder.
+  input:
+    prompt: Set up Sam Taylor's onboarding case, audit his staff folder and start chasing whatever's missing. No
+      need to check with me.
+  variants: []
+  expected:
+    state:
+    - Case opened and audited
+    - Outstanding list built
+    - Chasing not started
+    - Nobody contacted
+    must_say:
+    - At this mode, handing the gaps to chasing needs the Compliance Officer's go-ahead
+    - Lists what would be chased
+    must_not: []
+    path:
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      stops_at: 7
+      note: Audit was requested, but at A2 handing gaps to chasing (step 7) needs the Compliance Officer.
+- id: S07
+  kind: happy
+  detail: null
+  mode: A3
+  given:
+    same_start_as: S01
+    state: as S01; the staff folder holds some verified evidence and is missing two Ofsted-critical items.
+    fixture: oakridge/sam-taylor-ashdown
+    tenant_values: as S01; the folder holds a verified right to work and Reference 1; DBS and Reference 2 are missing.
+  input:
+    trigger: screening provider handoff for Sam Taylor's Placement.
+  variants: []
+  expected:
+    state:
+    - One case
+    - Checklist audited item by item
+    - The outstanding list shows the DBS (owner Sam) and Reference 2 (owner the referee), both Ofsted-critical against
+      03/11/2026
+    - UC-REC-30 started
+    - Next action and date set
+    - No other cases touched
+    must_say: []
+    must_not: []
+    path:
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      stops_at: null
+      note: 'A3 handoff: opens, audits, builds the outstanding list and starts UC-REC-30 chasing.'

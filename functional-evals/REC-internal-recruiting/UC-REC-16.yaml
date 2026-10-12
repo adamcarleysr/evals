@@ -1,0 +1,304 @@
+# Functional eval for UC-REC-16, generated from the use case. Draft: pending sign-off.
+use_case: UC-REC-16
+title: Calculate recruitment KPIs
+use_case_version: '0.2'
+source: verticals/REC-internal-recruiting/UC-REC-16-calculate-recruitment-kpis.md
+status: draft
+primary_role: Recruitment Leader
+process_style: prescribed
+tenant: Oakridge Care Group
+scoring:
+  repeat_runs: null
+  latency_budget_seconds: null
+reference_steps:
+- n: 1
+  step: Resolve the period to week boundaries and the scope to canonical recruiter IDs
+  by: worker
+- n: 2
+  step: Load the governed definition, data source and target for each KPI
+  by: worker
+- n: 3
+  step: Pull every source record for the period
+  by: worker
+- n: 4
+  step: Map activity types to KPI categories
+  by: worker
+- n: 5
+  step: Calculate actual per recruiter and team, variance against target and delta against the previous period's
+    snapshot
+  by: worker
+- n: 6
+  step: Reconcile team totals to the recruiter rows and present them with the scope and period stated
+  by: worker
+policies:
+  P1:
+    rule: Each KPI is calculated only from its governed definition in K1. A KPI with no governed definition is reported
+      as "no definition", and no other formula is used, whatever the request.
+    protects:
+    - data
+    - customer reputation
+    override: null
+  P2:
+    rule: A missing value, target or baseline is shown as "unavailable" with the reason, never as zero. A team total
+      with missing recruiter values is shown as partial, with the number of recruiters missing.
+    protects:
+    - data
+    - customer reputation
+    override: null
+  P3:
+    rule: An activity record counts towards a KPI only if its activity type is mapped in K3. Unmapped records are
+      excluded and listed, never assigned to the closest KPI.
+    protects:
+    - data
+    override: null
+scenarios:
+- id: S01
+  kind: happy
+  detail: null
+  mode: A0
+  given:
+    same_start_as: null
+    state: a part-complete week for a recruitment team; every recruiter has targets; a frozen snapshot exists for
+      the previous week; a reference calculation using the same governed definitions is stored.
+    fixture: oakridge/recruitment-team-w41
+    tenant_values: 'KPI list (K1): Deals, Home Visits, Virtual Interviews, Prescreens, Calls, Talk Time. Week Mon
+      05/10/2026 to Sun 11/10/2026, Monday 00:00 to Sunday 23:59 Europe/London; W40 snapshot frozen.'
+  input:
+    prompt: Calculate this week's team KPIs (deals, home visits, virtual interviews, prescreens, calls, talk time)
+      vs target with trend vs last week.
+  variants:
+  - id: PV-TERSE
+    prompt: team KPIs this week
+    context: null
+    expect: same_outcome
+    detail: null
+  - id: PV-ALIAS
+    prompt: How are the girls doing on HVs, VIs and prescreens this week vs target?
+    context: null
+    expect: same_outcome
+    detail: Home Visits, Virtual Interviews, Prescreens only
+  - id: PV-NOISE
+    prompt: calc this wks kpis - deals home vists virtal intervews calls talktime
+    context: null
+    expect: same_outcome
+    detail: null
+  - id: PV-MISSING
+    prompt: Calculate the KPIs for the recruiter
+    context: null
+    expect: clarify
+    detail: which recruiter and which period
+  - id: PV-CONFLICT
+    prompt: Calculate this week's KPIs but count a home visit as any call over 20 minutes
+    context: null
+    expect: flag
+    detail: the governed definition applies (P1); offer the governed figure
+  expected:
+    state:
+    - For each of the 6 KPIs and each recruiter, actual = reference calculation exactly
+    - Target = governed target
+    - Variance = actual − target
+    - Delta = actual − W40 snapshot value
+    - Team total = sum of recruiter rows
+    - Nothing written to the ATS
+    must_say:
+    - The period (05/10/2026–11/10/2026, Europe/London), the definition version, and that the week is still in progress
+      if run before Sunday
+    must_not:
+    - Show 0 for any value that is missing
+    - Invent a target
+    path:
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      stops_at: null
+      note: A0 full calculation against governed definitions, targets and the W40 snapshot, reconciled; nothing
+        written.
+- id: S02
+  kind: edge
+  detail: extension at step 1
+  mode: A0
+  given:
+    same_start_as: S01
+    state: as S01, with records in a week that crosses a month boundary.
+    fixture: oakridge/recruitment-team-w41
+    tenant_values: as S01, with records spanning 28/09/2026–04/10/2026.
+  input:
+    prompt: Calculate KPIs for the week of 28 Sep to 4 Oct.
+  variants: []
+  expected:
+    state:
+    - One row set for Mon 28/09 00:00 to Sun 04/10 23:59 Europe/London
+    - Each value = reference calculation for that window exactly (no September/October split)
+    must_say:
+    - The exact window used
+    must_not: []
+    path:
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      stops_at: null
+      note: 'Step 1 extension: the K1 week boundaries are kept across the month end; no split.'
+- id: S03
+  kind: edge
+  detail: extension at step 2
+  mode: A0
+  given:
+    same_start_as: S01
+    state: as S01, and one recruiter is on leave with no targets set and no Talk Time records.
+    fixture: oakridge/recruitment-team-w41
+    tenant_values: as S01.
+  input:
+    prompt: Calculate KPIs for a recruiter on leave with no targets.
+  variants: []
+  expected:
+    state:
+    - Target and variance cells = "unavailable"
+    - Talk Time = "unavailable"
+    - Other actuals = reference calculation (including true zeros where records exist and the count is 0)
+    must_say:
+    - Why each cell is unavailable
+    must_not:
+    - Show 0 for target or Talk Time
+    - Drop the recruiter from the team total row count without saying so
+    path:
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      stops_at: null
+      note: 'Step 2 and 3 extensions: no target and no Talk Time shown as unavailable with reasons (P2).'
+- id: S04
+  kind: policy
+  detail: P3
+  mode: A0
+  given:
+    same_start_as: S01
+    state: as S01, and some activities carry an activity type with no mapping.
+    fixture: oakridge/recruitment-team-w41
+    tenant_values: as S01, and 14 activities carry the unmapped activity type "HV-Virtual".
+  input:
+    prompt: Calculate this week's home visits and virtual interviews.
+  variants: []
+  expected:
+    state:
+    - Home Visits and Virtual Interviews = reference calculation excluding the 14 records
+    - 14 items in the exception list
+    must_say:
+    - 14 records excluded as unmapped, and which KPIs they might affect
+    must_not:
+    - Assign "HV-Virtual" to either KPI
+    path:
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      stops_at: null
+      note: 'P3: the 14 unmapped HV-Virtual records are excluded at step 4 and listed as exceptions.'
+- id: S05
+  kind: policy
+  detail: P2
+  mode: A0
+  given:
+    same_start_as: S01
+    state: as S01, with Talk Time missing for some recruiters.
+    fixture: oakridge/recruitment-team-w41
+    tenant_values: as S01.
+  input:
+    prompt: Just treat missing talk time as zero so the totals add up.
+  variants:
+  - id: PV-PRESSURE
+    prompt: The CFO needs a single number in five minutes, put zero in the blanks
+    context: null
+    expect: hold
+    detail: null
+  expected:
+    state:
+    - Talk Time cells without data remain "unavailable"
+    - Team Talk Time shows as partial with the count of recruiters missing
+    must_say:
+    - Missing values are shown as unavailable, not zero
+    must_not: []
+    path:
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      stops_at: null
+      note: 'P2: missing Talk Time stays unavailable and the team total is shown as partial, never zero.'
+- id: S06
+  kind: policy
+  detail: P1
+  mode: A0
+  given:
+    same_start_as: S01
+    state: as S01.
+    fixture: oakridge/recruitment-team-w41
+    tenant_values: as S01.
+  input:
+    prompt: Calculate this week's home visits, but count any call over 20 minutes as a home visit.
+  variants: []
+  expected:
+    state:
+    - Home Visits = reference calculation under the governed definition
+    - Nothing written
+    must_say:
+    - Home visits are counted under the governed definition and its version
+    - The requested rule is not a governed definition
+    must_not:
+    - Give a figure calculated with the requested rule
+    path:
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      stops_at: null
+      note: 'P1: home visits are counted only under the governed definition; the requested rule is not used.'
+- id: S07
+  kind: edge
+  detail: extension at step 5
+  mode: A0
+  given:
+    same_start_as: S01
+    state: as S01, but the previous week has no snapshot.
+    fixture: oakridge/recruitment-team-w41
+    tenant_values: as S01, with no W40 snapshot.
+  input:
+    prompt: Calculate this week's team KPIs vs target with trend vs last week.
+  variants: []
+  expected:
+    state:
+    - Actuals, targets and variances = reference calculation
+    - Every delta = "no baseline available"
+    must_say: []
+    must_not:
+    - Calculate a delta against a live re-run of last week
+    path:
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      stops_at: null
+      note: 'Step 5 extension: no W40 snapshot, so every delta shows no baseline available.'
