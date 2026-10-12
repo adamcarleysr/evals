@@ -10,6 +10,8 @@ values:
   other_home: Frimley
   incident_reference: "<to supply>"
   pending_booking: "£450 emergency plumbing booking"
+  incident_system_name: Sue Solutions
+  hr_system_name: ADP
 
   regulator_notification: Ofsted notification
 

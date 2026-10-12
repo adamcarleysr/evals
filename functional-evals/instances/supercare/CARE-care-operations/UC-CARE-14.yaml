@@ -15,6 +15,7 @@ values:
   rm_name: Rachel Howard
   rm_home: Frimley
   other_home: Phoenix
+  hr_system_name: ADP
 
 calendar:
   locale: en-GB

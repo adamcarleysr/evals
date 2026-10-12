@@ -24,6 +24,7 @@ parameters:
   probation_home:        {kind: entity, about: "Home of a recent starter with no probation end date", example: "Rowan House"}
   probation_home_rm:     {kind: entity, about: "The RM of probation_home", example: "Nadia Okafor"}
   ambiguous_home_name:   {kind: entity, about: "A short home name that matches two canonical homes", example: "the Lodge"}
+  hr_system_name:       {kind: text,   about: "What staff call the HR system", example: "ADP"}
 
   home_mapping_owner:    {kind: policy, about: "Owner of unmapped-home issues", example: "Tom Reid"}
   role_mapping_owner:    {kind: policy, about: "Owner of unmapped-role issues", example: "Tom Reid"}
@@ -59,7 +60,7 @@ scenarios:
         - "A reference issue list of those seven issues"
         - "Two canonical homes whose names both contain {ambiguous_home_name}"
     input:
-      prompt: "Run the workforce data-quality checks on the HR system and list every issue with the employee record, the rule it breaks and the metric it affects."
+      prompt: "Run the workforce data-quality checks on {hr_system_name} and list every issue with the employee record, the rule it breaks and the metric it affects."
     variants:
       - {id: PV-TERSE, prompt: "hr data checks", expect: same_outcome}
       - {id: PV-COLLOQUIAL, prompt: "Anything messy in the employee data I should know about before the People pack goes out?", expect: same_outcome}
@@ -146,7 +147,7 @@ scenarios:
       state: "As S05, and the {leaver_home} leaver's termination reason has since been entered in the HR system."
       conditions: ["The {leaver_home} leaver's termination reason filled in after the S05 run"]
     input:
-      prompt: "{leaver_home} have added the leaver reason. Re-run and update the queue."
+      prompt: "{leaver_home} have added the leaver reason in {hr_system_name}. Re-run and update the queue."
     expected:
       state: ["That item = Resolved with the clearing run (not deleted)", "Six open"]
       path: {steps: [1, 2, 3, 4, 5], stops_at: null, note: "Extension at 4: the cleared leaver item marked Resolved with the run (P2); six open."}

@@ -15,6 +15,7 @@ values:
   emp_overdue: "<to supply>"
   emp_completed: "<to supply>"
   emp_no_hire_date: "<to supply>"
+  hr_system_name: ADP
 
   people_team_contact: Damian Williams
   final_escalation_contact: Chris Coleman

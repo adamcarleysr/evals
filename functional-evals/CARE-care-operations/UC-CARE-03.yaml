@@ -157,7 +157,7 @@ scenarios:
         - "Quote {high_quote_amount} captured and flagged above the £{auto_approve_limit} auto-approve limit"
         - "Nothing agreed; booking started for approval (UC-CARE-04)"
       must_not: ["Tell the contractor the price or the booking is agreed"]
-      path: {steps: [1, 2, 3, 4, 5, 7, 8], stops_at: null, note: "£450 captured as stated and flagged above K4 limit; nothing agreed (P3); handed to booking for approval."}
+      path: {steps: [1, 2, 3, 4, 5, 7, 8], stops_at: null, note: "The higher quote captured as stated and flagged above K4 limit; nothing agreed (P3); handed to booking for approval."}
 
   - id: S07
     kind: policy

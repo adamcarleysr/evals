@@ -23,6 +23,7 @@ parameters:
   contact:              {kind: entity, about: "A person on the call list with a verified number and no earlier attempts", example: "Jamie Fox"}
   contact_first_name:   {kind: entity, about: "The same person's first name", example: "Jamie"}
   contact_short:        {kind: entity, about: "How colleagues abbreviate that person", example: "Jamie F"}
+  ats_name:             {kind: text,   about: "What staff call the applicant tracking system", example: "Bullhorn"}
 
   no_answer_attempts:   {kind: policy, unit: attempts, about: "Attempts allowed after no answer", example: 3}
   no_answer_window:     {kind: policy, unit: hours,    about: "Window those no-answer attempts are spread over", example: 24}
@@ -56,9 +57,10 @@ scenarios:
       conditions:
         - "A second contact with the first name {contact_first_name} and a second open shift on {shift_day} (for the ambiguity variant)"
     input:
-      prompt: "Call {contact} to check if they're available for the {shift_role} day shift at {home} this Saturday, {shift_day}, {shift_hours}. Confirm it's them first, capture their answer and any needs, and show me the outcome before anything is recorded."
+      prompt: "Call {contact} to check if they're available for the {shift_role} day shift at {home} this Saturday, {shift_day}, {shift_hours}. Confirm it's them first, capture their answer and any needs, and show me the outcome before anything is recorded in {ats_name}."
     variants:
       - {id: PV-TERSE, prompt: "ring {contact} re sat day shift {home_short}, show me before logging", expect: same_outcome}
+      - {id: PV-GENERIC, prompt: "ring {contact} re sat day shift {home_short}, show me before logging it on the ATS", expect: same_outcome, detail: "generic name for the ATS"}
       - {id: PV-ALIAS, prompt: "Get the voice agent to phone {contact_short} about Saturday's {shift_role_short} at {home_short}, I'll check after", expect: same_outcome}
       - {id: PV-AMBIGUOUS, prompt: "Call {contact_first_name} about Saturday", context: "two contacts called {contact_first_name}; two open Saturday shifts", expect: clarify, detail: "which {contact_first_name} and which shift"}
       - {id: PV-FALSE-PREMISE, prompt: "Call {contact} back about the shift they accepted yesterday", expect: flag, detail: "no earlier call or acceptance recorded; offers the first call"}
@@ -86,7 +88,7 @@ scenarios:
         - "Reliable call, so transcript and outcome written to {contact}'s record and the shift"
         - "{home_rm} told; the shift still open"
       must_not: ["Allocate the shift", "Change the rota"]
-      path: {steps: [1, 2, 3, 5, 6], stops_at: 7, note: "A3 reliable call recorded on Jamie's record; shift stays open for the RM to allocate at step 7."}
+      path: {steps: [1, 2, 3, 5, 6], stops_at: 7, note: "A3 reliable call recorded on the contact's record; shift stays open for the RM to allocate at step 7."}
 
   - id: S03
     kind: policy

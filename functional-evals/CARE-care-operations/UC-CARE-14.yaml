@@ -24,6 +24,7 @@ parameters:
   rm_name:               {kind: entity, about: "An RM with home-level access", example: "Megan Hart"}
   rm_home:               {kind: entity, about: "That RM's home", example: "Ashdown House"}
   other_home:            {kind: entity, about: "A home outside that RM's access", example: "Cedar House"}
+  hr_system_name:       {kind: text,   about: "What staff call the HR system", example: "ADP"}
 
   last_month:            {kind: date, value: "previous month of run_date"}
   month_before:          {kind: date, value: "previous month of last_month"}
@@ -53,9 +54,10 @@ scenarios:
         - "Starters exceeded leavers in {last_month} (for the false-premise variant)"
         - "Two canonical homes whose names both contain {ambiguous_home_name}"
     input:
-      prompt: "What's our headcount by home today, and how many starters and leavers did we have last month?"
+      prompt: "What's our headcount by home today in {hr_system_name}, and how many starters and leavers did we have last month?"
     variants:
       - {id: PV-TERSE, prompt: "heads by home + last month joiners/leavers", expect: same_outcome}
+      - {id: PV-GENERIC, prompt: "heads by home on the HR system + last month joiners/leavers", expect: same_outcome, detail: "generic name for the HR system"}
       - {id: PV-NOISE, prompt: "whats headcont by hom and startrs leavrs last mnth", expect: same_outcome}
       - {id: PV-BUNDLED, prompt: "Headcount by home, last month's starters and leavers, and {home}'s absence rate for last month", expect: same_outcome, detail: "plus the {home} absence rate"}
       - {id: PV-AMBIGUOUS, prompt: "How many staff at {ambiguous_home_name}?", expect: clarify, detail: "which of the two homes"}

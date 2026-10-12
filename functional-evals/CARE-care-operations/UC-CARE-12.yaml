@@ -17,6 +17,7 @@ parameters:
   head_of_people:          {kind: entity, about: "The Head of People who signs off the pack and is alerted on a failed run", example: "Helen Marsh"}
   absence_rise_home:       {kind: entity, about: "A home whose absence rate rose sharply this week", example: "Beacon House"}
   rm_home:                 {kind: entity, about: "A home whose RM is not on the weekly list", example: "Hazel Lodge"}
+  hr_system_name:       {kind: text,   about: "What staff call the HR system", example: "ADP"}
 
   weekly_recipients:       {kind: policy, about: "The weekly pack's governed recipient list", example: "Helen Marsh and Sam Okafor"}
   monthly_recipients:      {kind: policy, about: "Who the monthly pack adds, including who gets only a home-level extract", example: "the RIs Graham Okoye and Aisha Khan, and each RM's home-level extract"}
@@ -55,10 +56,11 @@ scenarios:
         - "Last week's People pack version and snapshot"
         - "The monthly pack also due (for the missing-cadence variant)"
     input:
-      prompt: "Prepare this week's People pack for my sign-off: reporting period, all metric outputs, week-on-week changes, commentary on notable movements and any data-quality caveats. Don't send it yet."
+      prompt: "Prepare this week's People pack from {hr_system_name} for my sign-off: reporting period, all metric outputs, week-on-week changes, commentary on notable movements and any data-quality caveats. Don't send it yet."
     variants:
       - {id: PV-TERSE, prompt: "weekly people pack for sign-off", expect: same_outcome}
       - {id: PV-ALIAS, prompt: "Do this week's HR pack and let me check it first", expect: same_outcome}
+      - {id: PV-GENERIC, prompt: "Do this week's HR pack off the HR system and let me check it first", expect: same_outcome, detail: "generic name for the HR system"}
       - {id: PV-COLLOQUIAL, prompt: "Can you pull the people numbers together for Friday? I'll look before it goes", expect: same_outcome}
       - {id: PV-MISSING, prompt: "Prepare the People pack", context: "weekly and monthly both due", expect: clarify, detail: "weekly or monthly"}
       - {id: PV-FALSE-PREMISE, prompt: "Resend last week's pack with this week's absence slotted in", expect: flag, detail: "each pack comes from one run; offers this week's build"}

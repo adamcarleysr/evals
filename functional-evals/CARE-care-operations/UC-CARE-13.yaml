@@ -21,6 +21,7 @@ parameters:
   filter_role:           {kind: entity, about: "A canonical role with employees in post at that home", example: "Senior Coach"}
   ri_name:               {kind: entity, about: "An RI whose region does not include the filter home", example: "Aisha Khan"}
   ri_region:             {kind: entity, about: "That RI's region", example: "South"}
+  hr_system_name:       {kind: text,   about: "What staff call the HR system", example: "ADP"}
 
   employment_types:      {kind: text,   about: "The provider's employment types, as staff name them", example: "permanent, bank and fixed-term"}
   undefined_metric:      {kind: text,   about: "A dashboard metric with no governed definition", example: "retention"}
@@ -58,10 +59,11 @@ scenarios:
         - "Five open items in the data-quality queue"
         - "{head_of_people} has this dashboard and a second view pinned (for the ambiguity variant)"
     input:
-      prompt: "Show me the Head of People dashboard with retention, absence, starters and leavers, probation, service length and data quality. Filter to the {region} region, then switch to company-wide with a breakdown by employment type."
+      prompt: "Show me the Head of People dashboard with retention, absence, starters and leavers, probation, service length and data quality. Filter to the {region} region, then switch to company-wide with a breakdown by employment type as recorded in {hr_system_name}."
     variants:
       - {id: PV-TERSE, prompt: "people dashboard, {region}, then all by employment type", expect: same_outcome}
       - {id: PV-ALIAS, prompt: "Open my HR dash for the {region} homes, then whole company split {employment_types}", expect: same_outcome}
+      - {id: PV-GENERIC, prompt: "Open my HR dash for the {region} homes, then whole company split {employment_types} as the HR system has them", expect: same_outcome, detail: "generic name for the HR system"}
       - {id: PV-CONTEXT, prompt: "Now the same but company-wide by contract type", context: "after the {region} view", expect: same_outcome, detail: "company-wide part"}
       - {id: PV-AMBIGUOUS, prompt: "Show me the dashboard", context: "the viewer has this and a compliance view pinned", expect: clarify, detail: "which dashboard"}
       - {id: PV-FALSE-PREMISE, prompt: "Why has the dashboard stopped showing data-quality issues?", context: "five are shown", expect: flag, detail: "five are open and shown"}

@@ -19,6 +19,8 @@ parameters:
   other_home:              {kind: entity, about: "Another home of the same provider that also has open items", example: "Willow Lodge"}
   incident_reference:      {kind: entity, about: "An open incident at the home with a regulator notification held for approval", example: "INC-AH-2026-00203"}
   pending_booking:         {kind: entity, about: "A contractor booking at the home waiting on the RM's approval (within the RM approval band)", example: "£320 plumbing booking"}
+  incident_system_name: {kind: text,   about: "What staff call the incident system", example: "Sue Solutions"}
+  hr_system_name:       {kind: text,   about: "What staff call the HR system", example: "ADP"}
 
   regulator_notification:  {kind: text,   about: "What the provider calls the notification to its regulator", example: "Ofsted notification"}
 
@@ -53,11 +55,12 @@ scenarios:
         - "A rota write for {home} whose read-back failed yesterday, in the event log"
         - "An RI user covering three homes including {home} (for the missing-scope variant)"
     input:
-      prompt: "Show me the attention view for {home}: open maintenance cases, incident follow-ups due, rota issues, pending approvals and failed jobs, each linked to its case or record with owner, due date, status and any blocker."
+      prompt: "Show me the attention view for {home}: open maintenance cases, incident follow-ups due in {incident_system_name}, rota issues from {hr_system_name}, pending approvals and failed jobs, each linked to its case or record with owner, due date, status and any blocker."
     variants:
       - {id: PV-TERSE, prompt: "{home} attention view", expect: same_outcome}
       - {id: PV-COLLOQUIAL, prompt: "What's on fire at {home} today?", expect: same_outcome}
       - {id: PV-ALIAS, prompt: "Open my home manager dashboard for {home}", expect: same_outcome}
+      - {id: PV-GENERIC, prompt: "Open my home manager dashboard for {home}, with what's due on the incident system and the rota system", expect: same_outcome, detail: "generic names for the incident system and HR system"}
       - {id: PV-MISSING, prompt: "Show me the attention view", context: "the asker is an RI with three homes", expect: clarify, detail: "which home, or all homes in the region"}
       - {id: PV-FALSE-PREMISE, prompt: "Show me the five approvals waiting on me at {home}", expect: flag, detail: "two approvals are waiting"}
     expected:

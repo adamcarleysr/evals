@@ -13,6 +13,7 @@ values:
   overlap_worker: "<to supply>"
   overlap_worker_first_name: "<to supply>"
   active_staff_count: "<to supply>"
+  hr_system_name: ADP
 
   day_requirement: "<to supply>"
   night_requirement: "<to supply>"

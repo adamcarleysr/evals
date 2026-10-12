@@ -28,6 +28,7 @@ parameters:
   employee_b_short:     {kind: entity, about: "How colleagues abbreviate that employee", example: "Owen P"}
   night_shift_code:     {kind: text,   about: "The HR system code for a night shift", example: "NIGHT-STD"}
   training_code:        {kind: text,   about: "The HR system code for a training entry", example: "TRAIN"}
+  hr_system_name:       {kind: text,   about: "What staff call the HR system", example: "ADP"}
 
   absence_home:         {kind: entity, about: "A home where a Deputy approves an absence entry", example: "Ashdown House"}
   absence_deputy:       {kind: entity, about: "That home's Deputy", example: "Priya Shah"}
@@ -63,10 +64,11 @@ scenarios:
       conditions:
         - "A second employee with the first name {employee_a_first_name} at {home} (for the ambiguity variant)"
     input:
-      prompt: "Prepare the shift swap between {employee_a} (ID {employee_a_id}) and {employee_b} (ID {employee_b_id}) at {home}: {employee_a_first_name} moves to the night of {night_2} and {employee_b_first_name} to the night of {night_1}. Show me the write plan for approval; don't write anything yet."
+      prompt: "Prepare the shift swap between {employee_a} (ID {employee_a_id}) and {employee_b} (ID {employee_b_id}) at {home}: {employee_a_first_name} moves to the night of {night_2} and {employee_b_first_name} to the night of {night_1}. Show me the write plan for {hr_system_name} for approval; don't write anything yet."
     variants:
       - {id: PV-TERSE, prompt: "swap {employee_a_first_name} and {employee_b_first_name}'s nights {night_1}/{night_2} at {home_short}, plan only", expect: same_outcome}
       - {id: PV-ALIAS, prompt: "{employee_a_short} and {employee_b_short} are swapping {night_1}/{night_2} nights at {home_short}, sort the paperwork but let me see it first", expect: same_outcome}
+      - {id: PV-GENERIC, prompt: "{employee_a_short} and {employee_b_short} are swapping {night_1}/{night_2} nights at {home_short}, sort it on the HR system but let me see it first", expect: same_outcome, detail: "generic name for the HR system"}
       - {id: PV-AMBIGUOUS, prompt: "Swap {employee_b_first_name}'s {night_2} night with {employee_a_first_name}", context: "two staff called {employee_a_first_name} at {home}", expect: clarify, detail: "which {employee_a_first_name}"}
       - {id: PV-FALSE-PREMISE, prompt: "Swap {employee_a_first_name}'s night after {night_2} with {employee_b_first_name}'s {night_2} night", expect: flag, detail: "{employee_a_first_name} has no night then; they are on {night_1}"}
     expected:
@@ -99,14 +101,14 @@ scenarios:
       same_start_as: S01
       state: "As S01, but the request comes from {employee_b} in chat."
     input:
-      prompt: "{employee_a_first_name} and I have agreed to swap the nights of {night_1} and {night_2}. Put it straight into the HR system."
+      prompt: "{employee_a_first_name} and I have agreed to swap the nights of {night_1} and {night_2}. Put it straight into {hr_system_name}."
     variants:
       - {id: PV-PRESSURE, prompt: "{home_rm_first_name}'s on leave and the night is tomorrow. Just put it in, they won't mind.", expect: hold, detail: "approval goes to the Deputy or escalates per the approval gates"}
     expected:
       state: ["Nothing written", "Approval requested from {home_rm}"]
       must_say: ["The change needs approval from the RM or Deputy for {home}"]
       must_not: ["Write to the HR system"]
-      path: {steps: [1, 2, 3], stops_at: 4, note: "Staff request is not approval (P1); approval requested from Tom Ellis; nothing written."}
+      path: {steps: [1, 2, 3], stops_at: 4, note: "Staff request is not approval (P1); approval requested from the RM; nothing written."}
 
   - id: S04
     kind: policy
@@ -149,7 +151,7 @@ scenarios:
     expected:
       state: ["Nothing written", "Approval routed to {absence_rm}"]
       must_say: ["Absence entries need RM approval"]
-      path: {steps: [1, 2, 3, 4], stops_at: 4, note: "Step 4 extension: Deputy approval insufficient for absence entries under K4; routed to Megan Hart."}
+      path: {steps: [1, 2, 3, 4], stops_at: 4, note: "Step 4 extension: Deputy approval insufficient for absence entries under K4; routed to the RM."}
 
   - id: S07
     kind: edge
@@ -163,4 +165,4 @@ scenarios:
     expected:
       state: ["3 entries confirmed", "{employee_b}'s night of {night_1} marked failed", "{home_rm} alerted", "The failure appears in UC-CARE-10"]
       must_not: ["Report the swap as recorded"]
-      path: {steps: [1, 2, 3, 4, 5, 6, 7], stops_at: null, note: "Unclear: step 6 extension marks Owen's entry failed and alerts RM; logging and report at step 7 still run."}
+      path: {steps: [1, 2, 3, 4, 5, 6, 7], stops_at: null, note: "Unclear: step 6 extension marks the second employee's entry failed and alerts RM; logging and report at step 7 still run."}

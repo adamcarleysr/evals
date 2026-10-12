@@ -153,7 +153,7 @@ scenarios:
         - "\"Urgent safety risk\" proposed to {home_rm} with the reason"
         - "Not recorded as urgent safety risk"
       must_not: ["Record the urgent-safety-risk classification itself"]
-      path: {steps: [1, 2, 3, 4, 5, 6], stops_at: null, note: "Step 3 extension: proposes urgent safety risk to Megan Hart with reason; does not record it (P3)."}
+      path: {steps: [1, 2, 3, 4, 5, 6], stops_at: null, note: "Step 3 extension: proposes urgent safety risk to the RM with reason; does not record it (P3)."}
 
   - id: S06
     kind: happy

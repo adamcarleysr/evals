@@ -24,6 +24,7 @@ parameters:
   emp_overdue:               {kind: entity, about: "Employee at home_a whose review date is today, no outcome recorded", example: "Ben Walsh"}
   emp_completed:             {kind: entity, about: "Employee at home_b with a pass already recorded", example: "Lucy Grant"}
   emp_no_hire_date:          {kind: entity, about: "Employee in probation with no hire date in the HR system", example: "Callum Ross"}
+  hr_system_name:       {kind: text,   about: "What staff call the HR system", example: "ADP"}
 
   people_team_contact:       {kind: policy, about: "People team contact copied on overdue alerts", example: "Tom Reid"}
   final_escalation_contact:  {kind: policy, about: "Who receives the escalation with the final notice", example: "Helen Marsh"}
@@ -68,10 +69,11 @@ scenarios:
         - "Reminder history: initial reminder for {emp_due} on {initial_sent}; initial and urgent reminders for {emp_overdue}"
         - "A pass outcome recorded for {emp_completed}"
     input:
-      prompt: "List everyone with an upcoming, due or overdue probation review and draft the reminders to their managers for approval."
+      prompt: "Check {hr_system_name} and list everyone with an upcoming, due or overdue probation review and draft the reminders to their managers for approval."
     variants:
       - {id: PV-TERSE, prompt: "probation reminders", expect: same_outcome}
       - {id: PV-ALIAS, prompt: "Who's got probation reviews coming up? Nudge their RMs", expect: same_outcome, detail: "drafts, not sent"}
+      - {id: PV-GENERIC, prompt: "Who's got probation reviews coming up on the HR system? Nudge their RMs", expect: same_outcome, detail: "generic name for the HR system"}
       - {id: PV-BUNDLED, prompt: "List upcoming, due and overdue probation reviews, draft the reminders, and make sure nobody gets the same one twice", expect: same_outcome}
       - {id: PV-MISSING, prompt: "Chase the manager about the probation review", expect: clarify, detail: "which employee, or all open reviews"}
       - {id: PV-FALSE-PREMISE, prompt: "Remind {rm_b} that {emp_completed}'s review is due", expect: flag, detail: "a pass is already recorded for {emp_completed}; no reminder"}

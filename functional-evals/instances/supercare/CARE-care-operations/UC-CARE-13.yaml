@@ -12,6 +12,7 @@ values:
   filter_role: Senior Coach
   ri_name: Charley Hooper
   ri_region: "Eastbourne and Hastings"
+  hr_system_name: ADP
 
   employment_types: "<to supply>"
   undefined_metric: retention

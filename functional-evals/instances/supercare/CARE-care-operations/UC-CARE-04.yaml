@@ -25,6 +25,7 @@ values:
   rm_band_excess: £200
   second_contractor: "<to supply>"
   second_quote: "<to supply>"
+  calendar_name: "<to supply>"
 
   senior_home: Phoenix
   senior_case_ref: "<to supply>"

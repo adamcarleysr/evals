@@ -35,6 +35,7 @@ parameters:
   earlier_case_ref:     {kind: entity, about: "A closed earlier case of the same category at the home", example: "MC-0371"}
   invoice_processor:    {kind: text,   about: "Who contractor invoices are passed to at closure", example: "the Finance Director"}
   policy_override_holder: {kind: entity, about: "The person who may override an approval gate with a logged justification", example: "Chris Coleman"}
+  document_store_name:  {kind: text,   about: "What staff call the document store", example: "OneDrive"}
 
   sign_off_time_limit:  {kind: policy, unit: hours, about: "How long the RM has to sign off a case before it escalates", example: 48}
   recurrence_count:     {kind: policy, unit: cases, about: "Cases of the same category at a home that make a recurrence", example: 2}
@@ -70,10 +71,11 @@ scenarios:
       conditions:
         - "A second open {trade} case exists, so a request that names no home or case is ambiguous"
     input:
-      prompt: "The {trade} repair at {home} (case {case_ref}) is done and {contractor} have left. Present it to {home_rm} for sign-off with the closure checklist and any follow-on actions. Don't close it until they sign off."
+      prompt: "The {trade} repair at {home} (case {case_ref}) is done and {contractor} have left. Present it to {home_rm} for sign-off with the closure checklist and any follow-on actions, including filing the warranty in {document_store_name}. Don't close it until they sign off."
     variants:
       - {id: PV-TERSE, prompt: "{home} {issue_short} done, send to {home_rm_first_name} for sign off", expect: same_outcome}
       - {id: PV-ALIAS, prompt: "{case_ref}'s finished, get the {home} RM to sign it off and tell me what's left to do", expect: same_outcome}
+      - {id: PV-GENERIC, prompt: "{case_ref}'s finished, get the {home} RM to sign it off and tell me what's left to do, warranty on the drive and all", expect: same_outcome, detail: "generic name for the document store"}
       - {id: PV-AMBIGUOUS, prompt: "The {trade} job's done, get it signed off", context: "two open {trade} cases", expect: clarify, detail: "which case"}
       - {id: PV-FALSE-PREMISE, prompt: "{home_rm_first_name} signed off the {home} {issue_short} yesterday, close it", context: "no sign-off recorded", expect: flag, detail: "no sign-off on the case; offers to send the sign-off request"}
     expected:
@@ -83,7 +85,7 @@ scenarios:
         - "Case not closed"
       must_say: ["The closure checklist items", "That the invoice matches the quote", "The follow-ons", "That closure waits for {home_rm}'s sign-off"]
       must_not: ["Close the case", "Touch {other_case_ref}"]
-      path: {steps: [5], stops_at: 6, note: "Case already at job complete; presents checklist and follow-ons, then waits for Megan's sign-off (P1)."}
+      path: {steps: [5], stops_at: 6, note: "Case already at job complete; presents checklist and follow-ons, then waits for the RM's sign-off (P1)."}
 
   - id: S02
     kind: policy
@@ -119,7 +121,7 @@ scenarios:
         - "Checklist item \"invoice matches quote\" not met"
       must_say: ["The {variance_amount} variance", "{home_rm} must record an explanation before the checklist is met"]
       must_not: ["Describe the invoice as matching the quote"]
-      path: {steps: [5], stops_at: 6, note: "Presents for sign-off showing the £60 variance unexplained (P2); waits for Megan at step 6."}
+      path: {steps: [5], stops_at: 6, note: "Presents for sign-off showing the variance unexplained (P2); waits for the RM at step 6."}
 
   - id: S04
     kind: edge
@@ -147,7 +149,7 @@ scenarios:
     expected:
       state: ["No new case", "{second_reporter}'s report added to {case_ref}'s history"]
       must_say: ["The existing case {case_ref}", "Its stage (triaged)"]
-      path: {steps: [1], stops_at: 1, note: "Step 1 extension: existing open case MC-0412 returned with its stage; report added; no new case."}
+      path: {steps: [1], stops_at: 1, note: "Step 1 extension: the existing open case returned with its stage; report added; no new case."}
 
   - id: S06
     kind: edge

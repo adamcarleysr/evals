@@ -15,6 +15,7 @@ values:
   probation_home: Heroes Haven
   probation_home_rm: Becky Silvester
   ambiguous_home_name: Lushington
+  hr_system_name: ADP
 
   home_mapping_owner: "<to supply>"
   role_mapping_owner: Hayley Harkins

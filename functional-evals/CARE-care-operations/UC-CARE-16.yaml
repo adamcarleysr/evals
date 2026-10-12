@@ -26,6 +26,7 @@ parameters:
   emp_consecutive:            {kind: entity, about: "Employee at home_b at the consecutive-days trigger", example: "Leah Morris"}
   emp_noncounting:            {kind: entity, about: "Employee at home_a with only absence types that don't count", example: "Owen Price"}
   emp_immediate:              {kind: entity, about: "Employee at home_a with an absence of the immediate-alert type recorded today", example: "Kieran Doyle"}
+  hr_system_name:       {kind: text,   about: "What staff call the HR system", example: "ADP"}
 
   short_trigger_count:        {kind: policy, unit: instances, about: "Instances in the short rolling window that trigger an alert", example: 3}
   short_trigger_window:       {kind: policy, about: "The short rolling window", example: "3 months"}
@@ -69,10 +70,11 @@ scenarios:
         - "{emp_noncounting}: two annual leave absences and one compassionate leave absence"
         - "Two canonical homes whose names both contain {ambiguous_home_name}"
     input:
-      prompt: "Which employees have hit an absence trigger this month? Draft the alerts to their managers for approval."
+      prompt: "Which employees in {hr_system_name} have hit an absence trigger this month? Draft the alerts to their managers for approval."
     variants:
       - {id: PV-TERSE, prompt: "absence triggers this month", expect: same_outcome}
       - {id: PV-COLLOQUIAL, prompt: "Has anyone's sickness tipped over our policy limits? Let the RMs know.", expect: same_outcome, detail: "drafts, not sent"}
+      - {id: PV-GENERIC, prompt: "Has anyone's sickness on the HR system tipped over our policy limits? Let the RMs know.", expect: same_outcome, detail: "generic name for the HR system"}
       - {id: PV-BUNDLED, prompt: "Which employees hit absence triggers this month and which managers were reminded?", expect: same_outcome, detail: "plus \"no alerts sent yet\""}
       - {id: PV-AMBIGUOUS, prompt: "Check absence triggers at {ambiguous_home_name}", expect: clarify, detail: "which of the two homes"}
       - {id: PV-FALSE-PREMISE, prompt: "Draft {emp_noncounting}'s {long_trigger_step} alert, they've had loads of time off", expect: flag, detail: "{emp_noncounting}'s absences don't count towards a trigger"}

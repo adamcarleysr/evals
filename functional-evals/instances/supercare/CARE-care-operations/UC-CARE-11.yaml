@@ -10,6 +10,7 @@ values:
   home_without_absence: "<to supply>"
   unmapped_home_code: Frimley Annex
   employee_name: "<to supply>"
+  hr_system_name: ADP
 
   undefined_metric: retention
   related_metric: turnover rate

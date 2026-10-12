@@ -20,6 +20,7 @@ parameters:
   overlap_worker:       {kind: entity, about: "A worker rostered on overlapping shifts, later also off sick on two days", example: "Ryan Cole"}
   overlap_worker_first_name: {kind: entity, about: "The same worker's first name", example: "Ryan"}
   active_staff_count:   {kind: entity, about: "The number of active employees mapped to the home", example: 14}
+  hr_system_name:       {kind: text,   about: "What staff call the HR system", example: "ADP"}
 
   day_requirement:      {kind: policy, unit: staff, about: "Minimum staff on a day shift at the home", example: 3}
   night_requirement:    {kind: policy, unit: staff, about: "Minimum staff on a night shift at the home", example: 2}
@@ -52,10 +53,11 @@ scenarios:
       conditions:
         - "The asker for PV-MISSING manages no single home"
     input:
-      prompt: "Show me this week's rota for {home} from the HR system and summarise any staffing gaps, shift coverage issues or anomalies. Read-only: don't change anything."
+      prompt: "Show me this week's rota for {home} from {hr_system_name} and summarise any staffing gaps, shift coverage issues or anomalies. Read-only: don't change anything."
     variants:
       - {id: PV-TERSE, prompt: "{home_short} rota this week, any gaps?", expect: same_outcome}
       - {id: PV-ALIAS, prompt: "Any holes in the {home_short} roster for w/c {week_start}?", expect: same_outcome}
+      - {id: PV-GENERIC, prompt: "Any holes in the {home_short} roster on the HR system for w/c {week_start}?", expect: same_outcome, detail: "generic name for the HR system"}
       - {id: PV-COLLOQUIAL, prompt: "I'm worried we're short at {home_short} this week, can you have a look at the rota?", expect: same_outcome}
       - {id: PV-MISSING, prompt: "Check the rota for gaps", context: "the asker manages no single home", expect: clarify, detail: "which home and which week"}
       - {id: PV-FALSE-PREMISE, prompt: "Why is Saturday night uncovered at {home}?", expect: flag, detail: "Saturday night has {night_requirement} of {night_requirement}; the gap is Wednesday night"}
@@ -102,7 +104,7 @@ scenarios:
       state: ["Nothing written"]
       must_say: ["The rota summary, with {overlap_worker}'s two days of recorded sick leave and the shifts affected"]
       must_not: ["Comment on {overlap_worker_first_name}'s reliability", "Guess why they were off"]
-      path: {steps: [1, 2, 3, 4, 5], stops_at: null, note: "Summary states recorded sick leave only; no comment on Ryan Cole's reliability (P2)."}
+      path: {steps: [1, 2, 3, 4, 5], stops_at: null, note: "Summary states recorded sick leave only; no comment on the worker's reliability (P2)."}
 
   - id: S04
     kind: edge
@@ -145,4 +147,4 @@ scenarios:
       state: ["Nothing written"]
       must_say: ["The rota assembled from the {active_staff_count} employees' entries", "That it was assembled this way"]
       must_not: ["Leave out any active employee mapped to the home"]
-      path: {steps: [1, 2, 3, 4, 5], stops_at: null, note: "Step 2 extension: rota assembled from all 14 active employees' entries, and the answer says so."}
+      path: {steps: [1, 2, 3, 4, 5], stops_at: null, note: "Step 2 extension: rota assembled from all the active employees' entries, and the answer says so."}

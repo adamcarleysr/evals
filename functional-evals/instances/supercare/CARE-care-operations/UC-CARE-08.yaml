@@ -21,6 +21,7 @@ values:
   employee_b_short: "<to supply>"
   night_shift_code: NIGHT-STD
   training_code: TRAIN
+  hr_system_name: ADP
 
   absence_home: Phoenix
   absence_deputy: "<to supply>"

@@ -16,6 +16,7 @@ values:
   contact: Joshua Woodman
   contact_first_name: Joshua
   contact_short: "<to supply>"
+  ats_name: Bullhorn
 
   no_answer_attempts: 3
   no_answer_window: 24

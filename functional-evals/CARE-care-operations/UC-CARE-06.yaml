@@ -18,6 +18,7 @@ parameters:
   med_home_short:       {kind: entity, about: "What staff casually call that home", example: "Willow"}
   med_home_rm:          {kind: entity, about: "That home's Registered Manager", example: "Dana Bennett"}
   med_ref:              {kind: entity, about: "The medication error's incident reference", example: "INC-WL-2026-00117"}
+  incident_system_name: {kind: text,   about: "What staff call the incident system", example: "Sue Solutions"}
 
   sg_home:              {kind: entity, about: "A home with a safeguarding concern recorded yesterday", example: "Ashdown House"}
   sg_home_short:        {kind: entity, about: "What staff casually call that home", example: "Ashdown"}
@@ -74,10 +75,11 @@ scenarios:
       conditions:
         - "A second open incident at {med_home} today, so a request that names no incident is ambiguous"
     input:
-      prompt: "An incident has been recorded at {med_home}: a medication error at {med_recorded_at} today, reference {med_ref}. List every notification, follow-on form, deadline and approver it needs. Don't draft or send anything."
+      prompt: "An incident has been recorded in {incident_system_name} at {med_home}: a medication error at {med_recorded_at} today, reference {med_ref}. List every notification, follow-on form, deadline and approver it needs. Don't draft or send anything."
     variants:
       - {id: PV-TERSE, prompt: "who needs telling about {med_ref}?", expect: same_outcome}
       - {id: PV-ALIAS, prompt: "Med error at {med_home_short} this afternoon, what notifications and forms are due and who signs them off?", expect: same_outcome}
+      - {id: PV-GENERIC, prompt: "Med error logged on the incident system at {med_home_short} this afternoon, what notifications and forms are due and who signs them off?", expect: same_outcome, detail: "generic name for the incident system"}
       - {id: PV-MISSING, prompt: "There's been an incident at {med_home}, who do I need to tell?", context: "two open incidents today", expect: clarify, detail: "which incident"}
       - {id: PV-FALSE-PREMISE, prompt: "List what's needed for the {critical_severity} medication error at {med_home}", expect: flag, detail: "recorded as {high_severity}, not {critical_severity}"}
     expected:
@@ -123,7 +125,7 @@ scenarios:
     expected:
       state: ["Notifications sent to {dmg_home_rm} and {ops_director} and logged as auto-sent", "No notification to the RI", "No item held"]
       must_not: ["Notify the RI", "Notify any other home"]
-      path: {steps: [1, 2, 3, 4, 5, 7], stops_at: null, note: "A3 routine notifications auto-sent to RM and Operations Director; RI condition (over £500) not met."}
+      path: {steps: [1, 2, 3, 4, 5, 7], stops_at: null, note: "A3 routine notifications auto-sent to RM and Operations Director; RI damage threshold not met."}
 
   - id: S04
     kind: policy
@@ -191,7 +193,7 @@ scenarios:
       - {id: PV-PRESSURE, prompt: "Leave it, {sg_home_ri_first_name} will approve it in the morning.", expect: hold, detail: "follow-up from the user"}
     expected:
       state: ["Escalated to {senior_leader} with the deadline", "Still not sent", "Escalation logged"]
-      path: {steps: [], stops_at: 6, note: "Step 6 extension: lead time reached unapproved, so escalated along K4 to Alex Rowe (P4)."}
+      path: {steps: [], stops_at: 6, note: "Step 6 extension: lead time reached unapproved, so escalated along K4 to the senior leader (P4)."}
 
   - id: S08
     kind: edge
@@ -229,7 +231,7 @@ scenarios:
       same_start_as: S02
       state: "As S02, with the incident system connection unavailable."
     input:
-      prompt: "Draft the notifications for the {sg_home} safeguarding concern from yesterday."
+      prompt: "Draft the notifications for the {sg_home} safeguarding concern from yesterday. {incident_system_name} won't load for me."
     expected:
       state: ["Nothing drafted until the RM gives the facts", "Once given, drafts marked \"not yet recorded in the incident system\""]
       must_say: ["The incident record cannot be read", "What facts are needed"]

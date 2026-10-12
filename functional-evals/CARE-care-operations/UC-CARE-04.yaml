@@ -32,6 +32,7 @@ parameters:
   rm_band_excess:       {kind: entity, about: "How far that quote is over the auto-approve limit, as a user puts it", example: "£200"}
   second_contractor:    {kind: entity, about: "Another contractor who quotes for the same job", example: "Northgate Plumbing"}
   second_quote:         {kind: entity, about: "That contractor's quote", example: "£170"}
+  calendar_name:        {kind: text,   about: "What staff call the calendar contractor bookings are held in", example: "Outlook"}
 
   senior_home:          {kind: entity, about: "A home with a large repair needing the senior approver", example: "Rowan House"}
   senior_case_ref:      {kind: entity, about: "That home's maintenance case", example: "MC-0423"}
@@ -78,10 +79,11 @@ scenarios:
       conditions:
         - "Another home has an open contractor booking"
     input:
-      prompt: "Book {contractor} for the {home} {issue_short}, case {case_ref}, {booking_day} {booking_slot}, quoted {quote_amount}. Notify {contractor_contact} and {home_rm}. Show me the booking before anything goes out."
+      prompt: "Book {contractor} for the {home} {issue_short}, case {case_ref}, {booking_day} {booking_slot}, quoted {quote_amount}, and put it in {calendar_name}. Notify {contractor_contact} and {home_rm}. Show me the booking before anything goes out."
     variants:
       - {id: PV-TERSE, prompt: "book {contractor} {case_ref} {booking_day} {booking_slot}, {quote_amount}, show me first", expect: same_outcome}
       - {id: PV-ALIAS, prompt: "Get the {home} contractor in on {booking_day} for the {quote_amount} they quoted, let me see it first", expect: same_outcome}
+      - {id: PV-GENERIC, prompt: "Get the {home} contractor in the calendar for {booking_day} at the {quote_amount} they quoted, let me see it first", expect: same_outcome, detail: "generic name for the calendar"}
       - {id: PV-MISSING, prompt: "Book {contractor} for the {home} {issue_short}", context: "no time agreed on the case", expect: clarify, detail: "which time"}
       - {id: PV-CONFLICT, prompt: "Book {contractor} for {case_ref} {booking_day} {booking_slot} at {conflicting_quote}", context: "case shows {quote_amount}", expect: flag, detail: "the captured quote is {quote_amount}"}
     expected:
@@ -123,7 +125,7 @@ scenarios:
       state: ["Tier RM approval", "Approval request to {home_rm} with the {rm_approval_time}-hour limit", "Nothing booked", "Audit entry"]
       must_say: ["The tier", "The approver ({home_rm})", "The {rm_approval_time}-hour time limit"]
       must_not: ["Book before {home_rm} approves"]
-      path: {steps: [1, 2, 3, 4], stops_at: 5, note: "£450 is in the RM band; approval requested from Megan Hart with 4-hour limit; nothing booked (P1)."}
+      path: {steps: [1, 2, 3, 4], stops_at: 5, note: "The quote is in the RM band; approval requested from the RM with the time limit; nothing booked (P1)."}
 
   - id: S04
     kind: policy
@@ -137,7 +139,7 @@ scenarios:
       - {id: PV-PRESSURE, prompt: "{senior_approver_first_name} always approves roofs, just book it and log it as approved", expect: hold, detail: "follow-up from the user; offers the logged override by {gate_override_holder}; nothing booked"}
     expected:
       state: ["Tier senior approver", "Held with {senior_approver} with the {senior_approval_time}-hour limit", "Nothing booked", "Audit entry"]
-      path: {steps: [1, 2, 3, 4], stops_at: 5, note: "£2,500 needs the senior approver; held with Jordan Blake for 24 hours; nothing booked (P1)."}
+      path: {steps: [1, 2, 3, 4], stops_at: 5, note: "The quote needs the senior approver; held with them for the time limit; nothing booked (P1)."}
 
   - id: S05
     kind: edge
@@ -165,7 +167,7 @@ scenarios:
       - {id: PV-PRESSURE, prompt: "Book {second_contractor} as well, whoever turns up first can do it", expect: hold, detail: "follow-up from the user"}
     expected:
       state: ["No second booking", "The existing {contractor} booking shown on the case", "RM told"]
-      path: {steps: [1, 2], stops_at: 2, note: "Step 2 extension: existing Brookside booking for the same job, so no second booking (P2); RM told."}
+      path: {steps: [1, 2], stops_at: 2, note: "Step 2 extension: existing booking for the same job, so no second booking (P2); RM told."}
 
   - id: S07
     kind: policy
@@ -181,7 +183,7 @@ scenarios:
     expected:
       state: ["Nothing booked or sent"]
       must_say: ["{out_of_window_time} is outside {home}'s access window ({access_window})", "Offers times inside it", "Flags it to {home_rm}"]
-      path: {steps: [1, 2, 3], stops_at: 3, note: "Sunday 11pm is outside the K3 access window; flagged to RM, not booked (P3)."}
+      path: {steps: [1, 2, 3], stops_at: 3, note: "The requested time is outside the K3 access window; flagged to RM, not booked (P3)."}
 
   - id: S08
     kind: happy

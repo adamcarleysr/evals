@@ -17,6 +17,7 @@ values:
   emp_consecutive: "<to supply>"
   emp_noncounting: "<to supply>"
   emp_immediate: "<to supply>"
+  hr_system_name: ADP
 
   short_trigger_count: 3
   short_trigger_window: "3 months"

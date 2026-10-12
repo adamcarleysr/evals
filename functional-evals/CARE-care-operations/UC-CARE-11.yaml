@@ -19,6 +19,7 @@ parameters:
   home_without_absence:     {kind: entity, about: "A home with no absence records for last month", example: "Larch House"}
   unmapped_home_code:       {kind: entity, about: "A home value carried by active employees in the HR system that maps to no canonical home", example: "OCG-ASH2"}
   employee_name:            {kind: entity, about: "An employee with a high Bradford Factor and a probation review due this month", example: "Jordan Price"}
+  hr_system_name:       {kind: text,   about: "What staff call the HR system", example: "ADP"}
 
   undefined_metric:         {kind: text,   about: "A workforce metric people ask for that has no governed definition", example: "retention"}
   related_metric:           {kind: text,   about: "The governed metric closest to it", example: "turnover"}
@@ -58,10 +59,11 @@ scenarios:
         - "Headcount at {home} rose this month (for the false-premise variant)"
         - "Two canonical homes whose names both contain {ambiguous_home_name}"
     input:
-      prompt: "Calculate the current workforce metrics from the HR system: total headcount, starters vs leavers (last 3 months), absence trend, probation counts and upcoming review dates, average length of service and top reasons for leaving, by home and in total. Flag where data is missing rather than converting to zero."
+      prompt: "Calculate the current workforce metrics from {hr_system_name}: total headcount, starters vs leavers (last 3 months), absence trend, probation counts and upcoming review dates, average length of service and top reasons for leaving, by home and in total. Flag where data is missing rather than converting to zero."
     variants:
       - {id: PV-TERSE, prompt: "workforce metrics, all homes", expect: same_outcome}
       - {id: PV-ALIAS, prompt: "Give me the people numbers: heads, joiners and leavers, sickness, probations, LOS and leaver reasons", expect: same_outcome}
+      - {id: PV-GENERIC, prompt: "Give me the people numbers off the HR system: heads, joiners and leavers, sickness, probations, LOS and leaver reasons", expect: same_outcome, detail: "generic name for the HR system"}
       - {id: PV-NOISE, prompt: "calc headcount startrs v leavers last 3 mths absense probaton and avg servcie", expect: same_outcome, detail: "those metrics only"}
       - {id: PV-AMBIGUOUS, prompt: "What's the absence rate for {ambiguous_home_name}?", expect: clarify, detail: "which home"}
       - {id: PV-FALSE-PREMISE, prompt: "Why did headcount drop at {home} this month?", expect: flag, detail: "headcount rose; give the figures; no causes"}

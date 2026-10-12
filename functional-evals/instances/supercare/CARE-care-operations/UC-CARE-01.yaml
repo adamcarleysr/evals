@@ -28,6 +28,7 @@ values:
   earlier_case_ref: "<to supply>"
   invoice_processor: Richard Foster (Finance Director)
   policy_override_holder: Chris Coleman
+  document_store_name: OneDrive
 
   sign_off_time_limit: 48
   recurrence_count: 2

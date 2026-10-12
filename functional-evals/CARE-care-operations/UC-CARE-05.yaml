@@ -98,7 +98,7 @@ scenarios:
         - "Total includes {exception_case}, with the exception marked"
       must_say: ["The exception", "It can't be left out"]
       must_not: ["Omit {exception_case}", "Show it as approved"]
-      path: {steps: [1, 2, 3, 4, 5], stops_at: 6, note: "MC-0417 shown as an exception and cannot be omitted (P1); send waits for approval."}
+      path: {steps: [1, 2, 3, 4, 5], stops_at: 6, note: "The exception case shown as an exception and cannot be omitted (P1); send waits for approval."}
 
   - id: S03
     kind: policy
@@ -130,7 +130,7 @@ scenarios:
       state: ["Report notes unchanged"]
       must_say: ["The factual {home_b} figures", "Causes and judgements about people aren't stated", "The RI may add their own attributed note"]
       must_not: ["State a cause", "Judge {home_b_rm}"]
-      path: {steps: [1, 2, 3, 4], stops_at: 4, note: "Report notes stay factual; the requested judgement about Dana is not added (P3)."}
+      path: {steps: [1, 2, 3, 4], stops_at: 4, note: "Report notes stay factual; the requested judgement about the RM is not added (P3)."}
 
   - id: S05
     kind: edge
@@ -177,4 +177,4 @@ scenarios:
         - "The gap listed"
         - "Report sent"
       must_not: ["Count {uninvoiced_amount} as invoiced", "Estimate the invoice"]
-      path: {steps: [1, 2, 3, 4, 5, 6, 7], stops_at: null, note: "Step 3 extension: MC-0412 shown approved, not invoiced, as a gap; nothing estimated; report still sent."}
+      path: {steps: [1, 2, 3, 4, 5, 6, 7], stops_at: null, note: "Step 3 extension: the uninvoiced case shown approved, not invoiced, as a gap; nothing estimated; report still sent."}
