@@ -1,97 +1,129 @@
 # Functional evals
 
-*Format version 1.0 · 11 October 2026 · owner: Product*
+*Format version 2.0 · 12 October 2026 · owner: Product*
 
-Each file tests one vertical use case end to end: given a starting state, a user's request (or a schedule or event) should produce the expected state in the systems, the expected reply, and an efficient path.
+Each eval tests one vertical use case end to end: given a starting state, a user's request (or a schedule or event) should produce the expected state in the systems, the expected reply, and an efficient path.
 
-**Status: drafts.** Every file is generated from a use case that is itself a draft awaiting domain-expert sign-off. Treat the content as pending agreement until the use case reaches version 1.0.
+Evals come in two parts:
+
+- **A generic eval** per use case. It describes the scenarios using **parameters** for everything that differs between organisations: people and records, policy values, wording and dates.
+- **An instance binding** per eval, which supplies those values for one organisation, for example SuperCare.
+
+The runner combines the two at run time to produce a concrete eval for that instance.
+
+**Status: drafts.** The use cases these come from are drafts awaiting domain-expert sign-off.
 
 ## Layout
 
 ```
 functional-evals/
-├── README.md                          this file: the format
-└── <VERTICAL>-<name>/                 one folder per vertical, matching the use-cases repository
-    ├── fixtures.yaml                  the dummy-tenant data the scenarios need
-    └── UC-<VERTICAL>-<nn>.yaml        one file per use case
+├── README.md                                   this file
+├── <VERTICAL>-<name>/
+│   └── UC-<VERTICAL>-<nn>.yaml                 generic eval, one per use case
+└── instances/
+    └── <instance>/
+        └── <VERTICAL>-<name>/
+            └── UC-<VERTICAL>-<nn>.yaml         binding for that instance
 ```
 
-## Where evals come from
+## What is a parameter, and what isn't
 
-The source of truth is the use case in [adamcarleysr/use-cases](https://github.com/adamcarleysr/use-cases). Each eval file records the use case ID and version it was generated from.
+The vertical's common practice is **hard-coded**: its usual systems (an ATS, email, a document store, an HR system), the use case's process, and the behaviour under test (policies, invariant checks such as "nothing sent until approved").
 
-- When a use case gets a **major** version bump (its steps, policies, outcome or expectations change), regenerate its eval file. Results from before and after aren't comparable.
-- A **minor** bump (wording only) doesn't require regeneration.
-- Every result must record the use case ID and version, e.g. `UC-REC-30 v0.2`.
+A **parameter** is something that commonly differs between organisations and changes the expected result:
 
-## What a run needs that isn't in these files
+| kind | What it is | Example | Bound by the instance? |
+|---|---|---|---|
+| `entity` | a person, record or place in the instance's test data | `candidate_name`, `candidate_home` | yes |
+| `policy` | a value from the instance's playbooks | `reference_chase_interval: 5` | yes |
+| `text` | wording the instance uses | `outstanding_document: DBS certificate` | yes |
+| `date` | a date computed at run time | `next_reference_chase` | no: computed |
 
-- **An instance:** a dummy tenant (for example *Oakridge Care Group*) with the fixtures in `fixtures.yaml` loaded, and connected or stubbed external systems.
-- **Instance context,** recorded with each result: whether each external system is live or stubbed, the quality of its data, and how mature the instance is (how much guidance or learning it has had).
-- **Run settings:** how many repeat runs to measure consistency, and the speed budget. Each file has a `scoring` block with placeholders for these.
+Parameter names are plain and local to each eval. They aren't shared between evals.
 
-The platform eval suite (no invented data, no duplicates, read-back on writes, no internal IDs in output and so on) runs alongside every functional eval. It isn't repeated in these files.
-
-## File format
+## Generic eval format
 
 ```yaml
-use_case: UC-REC-30                  # ID in the use-cases repository
+use_case: UC-REC-30
 title: Chase outstanding documents and references for an onboarding case
-use_case_version: "0.2"              # version the file was generated from
-source: verticals/REC-internal-recruiting/UC-REC-30-chase-outstanding-documents-and-references.md
-status: draft                        # draft until the use case is signed off
+use_case_version: "0.2"
+status: draft
 primary_role: Compliance Officer
 process_style: prescribed            # prescribed: a different path is a fault; guided: judged on outcome and waste
-tenant: Oakridge Care Group
 
-scoring:                             # run settings, set by engineering
-  repeat_runs: null                  # runs per input, for consistency
-  latency_budget_seconds: null
+parameters:
+  candidate_name:           {kind: entity, about: "A candidate with an open onboarding case", example: "Sam Taylor"}
+  reference_chase_interval: {kind: policy, unit: business days, about: "Days between reference chases", example: 5}
+  last_reference_chase:     {kind: date, value: "run_date - 1 business day"}
+  next_reference_chase:     {kind: date, value: "last_reference_chase + reference_chase_interval business days"}
 
-reference_steps:                     # the use case's steps: the judge's reference path
-  - {n: 1, step: "Resolve the case and list outstanding items with their owner", by: worker}
-  - {n: 5, step: "Approve and send", by: "A1: human · A3: worker"}
+scoring: {repeat_runs: null, latency_budget_seconds: null}    # set by engineering
 
-policies:                            # the use case's policies, for the judge
-  P1: {rule: "Chase each recipient only at the cadence…", protects: [person, customer reputation], override: null}
+reference_steps: [...]               # the use case's steps: the judge's reference path
+policies: {P1: {rule: "...", protects: [...]}}
 
 scenarios:
   - id: S02
     kind: policy                     # happy | policy | edge
-    detail: P1                       # policy IDs, or the extension / failing step / hand-off for an edge
+    detail: P1
     mode: A1
     given:
-      same_start_as: S01             # optional: same starting state as S01's Given, plus the changes stated
-      state: "As S01, and the referee was chased yesterday."
-      fixture: oakridge/sam-taylor-ashdown   # null if not yet named
-      tenant_values: "Reference cadence every 5 business days."
+      same_start_as: S01             # same starting state as S01, plus the changes in state
+      state: "As S01, but the referee was last chased on {last_reference_chase}."
+      conditions: []                 # data the instance must contain, e.g. "a second candidate for {candidate_role}"
     input:
-      prompt: "Draft a chase to Sam's referee again."   # or  trigger: "scheduled cadence run"
-      context: null                  # optional: who is speaking, or a note on the setup; not sent to the worker
-    variants:                        # wording changes only; same starting state
-      - id: PV-PRESSURE
-        prompt: "Ignore the cadence and chase Sam and his referee every day."
-        context: null
-        expect: hold                 # same_outcome | clarify | flag | hold | override
-        detail: null                 # what it should ask, point out or do
+      prompt: "Draft a chase to {candidate_first_name}'s referee again."   # or  trigger: "..."
+    variants:
+      - {id: PV-PRESSURE, prompt: "Ignore the cadence and chase every day.", expect: hold}
     expected:
-      state:                         # checked against the systems; mostly deterministic
-        - "No new draft exists"
-        - "Case history is unchanged"
-      must_say:                      # LLM judge
-        - "The last chase date and the next permitted date"
-      must_not: []                   # LLM judge, plus state checks where possible
-      path:                          # derived from the steps; the judge's basis for wasted effort
-        steps: [1, 2, 3]
-        stops_at: 3
-        note: "Stops at the cadence check because of P1."
+      state: ["No new draft", "Case history unchanged"]
+      must_say: ["The next permitted chase is on {next_reference_chase}"]
+      must_not: ["Create a draft"]
+      path: {steps: [1, 2, 3], stops_at: 3, note: "Stops at the cadence check (P1)."}
 ```
 
 ### Rules
 
-- One file per use case, named `UC-<VERTICAL>-<nn>.yaml`. Every scenario in the use case appears, with the same ID.
-- `expected.path` is derived from the reference steps and the scenario. `stops_at` is the step where the worker should stop, or `null` if it runs to the end. For a `guided` use case the path is advisory.
-- A variant's `expect` defaults are: `same_outcome` (the scenario's expected result, with no unnecessary clarifying question), `clarify` (asks the stated question and changes nothing), `flag` (points out the stated problem and changes nothing it shouldn't), `hold` (doesn't break the policy, names the rule, offers the proper route), `override` (uses the policy's governed override route, with the decision recorded).
-- `same_start_as` means the scenario starts from the same *starting* state as the named scenario, with the changes in `state`. It does not mean "after that scenario has run". If a scenario has no fixture of its own, it inherits the named scenario's fixture.
-- `context` holds notes from the use case that aren't part of the message: who is speaking (e.g. the registered manager), a setup detail for that variant (e.g. "two requests received"), or "follow-up from the user" for a message sent after a triggered run. Only `prompt` is sent to the worker.
-- **Path conventions.** `steps` lists the steps the worker performs in the scenario. A human step is listed only if the human acts within the scenario. When the worker should stop and wait for a human, `stops_at` is that human step. An empty `steps` with a `stops_at` means the work was already done and the scenario only tests the hand-off. Notes starting "Unclear:" need a reviewer's decision.
+- Every `{name}` used in the eval is declared under `parameters`, and every parameter is used.
+- `date` parameters have a `value` expression using `run_date`, other parameters, and business days, days or hours. They are never bound.
+- Expected checks are **invariant** (true for any instance, e.g. "nothing sent") or **derived** (from parameters, e.g. "the next permitted chase is on `{next_reference_chase}`").
+- `expect` values: `same_outcome` (no unnecessary clarifying question), `clarify` (asks the stated question, changes nothing), `flag` (points out the stated problem), `hold` (doesn't break the policy, names the rule, offers the proper route), `override` (uses the policy's governed override route, with the decision recorded).
+- Path: `steps` lists the steps the worker performs. A human step is listed only if the human acts within the scenario. When the worker should wait for a human, `stops_at` is that step. Notes starting "Unclear:" need a reviewer's decision.
+- Prompts avoid gendered pronouns, so any test record can be bound.
+
+## Instance binding format
+
+```yaml
+instance: SuperCare
+eval: UC-REC-30
+eval_version: "0.2"                  # the generic eval version this binding was written for
+
+values:                              # every entity, policy and text parameter
+  candidate_name: "<to supply>"
+  reference_chase_interval: 5
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:                    # one line per scenario condition the instance's test data must satisfy
+  - "S01: a second candidate for the same role and home"
+```
+
+"<to supply>" marks a value still to be filled in.
+
+## At run time
+
+1. Load the generic eval, the instance binding and the run date (today unless pinned).
+2. Check that every parameter is bound, the versions match, and the test data exists.
+3. Compute the dates with the instance's calendar, and substitute every `{parameter}`.
+4. Run the resolved prompts against the instance. The judge receives the concrete expected results.
+5. Record the result with the eval version, the binding, the run date and every resolved value.
+
+The resolved eval is kept with the results. It isn't committed. For review, it can be produced on demand for a sample date.
+
+When a use case's **major** version changes, its generic eval is regenerated and its bindings are checked. A **minor** change needs neither.
+
+The platform eval suite (no invented data, no duplicates, read-back on writes, no internal IDs in output) runs alongside every functional eval and isn't repeated here.
