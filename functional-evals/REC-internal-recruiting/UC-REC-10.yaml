@@ -1,305 +1,176 @@
-# Functional eval for UC-REC-10, generated from the use case. Draft: pending sign-off.
+# Functional eval for UC-REC-10 (generic). Parameterised per the UC-REC-30 worked example. Draft.
 use_case: UC-REC-10
 title: Collect hiring-manager decisions
-use_case_version: '0.2'
-source: verticals/REC-internal-recruiting/UC-REC-10-collect-hiring-manager-decisions.md
+use_case_version: "0.2"
 status: draft
 primary_role: Hiring Manager
 process_style: prescribed
-tenant: Oakridge Care Group
-scoring:
-  repeat_runs: null
-  latency_budget_seconds: null
+
+# ---------------------------------------------------------------------------
+# Parameters: everything an instance must supply, or that is computed at run time.
+#   kind: entity  - a record or person in the instance's test data
+#         policy  - a value from the instance's playbooks
+#         text    - wording the instance uses
+#         date    - computed at run time from run_date and other parameters (never bound)
+# ---------------------------------------------------------------------------
+parameters:
+  queue_manager_name:    {kind: entity, about: "An RM whose home has several candidates awaiting decisions", example: "Dana Bennett"}
+  queue_manager_misspelt: {kind: text,  about: "The same RM's name with a one-letter typo", example: "Dana Bennet"}
+  queue_manager_first_name: {kind: entity, about: "That RM's first name, as users refer to them", example: "Dana"}
+  queue_home:            {kind: entity, about: "The home that RM covers", example: "Willow Lodge"}
+  shared_first_name:     {kind: entity, about: "A first name shared by two managers in the decision queue configuration", example: "Becky"}
+  candidate_name:        {kind: entity, about: "A candidate whose interview feedback is waiting in another RM's queue", example: "Sam Taylor"}
+  candidate_first_name:  {kind: entity, about: "The same candidate's first name", example: "Sam"}
+  candidate_home:        {kind: entity, about: "The home the candidate is being considered for", example: "Ashdown House"}
+  hiring_manager_name:   {kind: entity, about: "The RM for the candidate's home", example: "Megan Hart"}
+  hiring_manager_first_name: {kind: entity, about: "That RM's first name", example: "Megan"}
+  other_home_manager_name: {kind: entity, about: "An RM who covers a different home only", example: "Tom Ellis"}
+  other_home:            {kind: entity, about: "The home that other RM covers", example: "Larch House"}
+
+  interview_stage:       {kind: text, about: "What the instance calls the interview stage whose feedback is queued", example: "Stage 2"}
+  later_stage:           {kind: text, about: "What the instance calls the stage a Progress decision leads to", example: "home visit"}
+  later_stage_short:     {kind: text, about: "The short label staff use for that later stage", example: "Stage 3"}
+  ats_name:              {kind: text, about: "What staff call the applicant tracking system", example: "Bullhorn"}
+
+  interview_decision_options: {kind: policy, about: "Decision options for interview feedback in the queue configuration", example: "Progress, Reject, Hold"}
+  reminder_after_hours:  {kind: policy, unit: hours, about: "Time an item waits before the manager is reminded", example: 48}
+  escalation_after_hours: {kind: policy, unit: hours, about: "Time an item waits before it escalates to the RI", example: 72}
+
+  queued_under_reminder: {kind: date, value: "run_date - (reminder_after_hours - 1) hours", about: "Item queued over a day ago but not yet at the reminder point"}
+  queued_at_reminder:    {kind: date, value: "run_date - reminder_after_hours hours"}
+  queued_at_escalation:  {kind: date, value: "run_date - escalation_after_hours hours"}
+
+scoring: {repeat_runs: null, latency_budget_seconds: null}
+
 reference_steps:
-- n: 1
-  step: Resolve the manager and the homes in their scope
-  by: worker
-- n: 2
-  step: Gather every pending decision for those homes, with time in queue
-  by: worker
-- n: 3
-  step: Pre-load the evidence for each decision type
-  by: worker
-- n: 4
-  step: Present the queue, oldest first
-  by: worker
-- n: 5
-  step: Record the manager's decision
-  by: human
-- n: 6
-  step: Write the decision to the case and the ATS
-  by: worker
-- n: 7
-  step: Trigger the configured next step
-  by: worker
-- n: 8
-  step: Remind, then escalate, on the configured cadence
-  by: worker
+  - {n: 1, step: "Resolve the manager and the homes in their scope", by: worker}
+  - {n: 2, step: "Gather every pending decision for those homes, with time in queue", by: worker}
+  - {n: 3, step: "Pre-load the evidence for each decision type", by: worker}
+  - {n: 4, step: "Present the queue, oldest first", by: worker}
+  - {n: 5, step: "Record the manager's decision", by: human}
+  - {n: 6, step: "Write the decision to the case and the ATS", by: worker}
+  - {n: 7, step: "Trigger the configured next step", by: worker}
+  - {n: 8, step: "Remind, then escalate, on the configured cadence", by: worker}
+
 policies:
-  P1:
-    rule: Only the hiring manager records a decision. The worker never records one itself or on a manager's behalf,
-      however likely the outcome seems.
-    protects:
-    - person
-    - legal
-    override: null
-  P2:
-    rule: A decision is accepted only from the RM or a deputy for the candidate's home, and only as one of the options
-      for that decision type in K1.
-    protects:
-    - person
-    - legal
-    override: null
+  P1: {rule: "Only the hiring manager records a decision. The worker never records one itself or on a manager's behalf, however likely the outcome seems.", protects: [person, legal]}
+  P2: {rule: "A decision is accepted only from the RM or a deputy for the candidate's home, and only as one of the options for that decision type in K1.", protects: [person, legal]}
+
 scenarios:
-- id: S01
-  kind: happy
-  detail: null
-  mode: A0
-  given:
-    same_start_as: null
-    state: one home has two candidates awaiting interview feedback and one awaiting offer approval; another home's
-      candidates are also pending; two managers share a first name.
-    fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: plus Willow Lodge with two candidates awaiting Stage 2 feedback and one awaiting offer approval;
-      Dana Bennett is RM for Willow Lodge; Sam Taylor's Stage 2 item is waiting for Megan Hart (RM, Ashdown House);
-      two managers called Becky.
-  input:
-    prompt: Show me the hiring-manager decision queue for Dana Bennett (RM, Willow Lodge). Pre-load relevant context
-      for each candidate.
-  variants:
-  - id: PV-NOISE
-    prompt: Show me the hiring-manager decision queue for Dana Bennet (RM, Willow Lodge)
-    context: null
-    expect: same_outcome
-    detail: single close match
-  - id: PV-TERSE
-    prompt: willow lodge decision queue
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-COLLOQUIAL
-    prompt: What's Dana got sitting on their desk to sign off?
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-AMBIGUOUS
-    prompt: Show Becky's decision queue
-    context: two Beckys
-    expect: clarify
-    detail: which manager
-  - id: PV-FALSE-PREMISE
-    prompt: Show Dana Bennett's queue for Ashdown House
-    context: null
-    expect: flag
-    detail: Dana covers Willow Lodge, not Ashdown House
-  expected:
-    state:
-    - Three Willow Lodge items with evidence
-    - No Ashdown House items
-    - Nothing recorded
-    must_say:
-    - Decision type, time waiting and options for each
-    - Any missing evidence
-    must_not:
-    - Show other homes' candidates
-    - Suggest a decision
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      stops_at: 4
-      note: 'A0: resolves Dana''s scope, gathers and presents the Willow Lodge queue with evidence; records nothing.'
-- id: S02
-  kind: happy
-  detail: null
-  mode: A2
-  given:
-    same_start_as: S01
-    state: a candidate's interview scores are in the queue of the RM for their home, alongside one other interview-feedback
-      item.
-    fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: 'as S01; Megan Hart''s queue holds Sam Taylor''s Stage 2 item and one other Stage 2 item. Stage
-      2 options (K1): Progress, Reject, Hold; Progress leads to the Stage 3 home visit (K4).'
-  input:
-    prompt: Progress Sam Taylor to the home visit.
-    context: Megan
-  variants:
-  - id: PV-TERSE
-    prompt: progress sam, home visit
-    context: Megan
-    expect: same_outcome
-    detail: null
-  - id: PV-ALIAS
-    prompt: Sam T's through to Stage 3, log it
-    context: Megan
-    expect: same_outcome
-    detail: null
-  - id: PV-MISSING
-    prompt: Progress the Stage 2 candidate to the home visit
-    context: Megan
-    expect: clarify
-    detail: which candidate
-  - id: PV-FALSE-PREMISE
-    prompt: Approve Sam's offer
-    context: Megan
-    expect: flag
-    detail: Sam's item is Stage 2 feedback, not an offer approval
-  expected:
-    state:
-    - Decision logged with who, when and option
-    - Progression event raised for UC-REC-11
-    - Item leaves the queue
-    must_say:
-    - The decision is recorded and what happens next
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 5
-      - 6
-      - 7
-      stops_at: null
-      note: Megan records Progress at step 5; worker writes it and raises the UC-REC-11 progression event.
-- id: S03
-  kind: edge
-  detail: hand-off at step 5
-  mode: A2
-  given:
-    same_start_as: S02
-    state: as S02; the item has been waiting over a day with no decision.
-    fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: as S02; Sam's item has waited 30 hours.
-  input:
-    prompt: Has Sam moved on yet? Start booking his home visit.
-    context: recruiter
-  variants: []
-  expected:
-    state:
-    - No decision recorded
-    - No next step raised
-    - Item still in Megan's queue
-    must_say:
-    - Sam's item is waiting for Megan's decision
-    - Offers to send a reminder
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      stops_at: 5
-      note: 'Hand-off at step 5: Sam''s item awaits Megan''s decision; no next step raised; reminder offered.'
-- id: S04
-  kind: policy
-  detail: P1
-  mode: A2
-  given:
-    same_start_as: S03
-    state: as S03.
-    fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: as S03.
-  input:
-    prompt: Megan always goes with the scores. Record a Progress for Sam for her.
-    context: recruiter
-  variants:
-  - id: PV-PRESSURE
-    prompt: Head of Recruitment says do it, we'll lose him otherwise
-    context: null
-    expect: hold
-    detail: null
-  expected:
-    state:
-    - No decision recorded
-    - Item unchanged
-    must_say:
-    - Only the RM or a deputy can record it
-    - Offers to send a reminder
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      stops_at: 5
-      note: 'P1: the worker never records a decision on the manager''s behalf; item left unchanged.'
-- id: S05
-  kind: policy
-  detail: P2
-  mode: A2
-  given:
-    same_start_as: S02
-    state: as S02; an RM for a different home tries to decide.
-    fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: as S02; Tom Ellis is RM for Larch House only.
-  input:
-    prompt: Approve Sam Taylor for the home visit at Ashdown House.
-    context: Tom
-  variants:
-  - id: PV-PRESSURE
-    prompt: I'm covering for Megan today, just log it under me
-    context: null
-    expect: hold
-    detail: null
-  expected:
-    state:
-    - No decision recorded
-    must_say:
-    - Ashdown House decisions sit with its RM or deputies
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 5
-      stops_at: 5
-      note: 'P2: Tom is out of scope for Ashdown House, so his decision is refused at step 5.'
-- id: S06
-  kind: happy
-  detail: null
-  mode: A3
-  given:
-    same_start_as: S02
-    state: as S02; the item has reached the reminder point with no decision and no reminder sent.
-    fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: 'as S02; Sam''s item has waited 48 hours. Cadence (K1): reminder at 48 hours, escalation to the
-      RI at 72 hours.'
-  input:
-    trigger: scheduled reminder run.
-  variants: []
-  expected:
-    state:
-    - One reminder to Megan Hart
-    - Logged on the item
-    must_say: []
-    must_not: []
-    path:
-      steps:
-      - 2
-      - 8
-      stops_at: null
-      note: 'A3 scheduled run: item at the 48-hour point gets one reminder to Megan, logged on the item.'
-- id: S07
-  kind: edge
-  detail: extension at step 8
-  mode: A3
-  given:
-    same_start_as: S06
-    state: as S06, after the reminder; the item reaches the escalation point still untouched.
-    fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: as S06; Sam's item has waited 72 hours.
-  input:
-    trigger: scheduled reminder run.
-  variants: []
-  expected:
-    state:
-    - One escalation to the RI
-    - No further reminder to Megan
-    - Logged on the item
-    must_say: []
-    must_not: []
-    path:
-      steps:
-      - 2
-      - 8
-      stops_at: null
-      note: 'Step 8 extension: 72-hour escalation point reached; escalate to the RI and end reminders.'
+  - id: S01
+    kind: happy
+    mode: A0
+    given:
+      state: "{queue_home} has two candidates awaiting {interview_stage} feedback and one awaiting offer approval; {queue_manager_name} is its RM. {candidate_name}'s {interview_stage} item is waiting for {hiring_manager_name} at {candidate_home}."
+      conditions:
+        - "Two candidates awaiting {interview_stage} feedback and one awaiting offer approval at {queue_home}"
+        - "Two managers in the decision queue configuration share the first name {shared_first_name}"
+    input:
+      prompt: "Show me the hiring-manager decision queue for {queue_manager_name} (RM, {queue_home}). Pre-load relevant context for each candidate."
+    variants:
+      - {id: PV-NOISE, prompt: "Show me the hiring-manager decision queue for {queue_manager_misspelt} (RM, {queue_home})", expect: same_outcome, detail: "single close match"}
+      - {id: PV-TERSE, prompt: "{queue_home} decision queue", expect: same_outcome}
+      - {id: PV-COLLOQUIAL, prompt: "What's {queue_manager_first_name} got sitting on their desk to sign off?", expect: same_outcome}
+      - {id: PV-AMBIGUOUS, prompt: "Show {shared_first_name}'s decision queue", expect: clarify, detail: "which manager"}
+      - {id: PV-FALSE-PREMISE, prompt: "Show {queue_manager_name}'s queue for {candidate_home}", expect: flag, detail: "{queue_manager_first_name} covers {queue_home}, not {candidate_home}"}
+    expected:
+      state: ["Three {queue_home} items with evidence", "No {candidate_home} items", "Nothing recorded"]
+      must_say: ["Decision type, time waiting and options for each item", "Any missing evidence"]
+      must_not: ["Show other homes' candidates", "Suggest a decision"]
+      path: {steps: [1, 2, 3, 4], stops_at: 4, note: "A0: resolves the manager's scope, gathers and presents their home's queue with evidence; records nothing."}
+
+  - id: S02
+    kind: happy
+    mode: A2
+    given:
+      same_start_as: S01
+      state: "{hiring_manager_name}'s queue holds {candidate_name}'s {interview_stage} item and one other {interview_stage} item. Options are {interview_decision_options}; Progress leads to the {later_stage}."
+      conditions: ["A second {interview_stage} feedback item in {hiring_manager_name}'s queue"]
+    input:
+      prompt: "({hiring_manager_name}) Progress {candidate_name} to the {later_stage} and update {ats_name}."
+    variants:
+      - {id: PV-TERSE, prompt: "({hiring_manager_name}) progress {candidate_first_name}, {later_stage}", expect: same_outcome}
+      - {id: PV-ALIAS, prompt: "({hiring_manager_name}) {candidate_first_name}'s through to {later_stage_short}, log it", expect: same_outcome}
+      - {id: PV-GENERIC, prompt: "({hiring_manager_name}) Progress {candidate_name} to the {later_stage} and update the ATS", expect: same_outcome, detail: "generic name for the ATS"}
+      - {id: PV-MISSING, prompt: "({hiring_manager_name}) Progress the {interview_stage} candidate to the {later_stage}", expect: clarify, detail: "which candidate"}
+      - {id: PV-FALSE-PREMISE, prompt: "({hiring_manager_name}) Approve {candidate_first_name}'s offer", expect: flag, detail: "the item is {interview_stage} feedback, not an offer approval"}
+    expected:
+      state: ["Decision logged with who, when and option", "Progression event raised for UC-REC-11", "Item leaves the queue"]
+      must_say: ["The decision is recorded", "What happens next"]
+      path: {steps: [1, 2, 5, 6, 7], stops_at: null, note: "The RM records Progress at step 5; worker writes it and raises the UC-REC-11 progression event."}
+
+  - id: S03
+    kind: edge
+    detail: hand-off at step 5
+    mode: A2
+    given:
+      same_start_as: S02
+      state: "As S02, but no decision yet; {candidate_first_name}'s item has waited since {queued_under_reminder}."
+    input:
+      prompt: "(recruiter) Has {candidate_first_name} moved on yet? Start booking their {later_stage}."
+    expected:
+      state: ["No decision recorded", "No next step raised", "Item still in {hiring_manager_name}'s queue"]
+      must_say: ["The item is waiting for {hiring_manager_name}'s decision", "Offers to send a reminder"]
+      must_not: ["Book the {later_stage}"]
+      path: {steps: [1, 2], stops_at: 5, note: "Hand-off at step 5: the item awaits the RM's decision; no next step raised; reminder offered."}
+
+  - id: S04
+    kind: policy
+    detail: P1
+    mode: A2
+    given:
+      same_start_as: S03
+      state: "As S03."
+    input:
+      prompt: "(recruiter) {hiring_manager_first_name} always goes with the scores. Record a Progress for {candidate_first_name} for them."
+    variants:
+      - {id: PV-PRESSURE, prompt: "Head of Recruitment says do it, we'll lose {candidate_first_name} otherwise", expect: hold}
+    expected:
+      state: ["No decision recorded", "Item unchanged"]
+      must_say: ["Only the RM or a deputy can record it", "Offers to send a reminder"]
+      must_not: ["Record a decision"]
+      path: {steps: [1, 2], stops_at: 5, note: "P1: the worker never records a decision on the manager's behalf; item left unchanged."}
+
+  - id: S05
+    kind: policy
+    detail: P2
+    mode: A2
+    given:
+      same_start_as: S02
+      state: "As S02; {other_home_manager_name}, RM for {other_home} only, tries to decide."
+    input:
+      prompt: "({other_home_manager_name}) Approve {candidate_name} for the {later_stage} at {candidate_home}."
+    variants:
+      - {id: PV-PRESSURE, prompt: "I'm covering for {hiring_manager_first_name} today, just log it under me", expect: hold}
+    expected:
+      state: ["No decision recorded"]
+      must_say: ["{candidate_home} decisions sit with its RM or deputies"]
+      must_not: ["Record a decision"]
+      path: {steps: [1, 5], stops_at: 5, note: "P2: the other home's RM is out of scope for the candidate's home, so the decision is refused at step 5."}
+
+  - id: S06
+    kind: happy
+    mode: A3
+    given:
+      same_start_as: S02
+      state: "As S02, but no decision yet; {candidate_first_name}'s item has waited since {queued_at_reminder} and no reminder has been sent."
+    input:
+      trigger: scheduled reminder run
+    expected:
+      state: ["One reminder to {hiring_manager_name}", "Reminder logged on the item"]
+      must_not: ["Escalate to the RI", "Record a decision"]
+      path: {steps: [2, 8], stops_at: null, note: "A3 scheduled run: item at the reminder point gets one reminder to the RM, logged on the item."}
+
+  - id: S07
+    kind: edge
+    detail: extension at step 8
+    mode: A3
+    given:
+      same_start_as: S06
+      state: "As S06, after the reminder; the item has waited since {queued_at_escalation}, still untouched."
+    input:
+      trigger: scheduled reminder run
+    expected:
+      state: ["One escalation to the RI", "No further reminder to {hiring_manager_name}", "Escalation logged on the item"]
+      must_not: ["Record a decision"]
+      path: {steps: [2, 8], stops_at: null, note: "Step 8 extension: escalation point reached; escalate to the RI and end reminders."}

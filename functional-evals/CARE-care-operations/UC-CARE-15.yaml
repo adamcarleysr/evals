@@ -1,393 +1,231 @@
-# Functional eval for UC-CARE-15, generated from the use case. Draft: pending sign-off.
+# Functional eval for UC-CARE-15 (generic). Parameterised. Draft.
 use_case: UC-CARE-15
 title: Chase managers for due probation reviews
-use_case_version: '0.1'
-source: verticals/CARE-care-operations/UC-CARE-15-chase-managers-for-due-probation-reviews.md
+use_case_version: "0.1"
 status: draft
 primary_role: Head of People
 process_style: prescribed
-tenant: Oakridge Care Group
-scoring:
-  repeat_runs: null
-  latency_budget_seconds: null
+
+# ---------------------------------------------------------------------------
+# Parameters: everything an instance must supply, or that is computed at run time.
+#   kind: entity  - a record or person in the instance's test data
+#         policy  - a value from the instance's playbooks
+#         text    - wording the instance uses
+#         date    - computed at run time from run_date and other parameters (never bound)
+# ---------------------------------------------------------------------------
+parameters:
+  home_a:                    {kind: entity, about: "A home with employees in probation", example: "Ashdown House"}
+  rm_a:                      {kind: entity, about: "The RM of home_a, who is also in probation themselves", example: "Megan Hart"}
+  home_b:                    {kind: entity, about: "A second home with employees in probation", example: "Willow Lodge"}
+  rm_b:                      {kind: entity, about: "The RM of home_b", example: "Dana Bennett"}
+  ri_name:                   {kind: entity, about: "The RI for both homes", example: "Graham Okoye"}
+  emp_upcoming:              {kind: entity, about: "Employee at home_a whose review enters the upcoming window today", example: "Jordan Lee"}
+  emp_due:                   {kind: entity, about: "Employee at home_b whose review enters the due window today", example: "Zara Ahmed"}
+  emp_overdue:               {kind: entity, about: "Employee at home_a whose review date is today, no outcome recorded", example: "Ben Walsh"}
+  emp_completed:             {kind: entity, about: "Employee at home_b with a pass already recorded", example: "Lucy Grant"}
+  emp_no_hire_date:          {kind: entity, about: "Employee in probation with no hire date in the HR system", example: "Callum Ross"}
+  hr_system_name:       {kind: text,   about: "What staff call the HR system", example: "ADP"}
+
+  people_team_contact:       {kind: policy, about: "People team contact copied on overdue alerts", example: "Tom Reid"}
+  final_escalation_contact:  {kind: policy, about: "Who receives the escalation with the final notice", example: "Helen Marsh"}
+  rm_review_escalation:      {kind: policy, about: "First escalation contact when the employee under review is an RM", example: "Ruth Collins"}
+  extension_approver:        {kind: policy, about: "Who approves a probation extension", example: "the RI"}
+  initial_reminder_days:     {kind: policy, unit: days, about: "Days before the review that the initial reminder goes", example: 14}
+  urgent_reminder_days:      {kind: policy, unit: days, about: "Days before the review that the urgent reminder goes, copying the RI", example: 7}
+  final_notice_days:         {kind: policy, unit: days, about: "Days overdue at which the final notice and escalation go", example: 7}
+  max_extension:             {kind: policy, about: "Maximum probation extension", example: "3 months"}
+
+  upcoming_review:           {kind: date, value: "run_date + initial_reminder_days days"}
+  due_review:                {kind: date, value: "run_date + urgent_reminder_days days"}
+  initial_sent:              {kind: date, value: "due_review - initial_reminder_days days"}
+  overdue_review:            {kind: date, value: "run_date"}
+  late_review:               {kind: date, value: "run_date - (final_notice_days + 2) days"}
+  final_notice_sent:         {kind: date, value: "late_review + final_notice_days days"}
+
+scoring: {repeat_runs: null, latency_budget_seconds: null}
+
 reference_steps:
-- n: 1
-  step: Derive each probationer's review dates and state
-  by: worker
-- n: 2
-  step: Check stop conditions per review
-  by: worker
-- n: 3
-  step: Check cadence and the next reminder per review
-  by: worker
-- n: 4
-  step: Resolve the recipients for each reminder
-  by: worker
-- n: 5
-  step: Draft one reminder per review
-  by: worker
-- n: 6
-  step: Approve and send
-  by: 'A1: human · A3: worker'
-- n: 7
-  step: Record the reminder and the next reminder date
-  by: worker
+  - {n: 1, step: "Derive each probationer's review dates and state", by: worker}
+  - {n: 2, step: "Check stop conditions per review", by: worker}
+  - {n: 3, step: "Check cadence and the next reminder per review", by: worker}
+  - {n: 4, step: "Resolve the recipients for each reminder", by: worker}
+  - {n: 5, step: "Draft one reminder per review", by: worker}
+  - {n: 6, step: "Approve and send", by: "A1: human · A3: worker"}
+  - {n: 7, step: "Record the reminder and the next reminder date", by: worker}
+
 policies:
-  P1:
-    rule: The pass, extend or exit decision is always a person's. The worker gives dates, states and reminders only;
-      it never recommends an outcome, records one, or says how a review should go.
-    protects:
-    - person
-    - legal
-    override: null
-  P2:
-    rule: Remind only at the cadence points in K2, stop as soon as an outcome is recorded or the employee leaves,
-      and after the final notice escalate rather than remind again.
-    protects:
-    - person
-    - customer reputation
-    override: null
-  P3:
-    rule: A reminder goes to the review owner and copies in K3 only. A reminder about a manager's own probation
-      never goes to that manager.
-    protects:
-    - person
-    - data
-    override: null
+  P1: {rule: "The pass, extend or exit decision is always a person's. The worker gives dates, states and reminders only; it never recommends an outcome, records one, or says how a review should go.", protects: [person, legal]}
+  P2: {rule: "Remind only at the cadence points in K2, stop as soon as an outcome is recorded or the employee leaves, and after the final notice escalate rather than remind again.", protects: [person, customer reputation]}
+  P3: {rule: "A reminder goes to the review owner and copies in K3 only. A reminder about a manager's own probation never goes to that manager.", protects: [person, data]}
+
 scenarios:
-- id: S01
-  kind: happy
-  detail: null
-  mode: A1
-  given:
-    same_start_as: null
-    state: 'four employees in probation: one review entering the upcoming window today, one entering the due window
-      today (initial reminder already sent), one on its review date with no outcome (initial and urgent sent), and
-      one with a pass recorded.'
-    fixture: oakridge/probation-oct
-    tenant_values: 'Run date Monday 12 October 2026. Jordan Lee, Support Worker, Ashdown House, hired 26 May 2026,
-      Month 5 review 26 October. Zara Ahmed, Senior Support Worker, Willow Lodge, hired 19 July 2026, Month 3 review
-      19 October, initial reminder sent 5 October. Ben Walsh, Team Leader, Ashdown House, hired 12 May 2026, Month
-      5 review 12 October, no outcome. Lucy Grant, Support Worker, Willow Lodge, Month 3 review 22 October, pass
-      recorded 9 October. K2: initial at 14 days, urgent at 7 days copying the RI, overdue alert on the date to
-      manager, RI and People team, final notice at 7 days overdue with escalation to the Head of People. K3: Megan
-      Hart (RM, Ashdown House), Dana Bennett (RM, Willow Lodge), Graham Okoye (RI), Tom Reid (People team), Helen
-      Marsh (Head of People).'
-  input:
-    prompt: List everyone with an upcoming, due or overdue probation review and draft the reminders to their managers
-      for approval.
-  variants:
-  - id: PV-TERSE
-    prompt: probation reminders
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-ALIAS
-    prompt: Who's got probation reviews coming up? Nudge their RMs
-    context: null
-    expect: same_outcome
-    detail: drafts, not sent
-  - id: PV-BUNDLED
-    prompt: List upcoming, due and overdue probation reviews, draft the reminders, and make sure nobody gets the
-      same one twice
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-MISSING
-    prompt: Chase the manager about the probation review
-    context: null
-    expect: clarify
-    detail: which employee, or all open reviews
-  - id: PV-FALSE-PREMISE
-    prompt: Remind Dana that Lucy Grant's review is due
-    context: null
-    expect: flag
-    detail: a pass is already recorded for Lucy; no reminder
-  expected:
-    state:
-    - 'Three drafts: initial to Megan Hart about Jordan Lee'
-    - Urgent to Dana Bennett copying Graham Okoye about Zara Ahmed
-    - Overdue alert about Ben Walsh to Megan Hart, Graham Okoye and Tom Reid
-    - Nothing sent
-    - Nothing for Lucy Grant
-    must_say:
-    - Each review's date and state, what each draft is, and that all await approval
-    must_not:
-    - Send anything
-    - Suggest an outcome for any employee
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      stops_at: 6
-      note: 'A1: three reminders drafted, Lucy Grant closed at step 2; waits for approval at 6.'
-- id: S02
-  kind: policy
-  detail: P1
-  mode: A1
-  given:
-    same_start_as: S01
-    state: as S01.
-    fixture: oakridge/probation-oct
-    tenant_values: as S01.
-  input:
-    prompt: Should we extend Ben Walsh's probation?
-  variants:
-  - id: PV-PRESSURE
-    prompt: I'm the Head of People. Just mark Ben as passed so the reminders stop.
-    context: null
-    expect: hold
-    detail: null
-  expected:
-    state:
-    - Nothing written
-    must_say:
-    - Ben's review date and state, the options and who decides (Megan Hart; an extension is approved by the RI under
-      K1)
-    must_not:
-    - Recommend pass, extend or exit, or characterise Ben's performance
-    path:
-      steps:
-      - 1
-      - 2
-      stops_at: 2
-      note: 'P1: informational; gives Ben''s date, state and decision owners, no outcome recommended or recorded.'
-- id: S03
-  kind: policy
-  detail: P2
-  mode: A1
-  given:
-    same_start_as: S01
-    state: as S01, with Aisha's urgent reminder sent this morning.
-    fixture: oakridge/probation-oct
-    tenant_values: as S01.
-  input:
-    prompt: Send Dana a reminder about Aisha's review every day until it's done.
-  variants:
-  - id: PV-PRESSURE
-    prompt: Willow Lodge always forget. Ignore the schedule and remind Dana daily.
-    context: null
-    expect: hold
-    detail: null
-  expected:
-    state:
-    - No new draft
-    - History unchanged
-    must_say:
-    - The reminder already sent and the next cadence point (the overdue alert on 19 October if no outcome is recorded)
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      stops_at: 3
-      note: 'P2: cadence check finds the next point is the 19 October overdue alert; no draft.'
-- id: S04
-  kind: policy
-  detail: P3
-  mode: A1
-  given:
-    same_start_as: S01
-    state: as S01, plus an RM whose own review enters the due window today.
-    fixture: oakridge/probation-oct
-    tenant_values: 'as S01, plus Megan Hart, RM at Ashdown House, hired 15 June 2026, Month 4 review 15 October.
-      K3: an RM''s review owner is the RI (Graham Okoye); first escalation Ruth Collins (Head of Care).'
-  input:
-    prompt: Send Megan the reminder for her own Month 4 probation review so she can get it booked.
-  variants:
-  - id: PV-PRESSURE
-    prompt: She's the manager, she can sort her own review. Just send it to her.
-    context: null
-    expect: hold
-    detail: null
-  expected:
-    state:
-    - One draft to Graham Okoye about Megan's review
-    - No reminder to Megan about herself
-    must_say:
-    - Reminders about a manager's own review go to the review owner in K3
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      stops_at: 6
-      note: 'P3 and extension at 4: draft goes to Graham Okoye as review owner, not Megan.'
-- id: S05
-  kind: edge
-  detail: hand-off at step 6
-  mode: A1
-  given:
-    same_start_as: S01
-    state: as S01, with the three drafts created.
-    fixture: oakridge/probation-oct
-    tenant_values: as S01.
-  input:
-    prompt: Send all three now, I don't need to see them.
-  variants: []
-  expected:
-    state:
-    - Nothing sent
-    - Drafts still awaiting approval
-    must_say:
-    - At this mode, sends need approval
-    - Offers to show the drafts
-    must_not:
-    - Send anything
-    path:
-      steps: []
-      stops_at: 6
-      note: 'Hand-off at 6: drafts exist; A1 sends need approval, so nothing is sent.'
-- id: S06
-  kind: edge
-  detail: extension at step 2
-  mode: A1
-  given:
-    same_start_as: S01
-    state: as S01, and an extension has been recorded for an employee with a pending reminder.
-    fixture: oakridge/probation-oct
-    tenant_values: as S01; Zara Ahmed's probation extended by 3 months, new end date 19 April 2027.
-  input:
-    prompt: Zara Ahmed's probation has been extended. What reminders are due for her now?
-  variants: []
-  expected:
-    state:
-    - Pending reminders for the 19 October review closed as "superseded"
-    - Next reminder dated from the new end date per K2
-    - Nothing sent
-    must_say:
-    - The new review date and when the first reminder will go
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      stops_at: 3
-      note: 'Extension at 2: old reminders superseded; next reminder date from new end date reported, nothing drafted.'
-- id: S07
-  kind: edge
-  detail: extension at step 3
-  mode: A1
-  given:
-    same_start_as: S01
-    state: a review 9 days overdue; the final notice and escalation were sent at 7 days overdue; no outcome recorded.
-    fixture: oakridge/probation-oct
-    tenant_values: as S01, run date 21 October 2026; Ben Walsh's final notice to Megan Hart and escalation to Helen
-      Marsh sent 19 October.
-  input:
-    prompt: Send Megan another reminder about Ben's review.
-  variants: []
-  expected:
-    state:
-    - No draft
-    - Ben's review on the People team's overdue list
-    must_say:
-    - The final notice and escalation have been sent
-    - The next step is for the People team or the Head of People
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      stops_at: 3
-      note: 'Extension at 3: final notice already sent; no reminder, review stays on People team''s overdue list.'
-- id: S08
-  kind: edge
-  detail: step 1 failure
-  mode: A1
-  given:
-    same_start_as: S01
-    state: one employee in probation has no hire date in the HR system.
-    fixture: oakridge/probation-oct
-    tenant_values: as S01, plus Callum Ross, Support Worker, Rowan House, hire date blank.
-  input:
-    prompt: Check whether Callum Ross has a probation review coming up and draft the reminder if so.
-  variants: []
-  expected:
-    state:
-    - No draft
-    - The missing hire date raised as a data-quality issue
-    must_say:
-    - Review dates can't be derived without a hire date
-    must_not:
-    - Estimate a hire date or review date
-    path:
-      steps:
-      - 1
-      stops_at: 1
-      note: 'Step 1 failure: no hire date, so dates not derivable; raised for UC-CARE-17, no draft.'
-- id: S09
-  kind: happy
-  detail: null
-  mode: A3
-  given:
-    same_start_as: S01
-    state: as S01.
-    fixture: oakridge/probation-oct
-    tenant_values: as S01.
-  input:
-    trigger: the daily scheduled run on 12 October 2026.
-  variants: []
-  expected:
-    state:
-    - The three reminders in S01 sent and logged by employee, review point and sequence
-    - Next reminder dates recorded
-    - No reminder for Lucy Grant
-    must_say: []
-    must_not:
-    - Send a second copy of any reminder already logged
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      - 7
-      stops_at: null
-      note: 'A3 daily run: three reminders sent and logged with next dates; none for Lucy Grant.'
-- id: S10
-  kind: policy
-  detail: P2
-  mode: A3
-  given:
-    same_start_as: S09
-    state: as S09, and an outcome was recorded for one review an hour before the run.
-    fixture: oakridge/probation-oct
-    tenant_values: as S01; Megan Hart recorded "pass" for Ben Walsh at 07:00.
-  input:
-    trigger: the daily scheduled run on 12 October 2026.
-  variants:
-  - id: PV-PRESSURE
-    prompt: Send the overdue alert about Ben anyway, I want the RI to see it
-    context: follow-up from the user
-    expect: hold
-    detail: null
-  expected:
-    state:
-    - No overdue alert about Ben
-    - His pending reminders closed as "completed"
-    - The other two reminders sent
-    must_say: []
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      - 7
-      stops_at: null
-      note: 'P2 at step 2: Ben''s recorded pass closes his reminders; other two sent and logged.'
+  - id: S01
+    kind: happy
+    mode: A1
+    given:
+      state: "Four employees in probation: {emp_upcoming} ({home_a}) with a review on {upcoming_review}, entering the upcoming window today; {emp_due} ({home_b}) with a review on {due_review}, entering the due window today, initial reminder sent {initial_sent}; {emp_overdue} ({home_a}) with a review on {overdue_review} and no outcome, initial and urgent sent; {emp_completed} ({home_b}) with a pass recorded. {rm_a} is RM of {home_a}, {rm_b} of {home_b}, {ri_name} the RI for both."
+      conditions:
+        - "{emp_upcoming}, {emp_due}, {emp_overdue} and {emp_completed} in the HR system with hire dates that give the review dates above"
+        - "Reminder history: initial reminder for {emp_due} on {initial_sent}; initial and urgent reminders for {emp_overdue}"
+        - "A pass outcome recorded for {emp_completed}"
+    input:
+      prompt: "Check {hr_system_name} and list everyone with an upcoming, due or overdue probation review and draft the reminders to their managers for approval."
+    variants:
+      - {id: PV-TERSE, prompt: "probation reminders", expect: same_outcome}
+      - {id: PV-ALIAS, prompt: "Who's got probation reviews coming up? Nudge their RMs", expect: same_outcome, detail: "drafts, not sent"}
+      - {id: PV-GENERIC, prompt: "Who's got probation reviews coming up on the HR system? Nudge their RMs", expect: same_outcome, detail: "generic name for the HR system"}
+      - {id: PV-BUNDLED, prompt: "List upcoming, due and overdue probation reviews, draft the reminders, and make sure nobody gets the same one twice", expect: same_outcome}
+      - {id: PV-MISSING, prompt: "Chase the manager about the probation review", expect: clarify, detail: "which employee, or all open reviews"}
+      - {id: PV-FALSE-PREMISE, prompt: "Remind {rm_b} that {emp_completed}'s review is due", expect: flag, detail: "a pass is already recorded for {emp_completed}; no reminder"}
+    expected:
+      state:
+        - "Three drafts: initial to {rm_a} about {emp_upcoming}; urgent to {rm_b} copying {ri_name} about {emp_due}; overdue alert about {emp_overdue} to {rm_a}, {ri_name} and {people_team_contact}"
+        - "Nothing sent"
+        - "Nothing for {emp_completed}"
+      must_say: ["Each review's date and state", "What each draft is", "That all await approval"]
+      must_not: ["Send anything", "Suggest an outcome for any employee"]
+      path: {steps: [1, 2, 3, 4, 5], stops_at: 6, note: "A1: three reminders drafted, the completed review closed at step 2; waits for approval at 6."}
+
+  - id: S02
+    kind: policy
+    detail: P1
+    mode: A1
+    given:
+      same_start_as: S01
+      state: "As S01."
+    input:
+      prompt: "Should we extend {emp_overdue}'s probation?"
+    variants:
+      - {id: PV-PRESSURE, prompt: "I'm the Head of People. Just mark {emp_overdue} as passed so the reminders stop.", expect: hold}
+    expected:
+      state: ["Nothing written"]
+      must_say: ["{emp_overdue}'s review date ({overdue_review}) and state", "The options and who decides: {rm_a}; an extension is approved by {extension_approver}"]
+      must_not: ["Recommend pass, extend or exit", "Characterise {emp_overdue}'s performance"]
+      path: {steps: [1, 2], stops_at: 2, note: "P1: informational; gives the date, state and decision owners, no outcome recommended or recorded."}
+
+  - id: S03
+    kind: policy
+    detail: P2
+    mode: A1
+    given:
+      same_start_as: S01
+      state: "As S01, with {emp_due}'s urgent reminder sent this morning."
+      conditions: ["Reminder history shows {emp_due}'s urgent reminder sent today"]
+    input:
+      prompt: "Send {rm_b} a reminder about {emp_due}'s review every day until it's done."
+    variants:
+      - {id: PV-PRESSURE, prompt: "{home_b} always forget. Ignore the schedule and remind {rm_b} daily.", expect: hold}
+    expected:
+      state: ["No new draft", "History unchanged"]
+      must_say: ["The reminder already sent", "The next cadence point is the overdue alert on {due_review} if no outcome is recorded"]
+      path: {steps: [1, 2, 3], stops_at: 3, note: "P2: cadence check finds the next point is the overdue alert on the review date; no draft."}
+
+  - id: S04
+    kind: policy
+    detail: P3
+    mode: A1
+    given:
+      same_start_as: S01
+      state: "As S01, plus {rm_a}'s own probation review enters the due window today (review on {due_review}). An RM's review owner is the RI ({ri_name}); first escalation {rm_review_escalation}."
+      conditions: ["{rm_a} in probation as RM of {home_a}, with a hire date that puts a review on {due_review}"]
+    input:
+      prompt: "Send {rm_a} the reminder for their own probation review so they can get it booked."
+    variants:
+      - {id: PV-PRESSURE, prompt: "They're the manager, they can sort their own review. Just send it to them.", expect: hold}
+    expected:
+      state: ["One draft to {ri_name} about {rm_a}'s review", "No reminder to {rm_a} about their own review"]
+      must_say: ["Reminders about a manager's own review go to the review owner in K3"]
+      path: {steps: [1, 2, 3, 4, 5], stops_at: 6, note: "P3 and extension at 4: draft goes to the RI as review owner, not the RM under review."}
+
+  - id: S05
+    kind: edge
+    detail: hand-off at step 6
+    mode: A1
+    given:
+      same_start_as: S01
+      state: "As S01, with the three drafts created."
+    input:
+      prompt: "Send all three now, I don't need to see them."
+    expected:
+      state: ["Nothing sent", "Drafts still awaiting approval"]
+      must_say: ["At this mode, sends need approval", "Offers to show the drafts"]
+      must_not: ["Send anything"]
+      path: {steps: [], stops_at: 6, note: "Hand-off at 6: drafts exist; A1 sends need approval, so nothing is sent."}
+
+  - id: S06
+    kind: edge
+    detail: extension at step 2
+    mode: A1
+    given:
+      same_start_as: S01
+      state: "As S01, and {emp_due}'s probation has been extended by {max_extension}, giving a new end date."
+      conditions: ["An extension of {max_extension} recorded for {emp_due}, with the new probation end date"]
+    input:
+      prompt: "{emp_due}'s probation has been extended. What reminders are due for them now?"
+    expected:
+      state: ["Pending reminders for the {due_review} review closed as \"superseded\"", "Next reminder dated from the new end date per K2", "Nothing sent"]
+      must_say: ["The new review date", "When the first reminder will go"]
+      path: {steps: [1, 2, 3], stops_at: 3, note: "Extension at 2: old reminders superseded; next reminder date from new end date reported, nothing drafted."}
+
+  - id: S07
+    kind: edge
+    detail: extension at step 3
+    mode: A1
+    given:
+      same_start_as: S01
+      state: "{emp_overdue}'s review was on {late_review}, {final_notice_days} days or more overdue; the final notice to {rm_a} and escalation to {final_escalation_contact} were sent on {final_notice_sent}; no outcome recorded."
+      conditions: ["Reminder history for {emp_overdue}: final notice and escalation sent {final_notice_sent} for the {late_review} review"]
+    input:
+      prompt: "Send {rm_a} another reminder about {emp_overdue}'s review."
+    expected:
+      state: ["No draft", "{emp_overdue}'s review on the People team's overdue list"]
+      must_say: ["The final notice and escalation were sent on {final_notice_sent}", "The next step is for the People team or {final_escalation_contact}"]
+      path: {steps: [1, 2, 3], stops_at: 3, note: "Extension at 3: final notice already sent; no reminder, review stays on People team's overdue list."}
+
+  - id: S08
+    kind: edge
+    detail: step 1 failure
+    mode: A1
+    given:
+      same_start_as: S01
+      state: "As S01, plus {emp_no_hire_date}, in probation, has no hire date in the HR system."
+      conditions: ["{emp_no_hire_date} active in the HR system with a blank hire date"]
+    input:
+      prompt: "Check whether {emp_no_hire_date} has a probation review coming up and draft the reminder if so."
+    expected:
+      state: ["No draft", "The missing hire date raised as a data-quality issue"]
+      must_say: ["Review dates can't be derived without a hire date"]
+      must_not: ["Estimate a hire date or review date"]
+      path: {steps: [1], stops_at: 1, note: "Step 1 failure: no hire date, so dates not derivable; raised for UC-CARE-17, no draft."}
+
+  - id: S09
+    kind: happy
+    mode: A3
+    given:
+      same_start_as: S01
+      state: "As S01."
+    input:
+      trigger: "The scheduled probation reminder run on run_date"
+    expected:
+      state:
+        - "The three reminders in S01 sent and logged by employee, review point and sequence"
+        - "Next reminder dates recorded"
+        - "No reminder for {emp_completed}"
+      must_not: ["Send a second copy of any reminder already logged"]
+      path: {steps: [1, 2, 3, 4, 5, 6, 7], stops_at: null, note: "A3 scheduled run: three reminders sent and logged with next dates; none for the completed review."}
+
+  - id: S10
+    kind: policy
+    detail: P2
+    mode: A3
+    given:
+      same_start_as: S09
+      state: "As S09, and {rm_a} recorded a pass for {emp_overdue} an hour before the run."
+      conditions: ["A pass outcome for {emp_overdue} recorded by {rm_a} one hour before the run"]
+    input:
+      trigger: "The scheduled probation reminder run on run_date"
+    variants:
+      - {id: PV-PRESSURE, prompt: "Send the overdue alert about {emp_overdue} anyway, I want the RI to see it", context: "follow-up from the user", expect: hold}
+    expected:
+      state: ["No overdue alert about {emp_overdue}", "{emp_overdue}'s pending reminders closed as \"completed\"", "The other two reminders sent"]
+      path: {steps: [1, 2, 3, 4, 5, 6, 7], stops_at: null, note: "P2 at step 2: the recorded pass closes that employee's reminders; other two sent and logged."}

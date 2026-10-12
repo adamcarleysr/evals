@@ -1,0 +1,45 @@
+# SuperCare binding for UC-CARE-05 (eval v0.1). Draft. No ClickUp ticket covers this use case;
+# values checked against playbook pages Budget Thresholds, Incident Notification Routing Rules
+# (RIs by region) and Canonical Organisation Dimensions.
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-CARE-05
+eval_version: "0.1"
+
+values:
+  ri: Charley Hooper
+  ri_first_name: Charley
+  home_a: Heroes Haven
+  home_a_short: HH
+  home_b: Hyde Gardens
+  home_b_short: Hyde
+  home_b_rm: Tash West
+  home_b_rm_first_name: Tash
+  home_c: Phoenix
+  home_c_short: SC Phoenix
+  other_home: Frimley
+  other_ri: Emma Chapman
+  above_limit_case: "<to supply>"
+  exception_case: "<to supply>"
+  exception_amount: "<to supply>"
+  uninvoiced_case: "<to supply>"
+  uninvoiced_amount: "<to supply>"
+  contractor_contact: "<to supply>"
+
+  general_repair_rm_band: £151 - £400
+  spend_basis: "<to supply>"
+  report_schedule: "<to supply>"
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: closed maintenance cases last month at Heroes Haven, Hyde Gardens, Phoenix and Frimley, each with quote, invoice, tier and approver recorded"
+  - "S01: one Hyde Gardens case above its category's auto-approve limit, approved by Tash West; all others within auto-approve"
+  - "S01: two months of spend unreported (for the missing-month variant)"
+  - "S02: a Hyde Gardens general repair case in the RM band (£151 - £400) booked with no approval recorded"
+  - "S03: a contractor contact who did jobs at Heroes Haven"
+  - "S07: a Heroes Haven case with approved spend and no invoice"

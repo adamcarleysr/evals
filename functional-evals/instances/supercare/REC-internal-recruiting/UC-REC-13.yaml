@@ -1,0 +1,45 @@
+# SuperCare binding for UC-REC-13 (eval v0.2). Values from ClickUp (SR-13370, SR-13377, Offer Auto-Fill Playbook,
+# Offer-to-Placement Mapping, Approval Gate Definitions, Bullhorn Meanings Policy, Stage Progression Rules,
+# P1/P2 Proof: Test Prompts). Draft.
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-REC-13
+eval_version: "0.2"
+
+values:
+  candidate_name: Joshua Woodman
+  candidate_first_name: Joshua
+  candidate_role: Senior Coach
+  candidate_role_short: "<to supply>"
+  candidate_home: Norwood
+  hiring_manager_first_name: Zinnia
+  offer_approver_name: Damian Williams
+  vacancy_rate: £18/hr
+  vacancy_hours: avg 36hrs (1-on-2-off)
+  vacancy_contract_type: Permanent
+  out_of_range_rate: £22/hr
+
+  interview_stage: Stage 2
+  final_stage: Stage 3 Home Visit
+  offer_stage: Offer Preparation
+  offer_status: Onboarding
+  region_term: Satellite
+  autofill_marker: Auto-filled, verify
+  document_store_name: OneDrive
+
+  offer_approvers: "the recruiter and Damian Williams (Operations Director)"
+  approved_rate_range: "<to supply>"
+  role_type: Care
+  region: London
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: Joshua Woodman at Offer Preparation for the Norwood Senior Coach JobOrder (£18/hr, Permanent, avg 36h on 1-on-2-off), with an application form in his Bullhorn files"
+  - "S03: a variant with Joshua Woodman still at Stage 2 and no Home Visit recorded"
+  - "S04: the approved rate range for Senior Coach at Norwood, excluding £22/hr"
+  - "S05: the offer pack approved by the recruiter and Damian Williams, with no Placement yet"

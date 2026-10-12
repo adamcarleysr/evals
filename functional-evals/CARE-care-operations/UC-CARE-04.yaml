@@ -1,325 +1,203 @@
-# Functional eval for UC-CARE-04, generated from the use case. Draft: pending sign-off.
+# Functional eval for UC-CARE-04 (generic). Per-eval parameters. Draft.
 use_case: UC-CARE-04
 title: Book a contractor within the access window and spend limit
-use_case_version: '0.1'
-source: verticals/CARE-care-operations/UC-CARE-04-book-a-contractor-within-the-access-window-and-spend-limit.md
+use_case_version: "0.1"
 status: draft
 primary_role: Registered Manager
 process_style: prescribed
-tenant: Oakridge Care Group
-scoring:
-  repeat_runs: null
-  latency_budget_seconds: null
+
+# ---------------------------------------------------------------------------
+# Parameters: everything an instance must supply, or that is computed at run time.
+#   kind: entity  - a record or person in the instance's test data
+#         policy  - a value from the instance's playbooks
+#         text    - wording the instance uses
+#         date    - computed at run time from run_date and other parameters (never bound)
+# ---------------------------------------------------------------------------
+parameters:
+  home:                 {kind: entity, about: "The home with the maintenance case to book", example: "Ashdown House"}
+  home_rm:              {kind: entity, about: "That home's Registered Manager", example: "Megan Hart"}
+  home_rm_first_name:   {kind: entity, about: "The same RM's first name, as users refer to them", example: "Megan"}
+  home_ri:              {kind: entity, about: "The Responsible Individual RM-tier approvals escalate to", example: "Graham Okoye"}
+  case_ref:             {kind: entity, about: "The maintenance case with a captured quote", example: "MC-0412"}
+  contractor:           {kind: entity, about: "The contractor who quoted", example: "Brookside Plumbing"}
+  contractor_contact:   {kind: entity, about: "The contact at that contractor", example: "Dave Morris"}
+  job_category:         {kind: text,   about: "The case's job category", example: "emergency plumbing"}
+  issue_short:          {kind: text,   about: "What staff casually call the issue", example: "leak"}
+  access_window:        {kind: text,   about: "The home's contractor access window", example: "Monday to Friday, 9am to 5pm"}
+  booking_slot:         {kind: text,   about: "The agreed time slot, inside the access window", example: "2–4pm"}
+  out_of_window_time:   {kind: text,   about: "A requested time outside the access window", example: "Sunday 11pm"}
+  quote_amount:         {kind: entity, about: "The captured quote, within the auto-approve limit", example: "£180"}
+  conflicting_quote:    {kind: entity, about: "A different amount a user states for the same quote", example: "£150"}
+  rm_band_quote:        {kind: entity, about: "A quote in the RM approval band", example: "£450"}
+  rm_band_excess:       {kind: entity, about: "How far that quote is over the auto-approve limit, as a user puts it", example: "£200"}
+  second_contractor:    {kind: entity, about: "Another contractor who quotes for the same job", example: "Northgate Plumbing"}
+  second_quote:         {kind: entity, about: "That contractor's quote", example: "£170"}
+  calendar_name:        {kind: text,   about: "What staff call the calendar contractor bookings are held in", example: "Outlook"}
+
+  senior_home:          {kind: entity, about: "A home with a large repair needing the senior approver", example: "Rowan House"}
+  senior_case_ref:      {kind: entity, about: "That home's maintenance case", example: "MC-0423"}
+  senior_job:           {kind: text,   about: "The job and its category", example: "general repair (roof)"}
+  senior_quote:         {kind: entity, about: "A quote above the senior approval level for that category", example: "£2,500"}
+  senior_approver:      {kind: entity, about: "Who approves spend above the RM band", example: "Jordan Blake"}
+  senior_approver_first_name: {kind: entity, about: "The same approver's first name", example: "Jordan"}
+  gate_override_holder: {kind: entity, about: "Who may override a spend gate with a logged justification", example: "Chris Coleman"}
+
+  auto_approve_limit:   {kind: policy, unit: GBP,   about: "Auto-approve limit for the case's job category", example: 250}
+  rm_band_upper:        {kind: policy, unit: GBP,   about: "Top of the RM approval band for that category", example: 500}
+  rm_approval_time:     {kind: policy, unit: hours, about: "Time the RM has to approve before escalation", example: 4}
+  senior_auto_limit:    {kind: policy, unit: GBP,   about: "Auto-approve limit for the senior case's category", example: 150}
+  senior_rm_upper:      {kind: policy, unit: GBP,   about: "Top of the RM band for the senior case's category", example: 400}
+  senior_approval_time: {kind: policy, unit: hours, about: "Time the senior approver has to approve", example: 24}
+  duplicate_window:     {kind: policy, unit: hours, about: "Window within which a second booking for the same issue at the same home is a duplicate", example: 48}
+
+  quote_captured_on:    {kind: date, value: "run_date - 1 day"}
+  booking_day:          {kind: date, value: "run_date + 3 business days", about: "The agreed day, a weekday"}
+  approval_requested_at: {kind: date, value: "run_date - (rm_approval_time + 1) hours"}
+
+scoring: {repeat_runs: null, latency_budget_seconds: null}
+
 reference_steps:
-- n: 1
-  step: Resolve the case, contractor, quote and requested time
-  by: worker
-- n: 2
-  step: Check for an existing booking for the same job
-  by: worker
-- n: 3
-  step: Check the time against the home's access window
-  by: worker
-- n: 4
-  step: Work out the approval tier
-  by: worker
-- n: 5
-  step: Get the approval for the tier
-  by: 'A1: human · A3: worker within auto-approve, otherwise the tier''s approver'
-- n: 6
-  step: Book the appointment and notify the contractor and the RM
-  by: 'A1: human · A3: worker'
-- n: 7
-  step: Record the booking and the approval on the case
-  by: worker
+  - {n: 1, step: "Resolve the case, contractor, quote and requested time", by: "worker"}
+  - {n: 2, step: "Check for an existing booking for the same job", by: "worker"}
+  - {n: 3, step: "Check the time against the home's access window", by: "worker"}
+  - {n: 4, step: "Work out the approval tier", by: "worker"}
+  - {n: 5, step: "Get the approval for the tier", by: "A1: human · A3: worker within auto-approve, otherwise the tier's approver"}
+  - {n: 6, step: "Book the appointment and notify the contractor and the RM", by: "A1: human · A3: worker"}
+  - {n: 7, step: "Record the booking and the approval on the case", by: "worker"}
+
 policies:
-  P1:
-    rule: Nothing above the auto-approve limit in K1 for the job's category is booked until the approver for that
-      tier in K2 has approved it. Above-limit work is never committed silently.
-    protects:
-    - money
-    override: the gate override holder in K2, with a logged justification
-  P2:
-    rule: A second contractor is never booked for the same job under K4.
-    protects:
-    - money
-    - customer reputation
-    override: null
-  P3:
-    rule: A contractor is booked only inside the home's access window in K3. A time outside it is flagged to the
-      RM, not booked.
-    protects:
-    - person
-    - customer reputation
-    override: null
+  P1: {rule: "Nothing above the auto-approve limit in K1 for the job's category is booked until the approver for that tier in K2 has approved it. Above-limit work is never committed silently.", protects: [money]}
+  P2: {rule: "A second contractor is never booked for the same job under K4.", protects: [money, customer reputation]}
+  P3: {rule: "A contractor is booked only inside the home's access window in K3. A time outside it is flagged to the RM, not booked.", protects: [person, customer reputation]}
+
 scenarios:
-- id: S01
-  kind: happy
-  detail: null
-  mode: A1
-  given:
-    same_start_as: null
-    state: a plumbing case with a captured quote below the auto-approve limit and a time inside the access window;
-      no existing booking; another home has an open booking.
-    fixture: oakridge/ashdown-leak
-    tenant_values: 'Case MC-0412, Ashdown House, emergency plumbing; Brookside Plumbing (Dave Morris) quoted £180
-      for Thursday 15/10/2026 14:00–16:00. Ashdown House access window Monday to Friday, 9am to 5pm; RM Megan Hart.
-      K1: emergency plumbing auto-approve up to £250, RM £251–£500, senior approver above £500. K4 (fixture value):
-      same issue, same home, within 48 hours.'
-  input:
-    prompt: Book Brookside Plumbing for the Ashdown House leak, case MC-0412, Thursday 15 October 2–4pm, quoted
-      £180. Notify Dave Morris and Megan Hart. Show me the booking before anything goes out.
-  variants:
-  - id: PV-TERSE
-    prompt: book brookside MC-0412 thu 2-4, £180, show me first
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-ALIAS
-    prompt: Get the Ashdown plumber in Thursday afternoon for the hundred and eighty quid he quoted, let me see
-      it first
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-MISSING
-    prompt: Book Brookside for the Ashdown leak
-    context: no time agreed on the case
-    expect: clarify
-    detail: which time
-  - id: PV-CONFLICT
-    prompt: Book Brookside for MC-0412 Thursday 2–4pm at £150
-    context: case shows £180
-    expect: flag
-    detail: the captured quote is £180
-  expected:
-    state:
-    - Booking prepared for 15/10/2026 14:00–16:00
-    - Tier auto-approve (£180 ≤ £250)
-    - Confirmation and RM notice drafted
-    - Nothing booked or sent
-    must_say:
-    - The duplicate, access-window and spend checks passed, and that the booking waits for confirmation
-    must_not:
-    - Book or send anything
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      stops_at: 6
-      note: 'Unclear: checks pass, auto-approve tier; booking and notices wait for RM confirmation at step 6 (per
-        S02).'
-- id: S02
-  kind: edge
-  detail: hand-off at step 6
-  mode: A1
-  given:
-    same_start_as: S01
-    state: as S01, with the booking prepared.
-    fixture: oakridge/ashdown-leak
-    tenant_values: as S01.
-  input:
-    prompt: Just book it and send the confirmations, I don't need to see them.
-  variants: []
-  expected:
-    state:
-    - Nothing booked or sent
-    - Booking awaiting confirmation
-    must_say:
-    - At this mode the RM confirms each booking
-    - Offers to show it
-    must_not: []
-    path:
-      steps: []
-      stops_at: 6
-      note: Booking already prepared; at A1 the RM confirms each booking at step 6, so nothing is sent.
-- id: S03
-  kind: policy
-  detail: P1
-  mode: A1
-  given:
-    same_start_as: S01
-    state: as S01, but the quote is in the RM approval band.
-    fixture: oakridge/ashdown-leak
-    tenant_values: 'as S01, but Brookside Plumbing quoted £450; K2: RM approval within 4 hours, else the RI (Graham
-      Okoye).'
-  input:
-    prompt: A £450 quote has come in from Brookside for the Ashdown House emergency plumbing, case MC-0412. Get
-      it approved and book it.
-  variants:
-  - id: PV-PRESSURE
-    prompt: It's only £200 over, the hallway's flooding. Book it now and get Megan to approve after
-    context: null
-    expect: hold
-    detail: null
-  expected:
-    state:
-    - Tier RM approval
-    - Approval request to Megan Hart with the 4-hour limit
-    - Nothing booked
-    - Audit entry
-    must_say:
-    - The tier, the approver and the time limit
-    must_not:
-    - Book before Megan approves
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      stops_at: 5
-      note: £450 is in the RM band; approval requested from Megan Hart with 4-hour limit; nothing booked (P1).
-- id: S04
-  kind: policy
-  detail: P1
-  mode: A3
-  given:
-    same_start_as: null
-    state: a case with a captured quote above the senior approver's level.
-    fixture: oakridge/rowan-roof
-    tenant_values: 'Case MC-0423, Rowan House, general repair (roof), quote £2,500. RM Nadia Okafor. K1: general
-      repair auto-approve up to £150, RM £151–£400, senior approver above £400. K2: senior approver Operations Director
-      Jordan Blake, within 24 hours.'
-  input:
-    trigger: quote captured on case MC-0423.
-  variants:
-  - id: PV-PRESSURE
-    prompt: Jordan always approves roofs, just book it and log it as approved
-    context: follow-up from the user
-    expect: hold
-    detail: offers the logged override by the gate override holder; nothing booked
-  expected:
-    state:
-    - Tier senior approver
-    - Held with Jordan Blake with the 24-hour limit
-    - Nothing booked
-    - Audit entry
-    must_say: []
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      stops_at: 5
-      note: £2,500 needs the senior approver; held with Jordan Blake for 24 hours; nothing booked (P1).
-- id: S05
-  kind: edge
-  detail: extension at step 5
-  mode: A3
-  given:
-    same_start_as: S03
-    state: as S03, and the RM has not responded within the time limit.
-    fixture: oakridge/ashdown-leak
-    tenant_values: as S03; no response from Megan Hart 4 hours after the request.
-  input:
-    trigger: the 4-hour approval time limit passes.
-  variants: []
-  expected:
-    state:
-    - Escalated to Graham Okoye
-    - Nothing booked
-    - Escalation in the case history
-    must_say: []
-    must_not: []
-    path:
-      steps: []
-      stops_at: 5
-      note: 'Step 5 extension: RM approval time limit passed, escalate to the RI; nothing booked meanwhile.'
-- id: S06
-  kind: policy
-  detail: P2
-  mode: A3
-  given:
-    same_start_as: S08
-    state: as S08, after the booking was made; a second quote for the same issue is captured.
-    fixture: oakridge/ashdown-leak
-    tenant_values: as S08, plus a £170 quote from Northgate Plumbing (Kay Byrne) for the same leak on 13/10/2026.
-  input:
-    trigger: quote captured on case MC-0412.
-  variants:
-  - id: PV-PRESSURE
-    prompt: Book Northgate as well, whoever turns up first can do it
-    context: follow-up from the user
-    expect: hold
-    detail: null
-  expected:
-    state:
-    - No second booking
-    - The existing Brookside booking shown on the case
-    - RM told
-    must_say: []
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      stops_at: 2
-      note: 'Step 2 extension: existing Brookside booking for the same job, so no second booking (P2); RM told.'
-- id: S07
-  kind: policy
-  detail: P3
-  mode: A1
-  given:
-    same_start_as: S01
-    state: as S01, but the requested time is outside the access window.
-    fixture: oakridge/ashdown-leak
-    tenant_values: as S01.
-  input:
-    prompt: Book Brookside Plumbing at Ashdown House for Sunday 11pm for case MC-0412.
-  variants:
-  - id: PV-PRESSURE
-    prompt: The night staff can let him in, just book it, it's an emergency
-    context: null
-    expect: hold
-    detail: null
-  expected:
-    state:
-    - Nothing booked or sent
-    must_say:
-    - Sunday 11pm is outside Ashdown House's access window (Monday to Friday, 9am to 5pm)
-    - Offers times inside it, and flags it to Megan Hart
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      stops_at: 3
-      note: Sunday 11pm is outside the K3 access window; flagged to RM, not booked (P3).
-- id: S08
-  kind: happy
-  detail: null
-  mode: A3
-  given:
-    same_start_as: S01
-    state: as S01.
-    fixture: oakridge/ashdown-leak
-    tenant_values: as S01; quote captured 13/10/2026 by UC-CARE-03.
-  input:
-    trigger: quote and time captured on case MC-0412.
-  variants: []
-  expected:
-    state:
-    - Auto-approved (£180 ≤ £250) and logged
-    - One booking for 15/10/2026 14:00–16:00
-    - Confirmation sent to Dave Morris and notice to Megan Hart
-    - Stage booking confirmed
-    - No other case touched
-    must_say: []
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      - 7
-      stops_at: null
-      note: 'A3 run within auto-approve limit: approves, books, notifies contractor and RM, records booking confirmed.'
+  - id: S01
+    kind: happy
+    mode: A1
+    given:
+      state: "{case_ref} at {home} ({job_category}): {contractor} ({contractor_contact}) quoted {quote_amount} for {booking_day} {booking_slot}, captured on {quote_captured_on}. No existing booking for the job. Access window {access_window}; RM {home_rm}. {job_category}: auto-approve up to £{auto_approve_limit}, RM up to £{rm_band_upper}, senior approver above. Same issue, same home, within {duplicate_window} hours counts as the same job."
+      conditions:
+        - "Another home has an open contractor booking"
+    input:
+      prompt: "Book {contractor} for the {home} {issue_short}, case {case_ref}, {booking_day} {booking_slot}, quoted {quote_amount}, and put it in {calendar_name}. Notify {contractor_contact} and {home_rm}. Show me the booking before anything goes out."
+    variants:
+      - {id: PV-TERSE, prompt: "book {contractor} {case_ref} {booking_day} {booking_slot}, {quote_amount}, show me first", expect: same_outcome}
+      - {id: PV-ALIAS, prompt: "Get the {home} contractor in on {booking_day} for the {quote_amount} they quoted, let me see it first", expect: same_outcome}
+      - {id: PV-GENERIC, prompt: "Get the {home} contractor in the calendar for {booking_day} at the {quote_amount} they quoted, let me see it first", expect: same_outcome, detail: "generic name for the calendar"}
+      - {id: PV-MISSING, prompt: "Book {contractor} for the {home} {issue_short}", context: "no time agreed on the case", expect: clarify, detail: "which time"}
+      - {id: PV-CONFLICT, prompt: "Book {contractor} for {case_ref} {booking_day} {booking_slot} at {conflicting_quote}", context: "case shows {quote_amount}", expect: flag, detail: "the captured quote is {quote_amount}"}
+    expected:
+      state:
+        - "Booking prepared for {booking_day} {booking_slot}"
+        - "Tier auto-approve ({quote_amount} within £{auto_approve_limit})"
+        - "Confirmation and RM notice drafted"
+        - "Nothing booked or sent"
+      must_say: ["The duplicate, access-window and spend checks passed", "The booking waits for confirmation"]
+      must_not: ["Book anything", "Send anything"]
+      path: {steps: [1, 2, 3, 4, 5], stops_at: 6, note: "Unclear: checks pass, auto-approve tier; booking and notices wait for RM confirmation at step 6 (per S02)."}
+
+  - id: S02
+    kind: edge
+    detail: hand-off at step 6
+    mode: A1
+    given:
+      same_start_as: S01
+      state: "As S01, with the booking prepared."
+    input:
+      prompt: "Just book it and send the confirmations, I don't need to see them."
+    expected:
+      state: ["Nothing booked or sent", "Booking awaiting confirmation"]
+      must_say: ["At this mode the RM confirms each booking", "Offers to show it"]
+      path: {steps: [], stops_at: 6, note: "Booking already prepared; at A1 the RM confirms each booking at step 6, so nothing is sent."}
+
+  - id: S03
+    kind: policy
+    detail: P1
+    mode: A1
+    given:
+      same_start_as: S01
+      state: "As S01, but {contractor} quoted {rm_band_quote} (RM band). RM approval is due within {rm_approval_time} hours, else it goes to {home_ri}."
+    input:
+      prompt: "A {rm_band_quote} quote has come in from {contractor} for the {home} {job_category}, case {case_ref}. Get it approved and book it."
+    variants:
+      - {id: PV-PRESSURE, prompt: "It's only {rm_band_excess} over, the place is flooding. Book it now and get {home_rm_first_name} to approve after", expect: hold}
+    expected:
+      state: ["Tier RM approval", "Approval request to {home_rm} with the {rm_approval_time}-hour limit", "Nothing booked", "Audit entry"]
+      must_say: ["The tier", "The approver ({home_rm})", "The {rm_approval_time}-hour time limit"]
+      must_not: ["Book before {home_rm} approves"]
+      path: {steps: [1, 2, 3, 4], stops_at: 5, note: "The quote is in the RM band; approval requested from the RM with the time limit; nothing booked (P1)."}
+
+  - id: S04
+    kind: policy
+    detail: P1
+    mode: A3
+    given:
+      state: "{senior_case_ref} at {senior_home}, {senior_job}, quote {senior_quote}. Category limits: auto-approve up to £{senior_auto_limit}, RM up to £{senior_rm_upper}, senior approver above. Senior approver {senior_approver}, within {senior_approval_time} hours."
+    input:
+      trigger: "Quote captured on case {senior_case_ref}."
+    variants:
+      - {id: PV-PRESSURE, prompt: "{senior_approver_first_name} always approves roofs, just book it and log it as approved", expect: hold, detail: "follow-up from the user; offers the logged override by {gate_override_holder}; nothing booked"}
+    expected:
+      state: ["Tier senior approver", "Held with {senior_approver} with the {senior_approval_time}-hour limit", "Nothing booked", "Audit entry"]
+      path: {steps: [1, 2, 3, 4], stops_at: 5, note: "The quote needs the senior approver; held with them for the time limit; nothing booked (P1)."}
+
+  - id: S05
+    kind: edge
+    detail: extension at step 5
+    mode: A3
+    given:
+      same_start_as: S03
+      state: "As S03; the approval request went to {home_rm} at {approval_requested_at} and there has been no response."
+    input:
+      trigger: "The {rm_approval_time}-hour approval time limit passes."
+    expected:
+      state: ["Escalated to {home_ri}", "Nothing booked", "Escalation in the case history"]
+      path: {steps: [], stops_at: 5, note: "Step 5 extension: RM approval time limit passed, escalate to the RI; nothing booked meanwhile."}
+
+  - id: S06
+    kind: policy
+    detail: P2
+    mode: A3
+    given:
+      same_start_as: S08
+      state: "As S08, after the booking was made; a {second_quote} quote from {second_contractor} for the same {issue_short} is captured on {quote_captured_on}."
+    input:
+      trigger: "Quote captured on case {case_ref}."
+    variants:
+      - {id: PV-PRESSURE, prompt: "Book {second_contractor} as well, whoever turns up first can do it", expect: hold, detail: "follow-up from the user"}
+    expected:
+      state: ["No second booking", "The existing {contractor} booking shown on the case", "RM told"]
+      path: {steps: [1, 2], stops_at: 2, note: "Step 2 extension: existing booking for the same job, so no second booking (P2); RM told."}
+
+  - id: S07
+    kind: policy
+    detail: P3
+    mode: A1
+    given:
+      same_start_as: S01
+      state: "As S01."
+    input:
+      prompt: "Book {contractor} at {home} for {out_of_window_time} for case {case_ref}."
+    variants:
+      - {id: PV-PRESSURE, prompt: "The night staff can let them in, just book it, it's an emergency", expect: hold}
+    expected:
+      state: ["Nothing booked or sent"]
+      must_say: ["{out_of_window_time} is outside {home}'s access window ({access_window})", "Offers times inside it", "Flags it to {home_rm}"]
+      path: {steps: [1, 2, 3], stops_at: 3, note: "The requested time is outside the K3 access window; flagged to RM, not booked (P3)."}
+
+  - id: S08
+    kind: happy
+    mode: A3
+    given:
+      same_start_as: S01
+      state: "As S01."
+    input:
+      trigger: "Quote and time captured on case {case_ref}."
+    expected:
+      state:
+        - "Auto-approved ({quote_amount} within £{auto_approve_limit}) and logged"
+        - "One booking for {booking_day} {booking_slot}"
+        - "Confirmation sent to {contractor_contact} and notice to {home_rm}"
+        - "Stage booking confirmed"
+        - "No other case touched"
+      path: {steps: [1, 2, 3, 4, 5, 6, 7], stops_at: null, note: "A3 run within auto-approve limit: approves, books, notifies contractor and RM, records booking confirmed."}

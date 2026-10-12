@@ -1,0 +1,36 @@
+# SuperCare binding for UC-REC-19 (eval v0.2). Values checked against ClickUp. Draft.
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-REC-19
+eval_version: "0.2"
+
+values:
+  ats_name: Bullhorn
+  similar_home: Frimley
+  unmapped_home_name: Frimley Annex
+  shared_home: "<to supply>"
+  failed_query_metric: Calls
+  impossible_start_date: 01/01/1900
+
+  forecast_horizon_weeks: 4
+  owner_placement_fields: Recruiter
+  owner_query_failure: "<to supply>"
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: 2 placements in this week's run with no start date"
+  - "S01: two placement records sharing one Placement ID"
+  - "S01: 1 activity record with a recruiter not in the canonical recruiter mapping"
+  - "S01: 1 placement with home recorded as \"Frimley Annex\""
+  - "S01: 1 placement with start date 01/01/1900"
+  - "S01: the Calls activity query forced to time out for the run"
+  - "S01: two draft reporting runs for this week (for the PV-MISSING variant)"
+  - "S01: a stored reference issue list"
+  - "S04: the stage history query forced to fail for the run"
+  - "S05: a home covered by two recruiters (for the PV-AMBIGUOUS variant)"
+  - "S07: the duplicate Placement merged in Bullhorn after S06"

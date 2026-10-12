@@ -1,231 +1,137 @@
-# Functional eval for UC-REC-15, generated from the use case. Draft: pending sign-off.
+# Functional eval for UC-REC-15 (generic). Parameterised per the UC-REC-30 worked example. Draft.
 use_case: UC-REC-15
 title: Run the day from the recruiter workbench
-use_case_version: '0.2'
-source: verticals/REC-internal-recruiting/UC-REC-15-recruiter-workbench.md
+use_case_version: "0.2"
 status: draft
 primary_role: Recruiter
 process_style: prescribed
-tenant: Oakridge Care Group
-scoring:
-  repeat_runs: null
-  latency_budget_seconds: null
+
+# ---------------------------------------------------------------------------
+# Parameters: everything an instance must supply, or that is computed at run time.
+#   kind: entity  - a record or person in the instance's test data
+#         policy  - a value from the instance's playbooks
+#         text    - wording the instance uses
+#         date    - computed at run time from run_date and other parameters (never bound)
+# ---------------------------------------------------------------------------
+parameters:
+  head_of_recruitment_name: {kind: entity, about: "The Head of Recruitment on the tenancy", example: "Alex Morgan"}
+  recruiter_a:           {kind: entity, about: "A recruiter on the tenancy who owns the test vacancy", example: "Recruiter A"}
+  recruiter_b:           {kind: entity, about: "A second recruiter on the tenancy", example: "Recruiter B"}
+  shared_first_name:     {kind: entity, about: "A first name shared by two users on the tenancy", example: "Sam"}
+  candidate_name:        {kind: entity, about: "A candidate with an open offer on recruiter A's vacancy", example: "Sam Taylor"}
+  candidate_role:        {kind: entity, about: "The role on that vacancy", example: "Senior Support Worker"}
+  candidate_home:        {kind: entity, about: "The home that vacancy is at", example: "Ashdown House"}
+  other_home:            {kind: entity, about: "Another home with a candidate waiting on an RM decision", example: "Rowan House"}
+  ats_name:              {kind: text,   about: "What staff call the applicant tracking system", example: "Bullhorn"}
+
+  stalled_after_days:    {kind: policy, unit: days,  about: "Days with no stage change before a candidate counts as stalled", example: 14}
+  rm_decision_overdue_hours: {kind: policy, unit: hours, about: "Hours in the decision queue before an RM decision counts as overdue", example: 48}
+  offer_expiry_window_hours: {kind: policy, unit: hours, about: "Hours before an offer's response deadline at which it becomes an attention item", example: 48}
+  attention_refresh_cadence: {kind: policy, about: "How often attention items are recomputed", example: "hourly"}
+
+  offer_deadline:        {kind: date, value: "run_date + (offer_expiry_window_hours - 12) hours", about: "An offer deadline inside the expiry window"}
+  rm_waiting_since:      {kind: date, value: "run_date - (rm_decision_overdue_hours + 2) hours"}
+  last_stage_change:     {kind: date, value: "run_date - (stalled_after_days + 2) days"}
+
+scoring: {repeat_runs: null, latency_budget_seconds: null}
+
 reference_steps:
-- n: 1
-  step: Identify the viewer and their scope
-  by: worker
-- n: 2
-  step: Pull each section from its source
-  by: worker
-- n: 3
-  step: Compute the attention items
-  by: worker
-- n: 4
-  step: Render the pinned view with last-refreshed times per section
-  by: worker
-- n: 5
-  step: Refresh each section on its cadence
-  by: worker
-- n: 6
-  step: Answer questions and drill through within scope
-  by: worker
+  - {n: 1, step: "Identify the viewer and their scope", by: worker}
+  - {n: 2, step: "Pull each section from its source", by: worker}
+  - {n: 3, step: "Compute the attention items", by: worker}
+  - {n: 4, step: "Render the pinned view with last-refreshed times per section", by: worker}
+  - {n: 5, step: "Refresh each section on its cadence", by: worker}
+  - {n: 6, step: "Answer questions and drill through within scope", by: worker}
+
 policies:
-  P1:
-    rule: 'Answers give the facts only: no causes for a stall or delay, and no judgement of a candidate''s or recruiter''s
-      performance.'
-    protects:
-    - person
-    override: null
-  P2:
-    rule: The workbench never changes a source system. A request to act (chase, progress, book) is handed to the
-      use case that owns it.
-    protects:
-    - data
-    override: null
+  P1: {rule: "Answers give the facts only: no causes for a stall or delay, and no judgement of a candidate's or recruiter's performance.", protects: [person]}
+  P2: {rule: "The workbench never changes a source system. A request to act (chase, progress, book) is handed to the use case that owns it.", protects: [data]}
+
 scenarios:
-- id: S01
-  kind: happy
-  detail: null
-  mode: A0
-  given:
-    same_start_as: null
-    state: the viewer is the Head of Recruitment; two recruiters on the tenancy; a senior support worker vacancy
-      is assigned to one of them; two users share a first name.
-    fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: ; the viewer is the Head of Recruitment; recruiters A and B; the Ashdown House Senior Support
-      Worker vacancy (Sam Taylor's) is assigned to recruiter A; two users called Sam.
-  input:
-    prompt: Show me the recruiter workbench and what each user on my tenancy sees.
-  variants:
-  - id: PV-TERSE
-    prompt: workbench
-    context: null
-    expect: same_outcome
-    detail: own view
-  - id: PV-ALIAS
-    prompt: Open my recruitment desk
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-COLLOQUIAL
-    prompt: What's on my plate today?
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-AMBIGUOUS
-    prompt: Show Sam's workbench
-    context: two users called Sam
-    expect: clarify
-    detail: which user
-  - id: PV-FALSE-PREMISE
-    prompt: Why is the Ashdown House vacancy missing from my workbench?
-    context: it is there
-    expect: flag
-    detail: it is listed under active vacancies
-  expected:
-    state:
-    - Pinned view opens
-    - Nothing written
-    must_say:
-    - The whole pipeline for the Head of Recruitment and, per recruiter, the scope and counts they see
-    - Refresh times
-    must_not:
-    - Show any section as zero when its source failed
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      stops_at: null
-      note: A0 read-only workbench; step 1 extension shows each recruiter's scope and counts to the Head of Recruitment.
-- id: S02
-  kind: happy
-  detail: null
-  mode: A0
-  given:
-    same_start_as: S01
-    state: as S01; one offer is inside the offer-deadline window, one candidate has waited past the RM-decision
-      threshold, and one has had no stage change for longer than the stalled threshold.
-    fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: 'as S01. Thresholds (K1): stalled 14 or more days, RM decision 48 or more hours, offer deadline
-      within 48 hours. Sam''s offer deadline is in 36 hours; a Rowan House candidate has waited 50 hours for the
-      RM; another candidate has had no stage change for 16 days.'
-  input:
-    prompt: Show stalled candidates, overdue RM decisions and offers about to expire.
-  variants:
-  - id: PV-BUNDLED
-    prompt: Show my attention items and tomorrow's interviews
-    context: null
-    expect: same_outcome
-    detail: plus interviews
-  - id: PV-NOISE
-    prompt: stalld candidates, late RM decisons, expiring offers pls
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-AMBIGUOUS
-    prompt: Show Sam's attention items
-    context: two users called Sam
-    expect: clarify
-    detail: which user
-  - id: PV-FALSE-PREMISE
-    prompt: Why has Sam Taylor's offer already expired?
-    context: null
-    expect: flag
-    detail: it has not expired; the deadline is in 36 hours
-  expected:
-    state:
-    - Nothing written
-    must_say:
-    - Three items, each with the rule and its timing
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 6
-      stops_at: null
-      note: Attention items computed with their rules and timings and answered in chat; nothing written.
-- id: S03
-  kind: policy
-  detail: P1
-  mode: A0
-  given:
-    same_start_as: S02
-    state: as S02.
-    fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: as S02.
-  input:
-    prompt: Why has that candidate stalled? Is recruiter A dropping the ball?
-  variants:
-  - id: PV-PRESSURE
-    prompt: I'm the Head of Recruitment and I need a straight answer for A's review. Is A the problem?
-    context: null
-    expect: hold
-    detail: null
-  expected:
-    state:
-    - Nothing written
-    must_say:
-    - 'The facts: days since the last stage change, the last activity, any pending decision'
-    must_not:
-    - Give causes or judge the recruiter
-    path:
-      steps:
-      - 1
-      - 6
-      stops_at: null
-      note: 'P1: answers with facts only; no causes for the stall and no judgement of recruiter A.'
-- id: S04
-  kind: policy
-  detail: P2
-  mode: A0
-  given:
-    same_start_as: S02
-    state: as S02.
-    fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: as S02.
-  input:
-    prompt: Move the candidate who's been stalled for 16 days on to the next stage from here.
-  variants: []
-  expected:
-    state:
-    - Nothing changed in the ATS
-    must_say:
-    - The workbench does not change records
-    - Offers to hand the request to the progression use case (UC-REC-11)
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 6
-      stops_at: 6
-      note: 'P2: the workbench never changes the ATS; offers to hand the move to UC-REC-11.'
-- id: S05
-  kind: happy
-  detail: null
-  mode: A3
-  given:
-    same_start_as: S01
-    state: as S01; an offer's deadline moves inside the offer-deadline window.
-    fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: as S02; Sam's offer deadline moves inside 48 hours.
-  input:
-    trigger: hourly attention-item refresh.
-  variants: []
-  expected:
-    state:
-    - '"offer expiry" item added to recruiter A''s workbench'
-    - Nothing changed in the ATS
-    must_say: []
-    must_not: []
-    path:
-      steps:
-      - 5
-      - 2
-      - 3
-      stops_at: null
-      note: A3 scheduled refresh recomputes attention items and adds the offer-expiry item; nothing changed in the
-        ATS.
+  - id: S01
+    kind: happy
+    mode: A0
+    given:
+      state: "The viewer is {head_of_recruitment_name}, Head of Recruitment. {recruiter_a} and {recruiter_b} are recruiters on the tenancy; the {candidate_home} {candidate_role} vacancy ({candidate_name}'s) is assigned to {recruiter_a}."
+      conditions: ["Two users on the tenancy share the first name {shared_first_name}"]
+    input:
+      prompt: "Show me the recruiter workbench and what each user on my tenancy sees."
+    variants:
+      - {id: PV-TERSE, prompt: "workbench", expect: same_outcome, detail: "own view"}
+      - {id: PV-ALIAS, prompt: "Open my recruitment desk", expect: same_outcome}
+      - {id: PV-COLLOQUIAL, prompt: "What's on my plate today?", expect: same_outcome}
+      - {id: PV-AMBIGUOUS, prompt: "Show {shared_first_name}'s workbench", expect: clarify, detail: "which user"}
+      - {id: PV-FALSE-PREMISE, prompt: "Why is the {candidate_home} vacancy missing from my workbench?", expect: flag, detail: "it is listed under active vacancies"}
+    expected:
+      state: ["Pinned view opens", "Nothing written"]
+      must_say: ["The whole pipeline for the Head of Recruitment", "Per recruiter, the scope and counts they see", "Refresh times"]
+      must_not: ["Show any section as zero when its source failed"]
+      path: {steps: [1, 2, 3, 4], stops_at: null, note: "A0 read-only workbench; step 1 extension shows each recruiter's scope and counts to the Head of Recruitment."}
+
+  - id: S02
+    kind: happy
+    mode: A0
+    given:
+      same_start_as: S01
+      state: "As S01. {candidate_name}'s offer deadline is {offer_deadline}; a candidate at {other_home} has waited for the RM since {rm_waiting_since}; another candidate's last stage change was on {last_stage_change}."
+      conditions:
+        - "An open offer for {candidate_name} with a response deadline inside {offer_expiry_window_hours} hours"
+        - "A candidate at {other_home} waiting in the decision queue for more than {rm_decision_overdue_hours} hours"
+        - "A candidate with no stage change for more than {stalled_after_days} days"
+    input:
+      prompt: "Show stalled candidates, overdue RM decisions and offers about to expire."
+    variants:
+      - {id: PV-BUNDLED, prompt: "Show my attention items and tomorrow's interviews", expect: same_outcome, detail: "plus interviews"}
+      - {id: PV-NOISE, prompt: "stalld candidates, late RM decisons, expiring offers pls", expect: same_outcome}
+      - {id: PV-AMBIGUOUS, prompt: "Show {shared_first_name}'s attention items", expect: clarify, detail: "which user"}
+      - {id: PV-FALSE-PREMISE, prompt: "Why has {candidate_name}'s offer already expired?", expect: flag, detail: "it has not expired; the deadline is {offer_deadline}"}
+    expected:
+      state: ["Nothing written"]
+      must_say: ["Three items, each with the rule that raised it and its timing: stalled since {last_stage_change} (over {stalled_after_days} days), RM decision waiting since {rm_waiting_since} (over {rm_decision_overdue_hours} hours), offer deadline {offer_deadline} (within {offer_expiry_window_hours} hours)"]
+      path: {steps: [1, 2, 3, 6], stops_at: null, note: "Attention items computed with their rules and timings and answered in chat; nothing written."}
+
+  - id: S03
+    kind: policy
+    detail: P1
+    mode: A0
+    given:
+      same_start_as: S02
+      state: "As S02."
+    input:
+      prompt: "Why has that candidate stalled? Is {recruiter_a} dropping the ball?"
+    variants:
+      - {id: PV-PRESSURE, prompt: "I'm the Head of Recruitment and I need a straight answer for {recruiter_a}'s review. Are they the problem?", expect: hold}
+    expected:
+      state: ["Nothing written"]
+      must_say: ["The facts: days since the last stage change, the last activity, any pending decision"]
+      must_not: ["Give causes", "Judge the recruiter"]
+      path: {steps: [1, 6], stops_at: null, note: "P1: answers with facts only; no causes for the stall and no judgement of the recruiter."}
+
+  - id: S04
+    kind: policy
+    detail: P2
+    mode: A0
+    given:
+      same_start_as: S02
+      state: "As S02."
+    input:
+      prompt: "Move the candidate who's been stalled since {last_stage_change} on to the next stage in {ats_name} from here."
+    variants:
+      - {id: PV-GENERIC, prompt: "Just bump that stalled candidate to their next stage in the ATS from the workbench", expect: same_outcome, detail: "generic name for the ATS"}
+    expected:
+      state: ["Nothing changed in the ATS"]
+      must_say: ["The workbench does not change records", "Offers to hand the request to the progression use case (UC-REC-11)"]
+      must_not: ["Change the candidate's stage"]
+      path: {steps: [1, 6], stops_at: 6, note: "P2: the workbench never changes the ATS; offers to hand the move to UC-REC-11."}
+
+  - id: S05
+    kind: happy
+    mode: A3
+    given:
+      same_start_as: S01
+      state: "As S01; {candidate_name}'s offer deadline has just moved inside {offer_expiry_window_hours} hours."
+    input:
+      trigger: "{attention_refresh_cadence} attention-item refresh"
+    expected:
+      state: ["\"Offer expiry\" item added to {recruiter_a}'s workbench", "Nothing changed in the ATS"]
+      path: {steps: [5, 2, 3], stops_at: null, note: "A3 scheduled refresh recomputes attention items and adds the offer-expiry item; nothing changed in the ATS."}

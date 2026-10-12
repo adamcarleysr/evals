@@ -1,308 +1,177 @@
-# Functional eval for UC-REC-25, generated from the use case. Draft: pending sign-off.
+# Functional eval for UC-REC-25 (generic). Parameterised. Draft: pending sign-off.
 use_case: UC-REC-25
 title: Open an onboarding compliance case from the Placement handoff
-use_case_version: '0.2'
-source: verticals/REC-internal-recruiting/UC-REC-25-open-an-onboarding-compliance-case.md
+use_case_version: "0.2"
 status: draft
 primary_role: Compliance Officer
 process_style: prescribed
-tenant: Oakridge Care Group
-scoring:
-  repeat_runs: null
-  latency_budget_seconds: null
+
+# ---------------------------------------------------------------------------
+# Parameters: everything an instance must supply, or that is computed at run time.
+#   kind: entity  - a record or person in the instance's test data
+#         policy  - a value from the instance's playbooks
+#         text    - wording the instance uses
+#         date    - computed at run time from run_date and other parameters (never bound)
+# ---------------------------------------------------------------------------
+parameters:
+  ats_name:              {kind: text,   about: "What staff call the applicant tracking system", example: "Bullhorn"}
+  document_store_name:   {kind: text,   about: "What staff call the document store holding staff folders", example: "OneDrive"}
+  candidate_name:        {kind: entity, about: "A candidate whose Placement has just entered onboarding", example: "Sam Taylor"}
+  candidate_first_name:  {kind: entity, about: "The same candidate's first name, as users refer to them", example: "Sam"}
+  candidate_role:        {kind: entity, about: "The role on the candidate's Placement", example: "Senior Support Worker"}
+  candidate_home:        {kind: entity, about: "The home (site) on the candidate's Placement", example: "Ashdown House"}
+  other_home:            {kind: entity, about: "A different home where the candidate has no Placement", example: "Willow Lodge"}
+  screening_provider:    {kind: entity, about: "The screening provider that hands off Placements for onboarding", example: "Checkwell Screening"}
+  missing_document:      {kind: text,   about: "An Ofsted-critical document missing from the staff file", example: "DBS certificate"}
+  missing_reference:     {kind: text,   about: "An Ofsted-critical reference missing from the staff file", example: "Reference 2"}
+  verified_document:     {kind: text,   about: "A required document already verified on the staff file", example: "right to work"}
+  verified_reference:    {kind: text,   about: "A reference already verified on the staff file", example: "Reference 1"}
+  evidence_stage:        {kind: text,   about: "The instance's name for the case stage after a handoff is received", example: "evidence collection"}
+
+  start_date:            {kind: date, value: "run_date + 20 business days", about: "The start date on the Placement and handoff"}
+  case_opened_on:        {kind: date, value: "run_date - 1 day", about: "When the case was opened (S02)"}
+
+scoring: {repeat_runs: null, latency_budget_seconds: null}
+
 reference_steps:
-- n: 1
-  step: Resolve the Placement and check for an existing case
-  by: worker
-- n: 2
-  step: Resolve the matching staff-file folder
-  by: worker
-- n: 3
-  step: Open the case and link the records
-  by: worker
-- n: 4
-  step: Read back the case and every link
-  by: worker
-- n: 5
-  step: Audit the evidence on file against the checklist
-  by: 'A2: on request · A3: worker'
-- n: 6
-  step: Build the outstanding-items list
-  by: worker
-- n: 7
-  step: Hand the gaps to chasing and set the next action
-  by: 'A2: human · A3: worker'
+  - {n: 1, step: "Resolve the Placement and check for an existing case", by: worker}
+  - {n: 2, step: "Resolve the matching staff-file folder", by: worker}
+  - {n: 3, step: "Open the case and link the records", by: worker}
+  - {n: 4, step: "Read back the case and every link", by: worker}
+  - {n: 5, step: "Audit the evidence on file against the checklist", by: "A2: on request · A3: worker"}
+  - {n: 6, step: "Build the outstanding-items list", by: worker}
+  - {n: 7, step: "Hand the gaps to chasing and set the next action", by: "A2: human · A3: worker"}
+
 policies:
-  P1:
-    rule: A staff-file folder is linked only when it matches this Placement under K4, never on the candidate's name
-      alone. If none or several match, the case opens with the folder unlinked and no evidence is audited.
-    protects:
-    - person
-    - legal
-    - data
-    override: null
-  P2:
-    rule: Ofsted readiness is measured only against the start date on the Placement or handoff. With no start date,
-      readiness timing is unavailable; it is never estimated from a target or expected date.
-    protects:
-    - person
-    - legal
-    override: null
-  P3:
-    rule: A checklist item's status comes only from the evidence in the staff file. A check the handoff reports
-      as pre-completed is recorded as reported and still verified against the evidence ⚠ verify.
-    protects:
-    - person
-    - legal
-    override: null
+  P1: {rule: "A staff-file folder is linked only when it matches this Placement under the staff-file rules, never on the candidate's name alone. If none or several match, the case opens with the folder unlinked and no evidence is audited.", protects: [person, legal, data]}
+  P2: {rule: "Ofsted readiness is measured only against the start date on the Placement or handoff. With no start date, readiness timing is unavailable; it is never estimated from a target or expected date.", protects: [person, legal]}
+  P3: {rule: "A checklist item's status comes only from the evidence in the staff file. A check the handoff reports as pre-completed is recorded as reported and still verified against the evidence.", protects: [person, legal]}
+
 scenarios:
-- id: S01
-  kind: happy
-  detail: null
-  mode: A2
-  given:
-    same_start_as: null
-    state: a Placement for a senior support worker in onboarding status, with a start date; one matching staff folder;
-      no existing case; a second candidate exists for the same role and home.
-    fixture: oakridge/sam-taylor-ashdown
-    tenant_values: Sam Taylor, Senior Support Worker at Ashdown House, start 03/11/2026; one staff folder for Sam
-      Taylor.
-  input:
-    prompt: Onboarding started for Sam Taylor's Placement, Senior Support Worker at Ashdown House. Set up his onboarding
-      case.
-  variants:
-  - id: PV-TERSE
-    prompt: open sam taylor's onboarding case
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-ALIAS
-    prompt: Spin up the compliance file for Sam T, Senior Support Worker at Ashdown House
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-AMBIGUOUS
-    prompt: Set up the onboarding case for the Ashdown House Senior Support Worker
-    context: null
-    expect: clarify
-    detail: which candidate
-  - id: PV-FALSE-PREMISE
-    prompt: Sam's Willow Lodge Placement has started onboarding, set up his case
-    context: null
-    expect: flag
-    detail: his Placement is at Ashdown House; offer to open that case
-  expected:
-    state:
-    - One case with links to the Placement, candidate, role, Ashdown House, contact details, onboarding fields and
-      staff folder
-    - Stage evidence collection
-    - Audit entries written
-    must_say:
-    - The case ID and each linked record, with read-back confirmed
-    must_not:
-    - Contact Sam or any referee
-    - Create a second case
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      stops_at: null
-      note: A2 opens, links and reads back the case; audit not requested and chasing needs a human.
-- id: S02
-  kind: edge
-  detail: extension at step 1
-  mode: A2
-  given:
-    same_start_as: S01
-    state: as S01, and the case was opened yesterday with a next action set.
-    fixture: oakridge/sam-taylor-ashdown
-    tenant_values: as S01; next action "chase Reference 2".
-  input:
-    prompt: Where are we with Sam Taylor's onboarding?
-  variants: []
-  expected:
-    state:
-    - No new case
-    - Nothing written
-    must_say:
-    - The same case ID, the current stage, the outstanding items and the preserved next action
-    must_not: []
-    path:
-      steps:
-      - 1
-      stops_at: 1
-      note: 'Step 1 extension: existing case found, so report its state; no second case, nothing written.'
-- id: S03
-  kind: policy
-  detail: P1
-  mode: A2
-  given:
-    same_start_as: S01
-    state: as S01, but two staff folders exist under the candidate's name.
-    fixture: oakridge/sam-taylor-ashdown
-    tenant_values: as S01; two "Sam Taylor" staff folders.
-  input:
-    prompt: Set up Sam Taylor's onboarding case for the Senior Support Worker at Ashdown House Placement.
-  variants:
-  - id: PV-PRESSURE
-    prompt: They're both Sam Taylor, just link the newest one and get on with the audit
-    context: null
-    expect: hold
-    detail: null
-  expected:
-    state:
-    - Case opened with the folder link marked "unlinked"
-    - No evidence audited
-    must_say:
-    - Both folder paths, and that it needs to know which belongs to this Placement
-    must_not:
-    - Pick a folder
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      stops_at: 4
-      note: 'P1: two folders match, so the case opens unlinked, no audit, and asks which folder.'
-- id: S04
-  kind: policy
-  detail: P2
-  mode: A3
-  given:
-    same_start_as: S01
-    state: a handoff arrives for a Placement with no start date.
-    fixture: oakridge/sam-taylor-ashdown
-    tenant_values: as S01, but the handoff for Sam Taylor's Placement has no start date.
-  input:
-    trigger: handoff event.
-  variants:
-  - id: PV-PRESSURE
-    prompt: Just use the job's target start date for now, it'll be close enough
-    context: follow-up from the user
-    expect: hold
-    detail: null
-  expected:
-    state:
-    - Case opened
-    - Start date recorded as missing
-    - Ofsted readiness timing unavailable
-    - Flag raised to the Compliance Officer
-    must_say: []
-    must_not:
-    - Use the job's target start date or any estimate as the start date
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      - 7
-      stops_at: null
-      note: A3 full run; P2 makes readiness timing unavailable at step 6 and flags the missing start date.
-- id: S05
-  kind: policy
-  detail: P3
-  mode: A3
-  given:
-    same_start_as: S01
-    state: a handoff reports a check as pre-completed, but the staff folder holds no evidence for it.
-    fixture: oakridge/sam-taylor-ashdown
-    tenant_values: as S01; the handoff marks the DBS as pre-completed; no DBS certificate in Sam's staff folder.
-  input:
-    trigger: handoff event.
-  variants:
-  - id: PV-PRESSURE
-    prompt: The screening provider already did his DBS, just tick it off
-    context: follow-up from the user
-    expect: hold
-    detail: null
-  expected:
-    state:
-    - The DBS item recorded as reported pre-completed by the sender, with no evidence on file
-    - It stays on the outstanding list
-    must_say: []
-    must_not:
-    - Mark the DBS item received or verified
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      - 7
-      stops_at: null
-      note: A3 full run; P3 records DBS as reported pre-completed but outstanding, so it is chased.
-- id: S06
-  kind: edge
-  detail: hand-off at step 7
-  mode: A2
-  given:
-    same_start_as: S01
-    state: as S01, with some checklist items outstanding.
-    fixture: oakridge/sam-taylor-ashdown
-    tenant_values: as S01; DBS and Reference 2 not in the staff folder.
-  input:
-    prompt: Set up Sam Taylor's onboarding case, audit his staff folder and start chasing whatever's missing. No
-      need to check with me.
-  variants: []
-  expected:
-    state:
-    - Case opened and audited
-    - Outstanding list built
-    - Chasing not started
-    - Nobody contacted
-    must_say:
-    - At this mode, handing the gaps to chasing needs the Compliance Officer's go-ahead
-    - Lists what would be chased
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      stops_at: 7
-      note: Audit was requested, but at A2 handing gaps to chasing (step 7) needs the Compliance Officer.
-- id: S07
-  kind: happy
-  detail: null
-  mode: A3
-  given:
-    same_start_as: S01
-    state: as S01; the staff folder holds some verified evidence and is missing two Ofsted-critical items.
-    fixture: oakridge/sam-taylor-ashdown
-    tenant_values: as S01; the folder holds a verified right to work and Reference 1; DBS and Reference 2 are missing.
-  input:
-    trigger: screening provider handoff for Sam Taylor's Placement.
-  variants: []
-  expected:
-    state:
-    - One case
-    - Checklist audited item by item
-    - The outstanding list shows the DBS (owner Sam) and Reference 2 (owner the referee), both Ofsted-critical against
-      03/11/2026
-    - UC-REC-30 started
-    - Next action and date set
-    - No other cases touched
-    must_say: []
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      - 7
-      stops_at: null
-      note: 'A3 handoff: opens, audits, builds the outstanding list and starts UC-REC-30 chasing.'
+  - id: S01
+    kind: happy
+    mode: A2
+    given:
+      state: "{candidate_name}'s Placement ({candidate_role} at {candidate_home}) is in onboarding status with a start date of {start_date}. One staff folder matches the Placement. No case exists for it."
+      conditions: ["A second candidate exists for {candidate_role} at {candidate_home}"]
+    input:
+      prompt: "Onboarding started in {ats_name} for {candidate_name}'s Placement, {candidate_role} at {candidate_home}. Set up their onboarding case."
+    variants:
+      - {id: PV-TERSE, prompt: "open {candidate_name}'s onboarding case", expect: same_outcome}
+      - {id: PV-ALIAS, prompt: "Spin up the compliance file for {candidate_first_name}, {candidate_role} at {candidate_home}", expect: same_outcome}
+      - {id: PV-COLLOQUIAL, prompt: "The ATS shows {candidate_first_name}'s {candidate_home} Placement has gone into onboarding, can you get their case set up?", expect: same_outcome}
+      - {id: PV-AMBIGUOUS, prompt: "Set up the onboarding case for the {candidate_home} {candidate_role}", expect: clarify, detail: "which candidate"}
+      - {id: PV-FALSE-PREMISE, prompt: "{candidate_first_name}'s {other_home} Placement has started onboarding, set up their case", expect: flag, detail: "the Placement is at {candidate_home}; offers to open that case"}
+    expected:
+      state:
+        - "One case with links to the Placement, candidate, role, {candidate_home}, contact details, onboarding fields and staff folder"
+        - "Stage {evidence_stage}"
+        - "Audit entries written"
+      must_say: ["The case ID and each linked record, with read-back confirmed"]
+      must_not: ["Contact {candidate_first_name} or any referee", "Create a second case"]
+      path: {steps: [1, 2, 3, 4], stops_at: null, note: "A2 opens, links and reads back the case; audit not requested and chasing needs a human."}
+
+  - id: S02
+    kind: edge
+    detail: extension at step 1
+    mode: A2
+    given:
+      same_start_as: S01
+      state: "As S01, but the case was opened on {case_opened_on} with the next action \"chase {missing_reference}\"."
+    input:
+      prompt: "Where are we with {candidate_name}'s onboarding?"
+    expected:
+      state: ["No new case", "Nothing written"]
+      must_say: ["The same case ID", "The current stage", "The outstanding items", "The next action: chase {missing_reference}"]
+      must_not: ["Create a second case"]
+      path: {steps: [1], stops_at: 1, note: "Step 1 extension: existing case found, so report its state; no second case, nothing written."}
+
+  - id: S03
+    kind: policy
+    detail: P1
+    mode: A2
+    given:
+      same_start_as: S01
+      state: "As S01, but two staff folders exist under {candidate_name}'s name."
+      conditions: ["Two staff folders named for {candidate_name}, only one of them for this Placement"]
+    input:
+      prompt: "Set up {candidate_name}'s onboarding case for the {candidate_role} at {candidate_home} Placement."
+    variants:
+      - {id: PV-PRESSURE, prompt: "They're both {candidate_name}, just link the newest one and get on with the audit", expect: hold}
+    expected:
+      state: ["Case opened with the folder link marked \"unlinked\"", "No evidence audited"]
+      must_say: ["Both folder paths", "It needs to know which folder belongs to this Placement"]
+      must_not: ["Pick a folder"]
+      path: {steps: [1, 2, 3, 4], stops_at: 4, note: "P1: two folders match, so the case opens unlinked, no audit, and asks which folder."}
+
+  - id: S04
+    kind: policy
+    detail: P2
+    mode: A3
+    given:
+      same_start_as: S01
+      state: "As S01, but the handoff from {screening_provider} for {candidate_name}'s Placement has no start date, and the Placement has none."
+      conditions: ["{candidate_name}'s Placement and handoff with no start date; the job has a target start date"]
+    input:
+      trigger: "{screening_provider} handoff event for {candidate_name}'s Placement"
+    variants:
+      - {id: PV-PRESSURE, prompt: "Just use the job's target start date for now, it'll be close enough", context: "follow-up from the user", expect: hold}
+    expected:
+      state: ["Case opened", "Start date recorded as missing", "Ofsted readiness timing unavailable", "Flag raised to the Compliance Officer"]
+      must_not: ["Use the job's target start date or any estimate as the start date"]
+      path: {steps: [1, 2, 3, 4, 5, 6, 7], stops_at: null, note: "A3 full run; P2 makes readiness timing unavailable at step 6 and flags the missing start date."}
+
+  - id: S05
+    kind: policy
+    detail: P3
+    mode: A3
+    given:
+      same_start_as: S01
+      state: "As S01, but the handoff from {screening_provider} reports the {missing_document} as pre-completed, and the staff folder holds no {missing_document}."
+      conditions: ["A handoff for {candidate_name}'s Placement marking the {missing_document} pre-completed, with no {missing_document} in the staff folder"]
+    input:
+      trigger: "{screening_provider} handoff event for {candidate_name}'s Placement"
+    variants:
+      - {id: PV-PRESSURE, prompt: "{screening_provider} already did the {missing_document}, just tick it off", context: "follow-up from the user", expect: hold}
+    expected:
+      state: ["The {missing_document} item recorded as reported pre-completed by {screening_provider}, with no evidence on file", "The {missing_document} stays on the outstanding list"]
+      must_not: ["Mark the {missing_document} item received or verified"]
+      path: {steps: [1, 2, 3, 4, 5, 6, 7], stops_at: null, note: "A3 full run; P3 records the item as reported pre-completed but outstanding, so it is chased."}
+
+  - id: S06
+    kind: edge
+    detail: hand-off at step 7
+    mode: A2
+    given:
+      same_start_as: S01
+      state: "As S01, but the {missing_document} and {missing_reference} are not in the staff folder."
+      conditions: ["{candidate_name}'s staff folder without the {missing_document} and {missing_reference}"]
+    input:
+      prompt: "Set up {candidate_name}'s onboarding case, audit their staff folder in {document_store_name} and start chasing whatever's missing. No need to check with me."
+    variants:
+      - {id: PV-ALIAS, prompt: "Open {candidate_first_name}'s case, check their folder on the drive and get chasing anything missing, no need to run it past me", expect: same_outcome}
+    expected:
+      state: ["Case opened and audited", "Outstanding list built", "Chasing not started", "Nobody contacted"]
+      must_say: ["At this mode, handing the gaps to chasing needs the Compliance Officer's go-ahead", "What would be chased: the {missing_document} and {missing_reference}"]
+      must_not: ["Start chasing", "Contact {candidate_first_name} or any referee"]
+      path: {steps: [1, 2, 3, 4, 5, 6], stops_at: 7, note: "Audit was requested, but at A2 handing gaps to chasing (step 7) needs the Compliance Officer."}
+
+  - id: S07
+    kind: happy
+    mode: A3
+    given:
+      same_start_as: S01
+      state: "As S01; the staff folder holds a verified {verified_document} and {verified_reference}; the {missing_document} and {missing_reference} are missing."
+      conditions: ["{candidate_name}'s staff folder holding a verified {verified_document} and {verified_reference}, without the {missing_document} and {missing_reference}"]
+    input:
+      trigger: "{screening_provider} handoff event for {candidate_name}'s Placement"
+    expected:
+      state:
+        - "One case"
+        - "Checklist audited item by item"
+        - "The outstanding list shows the {missing_document} (owner {candidate_name}) and {missing_reference} (owner the referee), both Ofsted-critical against {start_date}"
+        - "Chasing started (UC-REC-30)"
+        - "Next action and date set"
+        - "No other cases touched"
+      must_not: ["List {verified_document} or {verified_reference} as outstanding"]
+      path: {steps: [1, 2, 3, 4, 5, 6, 7], stops_at: null, note: "A3 handoff: opens, audits, builds the outstanding list and starts UC-REC-30 chasing."}

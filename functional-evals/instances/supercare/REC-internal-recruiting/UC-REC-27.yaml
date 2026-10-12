@@ -1,0 +1,35 @@
+# SuperCare binding for UC-REC-27 (eval v0.2). Draft. Values checked against ClickUp (P1/P2 Proof list, playbooks, test prompts).
+instance: SuperCare
+eval: UC-REC-27
+eval_version: "0.2"
+
+values:
+  document_store_name: OneDrive
+  candidate_name: Joshua Woodman
+  candidate_first_name: Joshua
+  candidate_role: Senior Coach
+  candidate_home: Norwood
+  staging_file: scan_0042.pdf
+  dbs_document: DBS certificate
+  dbs_document_informal: "<to supply>"
+  first_reference: Reference 1
+  second_reference: Reference 2
+  dbs_subfolder: "<to supply>"
+
+  naming_convention: "First Name, Last Name - Document Name"
+  dbs_filed_name: "Joshua, Woodman - DBS Certificate"
+  collision_rule: "<to supply>"
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: scan_0042.pdf in staging, Joshua Woodman's DBS certificate, already classified; one staff folder for Joshua with no DBS file"
+  - "S01: a second candidate for Senior Coach at Norwood (for the ambiguity variant)"
+  - "S02: classified passport, DBS certificate, Reference 1 and Reference 2 for Joshua in staging"
+  - "S03: an existing \"Joshua, Woodman - DBS Certificate\" in Joshua's DBS subfolder"
+  - "S05: two staff folders named for Joshua Woodman, only one matching the Placement"
+  - "S06: the document store set to append \" (1)\" on save for this file"

@@ -1,0 +1,39 @@
+# SuperCare binding for UC-REC-30 (eval v0.2). Worked example. Draft. Values checked against ClickUp (P1/P2 Proof list, playbooks, test prompts).
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-REC-30
+eval_version: "0.2"
+
+values:
+  document_store_name: OneDrive
+  candidate_name: Joshua Woodman
+  candidate_first_name: Joshua
+  candidate_role: Senior Coach
+  candidate_home: Norwood
+  outstanding_document: DBS certificate
+  outstanding_document_informal: "<to supply>"
+  outstanding_reference: Reference 2
+  verified_item: Right to Work
+  safeguarding_contact: "<to supply>"
+
+  document_first_chase_delay: 48
+  document_chase_interval: 3
+  document_max_chases: 4
+  reference_first_chase_delay: 5
+  reference_chase_interval: 5
+  reference_max_chases: 3
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: a second candidate for Senior Coach at Norwood (for the ambiguity variant)"
+  - "S03: Joshua Woodman with 4 document chases already sent and no reply"
+  - "S05: Joshua marked withdrawn and closed in Bullhorn"
+  - "S07: an inbound reply from Joshua's Reference 2 referee on the reference chase series, raising a concern about working with children"
+  - "S08: at least one other active onboarding case with no chase due today"
+  - "S09: Joshua's DBS certificate validated on the case an hour before the run"
+  - "S10: three active onboarding cases with open chase series; one series stopped by a reply; one reference series at 3 chases and escalated"

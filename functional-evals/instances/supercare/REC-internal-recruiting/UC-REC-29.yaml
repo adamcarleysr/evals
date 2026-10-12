@@ -1,0 +1,37 @@
+# SuperCare binding for UC-REC-29 (eval v0.2). Draft. Values checked against ClickUp (P1/P2 Proof list, playbooks, test prompts).
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-REC-29
+eval_version: "0.2"
+
+values:
+  ats_name: Bullhorn
+  candidate_name: Joshua Woodman
+  candidate_first_name: Joshua
+  candidate_role: Senior Coach
+  candidate_home: Norwood
+  compliance_approver: Michal Kibilko (Compliance Manager)
+  arrival_confirmer: the Registered Manager of Norwood
+  evidence_stage: Evidence Collection
+  review_stage: Compliance Review
+  ready_stage: Ready to Start
+  started_stage: Started
+  requested_status: Awaiting Ref
+  missing_reference: Reference 2
+
+  review_criteria: "DBS, Right to Work, 2 references, health declaration and contract validated"
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: Joshua Woodman's Norwood Senior Coach case at Evidence Collection, start date set to the computed start_date (ClickUp test record uses 03/11/2026), with DBS, Right to Work, 2 references, health declaration and contract validated"
+  - "S01: a second candidate for Senior Coach at Norwood (for the ambiguity variant)"
+  - "S02: Joshua's case at Evidence Collection with documents requested"
+  - "S03: Joshua's case at Ready to Start with no arrival confirmation"
+  - "S04: Joshua's staff file without a validated Reference 2"
+  - "S05: Joshua's case at Compliance Review with no sign-off"
+  - "S06: Joshua's case moved to Compliance Review, with the progression logged"

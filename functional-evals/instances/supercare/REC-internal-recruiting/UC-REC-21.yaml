@@ -1,0 +1,41 @@
+# SuperCare binding for UC-REC-21 (eval v0.2). Values checked against ClickUp. Draft.
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-REC-21
+eval_version: "0.2"
+
+values:
+  ats_name: Bullhorn
+  validated_run: "<to supply>"
+  mismatch_home: Frimley
+  removal_home: Phoenix
+  cfo_recipient: Shane Janjua
+  personal_address: shane.personal@gmail.com
+  report_alias: CFO/CEO leadership email
+
+  governed_recipients: Chris Coleman, Damian Williams, Shane Janjua
+  recipient_approvers: Chris Coleman or Damian Williams
+  alert_recipient: "<to supply>"
+  data_window: Monday 00:00 to Thursday 23:59
+  report_day: Friday
+  build_time: "14:00"
+  build_deadline: "15:45"
+  qa_deadline: "15:55"
+  send_time: "16:00"
+  version_scheme: YYYY-WNN-vX
+  forecast_horizon_weeks: 4
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: this week's reporting run covering Monday 00:00 to Thursday 23:59 that passes every pre-publication check"
+  - "S01: last week's report version"
+  - "S01: two earlier weeks with no report (for the PV-MISSING variant)"
+  - "S02: Frimley's per-week forecast cells summing to 5 while its headline forecast is 6"
+  - "S04: Phoenix with one fewer forecast starter than last week in the run"
+  - "S07: the report's pipeline total (212) differing from the Bullhorn pipeline count for the window (215)"
+  - "S08: the Bullhorn sync still running at 15:45 on Friday"

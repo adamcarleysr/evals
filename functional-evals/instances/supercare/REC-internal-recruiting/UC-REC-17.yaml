@@ -1,0 +1,38 @@
+# SuperCare binding for UC-REC-17 (eval v0.2). Values checked against ClickUp. Draft.
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-REC-17
+eval_version: "0.2"
+
+values:
+  ats_name: Bullhorn
+  candidate_name: Joshua Woodman
+  candidate_role: Senior Coach
+  candidate_home: Norwood
+  other_home: Frimley
+  ambiguous_home_name: Lushington
+  ambiguous_home_options: 13 Lushington or 23 Lushington
+  alias_home: Frimley
+  home_alias: SC Frimley
+  unmapped_home_name: Frimley Annex
+  eligible_status: Onboarding
+
+  forecast_horizon_weeks: 4
+  horizon_start_offset: "<to supply>"
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: Joshua Woodman's Senior Coach placement at Norwood in Onboarding, starting in the last forecast week"
+  - "S01: other eligible placements in the horizon across several homes, including Frimley"
+  - "S01: one cancelled, one withdrawn and one deferred placement starting in the horizon"
+  - "S01: \"Lushington\" matches both 13 Lushington and 23 Lushington (per Canonical Organisation Dimensions)"
+  - "S01: a stored reference calculation of the forecast grid"
+  - "S03: Joshua Woodman's placement changed to deferred the day before the run"
+  - "S03: two other Norwood placements with no start date"
+  - "S04: an eligible placement in the horizon with home recorded as \"Frimley Annex\""
+  - "S05: an eligible placement in the horizon with home recorded as \"SC Frimley\""

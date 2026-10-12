@@ -1,0 +1,39 @@
+# SuperCare binding for UC-REC-02 (eval v0.2). Draft. Values from ClickUp.
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-REC-02
+eval_version: "0.2"
+
+values:
+  home: Norwood
+  home_alias: SC Norwood
+  second_home: "<to supply>"
+  role: Senior Coach
+  role_alias: Senior Residential Support Worker
+  pay_rate: "£18/hr"
+  required_qualification: Level 3 Diploma in Residential Childcare
+  ats_name: Bullhorn
+  expected_title: "Senior Coach - Norwood, Croydon - SuperCare"
+
+  board_count: 4
+  board_a: Indeed
+  board_a_title_limit: 100
+  board_a_description_limit: 4000
+  board_b: Reed
+  board_b_title_limit: 80
+  board_b_description_limit: 3000
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: a second open Senior Coach JobOrder at another home (for the ambiguity variant)"
+  - "S01: a Senior Coach JobOrder at Norwood with no approved advert (for the false-premise variant)"
+  - "S04: the Norwood Senior Coach JobOrder already live on Indeed"
+  - "S05: an Indeed application link-back that can't be confirmed (test stub)"
+  - "S06: the Norwood Senior Coach JobOrder with no rate recorded"
+  - "S07: only Indeed and Reed configured for the Norwood Senior Coach JobOrder"
+  - "S08: only Indeed and Reed configured for the Norwood Senior Coach JobOrder, with £18/hr recorded"

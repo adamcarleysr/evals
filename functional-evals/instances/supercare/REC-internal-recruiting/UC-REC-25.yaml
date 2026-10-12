@@ -1,0 +1,35 @@
+# SuperCare binding for UC-REC-25 (eval v0.2). Draft. Values checked against ClickUp (P1/P2 Proof list, playbooks, test prompts).
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-REC-25
+eval_version: "0.2"
+
+values:
+  ats_name: Bullhorn
+  document_store_name: OneDrive
+  candidate_name: Joshua Woodman
+  candidate_first_name: Joshua
+  candidate_role: Senior Coach
+  candidate_home: Norwood
+  other_home: Frimley
+  screening_provider: Access Screening
+  missing_document: DBS certificate
+  missing_reference: Reference 2
+  verified_document: Right to Work
+  verified_reference: Reference 1
+  evidence_stage: Evidence Collection
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: Joshua Woodman's Senior Coach at Norwood Placement in Onboarding status, start date set to the computed start_date (the ClickUp test record uses 03/11/2026)"
+  - "S01: a second candidate for Senior Coach at Norwood (for the ambiguity variant)"
+  - "S03: two staff folders named for Joshua Woodman, only one matching the Placement (as in the SR-13378 test prompts)"
+  - "S04: Joshua Woodman's Placement and Access Screening handoff with no start date; the Norwood Senior Coach job has a target start date"
+  - "S05: an Access Screening handoff marking the DBS as pre-completed, with no DBS certificate in Joshua's staff folder"
+  - "S06: Joshua's staff folder without the DBS certificate and Reference 2"
+  - "S07: Joshua's staff folder holding a verified Right to Work and Reference 1, without the DBS certificate and Reference 2"

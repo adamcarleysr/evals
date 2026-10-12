@@ -1,0 +1,33 @@
+# SuperCare binding for UC-CARE-12 (eval v0.1). Draft. Values from ClickUp (SR-13400, SR-13433 and playbook doc 8cnycrm-164035).
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-CARE-12
+eval_version: "0.1"
+
+values:
+  head_of_people: Hayley Harkins
+  absence_rise_home: "<to supply>"
+  rm_home: Norwood
+  hr_system_name: ADP
+
+  weekly_recipients: "Hayley Harkins and Chris Coleman"
+  monthly_recipients: "Emma Chapman and Charley Hooper, and each RM's home-level extract"
+  rm_max_tier: Internal
+  export_approver: "Chris Coleman or Damian Williams"
+  hr_block_after: 24
+  weekly_send_time: "Friday 12:00"
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: a validated weekly People metrics run from ADP with a run ID, whose home figures reconcile to totals"
+  - "S01: last week's People pack version and snapshot"
+  - "S01: the monthly pack also due on the run date (missing-cadence variant)"
+  - "S02: a validated monthly metrics run for last month and the previous month's pack version"
+  - "S03: the ADP feed's last successful refresh set to more than 24 hours before the run, with three failed retries since"
+  - "S04: one SuperCare home whose absence rate in the run is about double the previous week's"
+  - "S06: last month's run includes named employees with Bradford Factor triggers in more than one home"

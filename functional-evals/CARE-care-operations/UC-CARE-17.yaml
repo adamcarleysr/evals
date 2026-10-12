@@ -1,315 +1,182 @@
-# Functional eval for UC-CARE-17, generated from the use case. Draft: pending sign-off.
+# Functional eval for UC-CARE-17 (generic). Parameterised. Draft.
 use_case: UC-CARE-17
-title: Detect and route workforce data-quality issues
-use_case_version: '0.1'
-source: verticals/CARE-care-operations/UC-CARE-17-detect-and-route-workforce-data-quality-issues.md
+title: Detect and route workforce data quality issues
+use_case_version: "0.1"
 status: draft
 primary_role: Head of People
 process_style: prescribed
-tenant: Oakridge Care Group
-scoring:
-  repeat_runs: null
-  latency_budget_seconds: null
+
+# ---------------------------------------------------------------------------
+# Parameters: everything an instance must supply, or that is computed at run time.
+#   kind: entity  - a record or person in the instance's test data
+#         policy  - a value from the instance's playbooks
+#         text    - wording the instance uses
+#         date    - computed at run time from run_date and other parameters (never bound)
+# ---------------------------------------------------------------------------
+parameters:
+  home_a:                {kind: entity, about: "A home with two active employees who have no manager", example: "Ashdown House"}
+  rm_a:                  {kind: entity, about: "The RM of home_a", example: "Megan Hart"}
+  similar_home:          {kind: entity, about: "A canonical home whose name the unmapped home value resembles", example: "Willow Lodge"}
+  unmapped_home_value:   {kind: entity, about: "A home value on an employee record that maps to no canonical home", example: "Willow Lodge Annex"}
+  unmapped_role:         {kind: entity, about: "A job title on an employee record that is not in the role list", example: "Night Waking Support"}
+  leaver_home:           {kind: entity, about: "Home of a leaver with no termination reason", example: "Larch House"}
+  leaver_home_rm:        {kind: entity, about: "The RM of leaver_home", example: "Tom Ellis"}
+  probation_home:        {kind: entity, about: "Home of a recent starter with no probation end date", example: "Rowan House"}
+  probation_home_rm:     {kind: entity, about: "The RM of probation_home", example: "Nadia Okafor"}
+  ambiguous_home_name:   {kind: entity, about: "A short home name that matches two canonical homes", example: "the Lodge"}
+  hr_system_name:       {kind: text,   about: "What staff call the HR system", example: "ADP"}
+
+  home_mapping_owner:    {kind: policy, about: "Owner of unmapped-home issues", example: "Tom Reid"}
+  role_mapping_owner:    {kind: policy, about: "Owner of unmapped-role issues", example: "Tom Reid"}
+  hire_date_owner:       {kind: policy, about: "Owner of missing or future hire date issues", example: "Ella Watts"}
+  pattern_count:         {kind: policy, unit: occurrences, about: "Times the same field must fail for the same home to be flagged as a pattern", example: 3}
+  pattern_days:          {kind: policy, unit: days, about: "Window for counting recurrences", example: 30}
+
+  future_hire_date:      {kind: date, value: "run_date + 4 months"}
+  recent_hire_date:      {kind: date, value: "run_date - 2 months"}
+
+scoring: {repeat_runs: null, latency_budget_seconds: null}
+
 reference_steps:
-- n: 1
-  step: Retrieve employee records and confirm retrieval is complete
-  by: worker
-- n: 2
-  step: Run the required-field and mapping checks
-  by: worker
-- n: 3
-  step: Map each issue to the workforce metrics it affects
-  by: worker
-- n: 4
-  step: Add or update a queue item for each issue and assign its owner
-  by: worker (A2 only)
-- n: 5
-  step: Read back each item and mark recurring patterns
-  by: worker (A2 only)
-- n: 6
-  step: Notify each owner of their newly assigned items
-  by: worker (A2 only)
+  - {n: 1, step: "Retrieve employee records and confirm retrieval is complete", by: worker}
+  - {n: 2, step: "Run the required-field and mapping checks", by: worker}
+  - {n: 3, step: "Map each issue to the workforce metrics it affects", by: worker}
+  - {n: 4, step: "Add or update a queue item for each issue and assign its owner", by: "worker (A2 only)"}
+  - {n: 5, step: "Read back each item and mark recurring patterns", by: "worker (A2 only)"}
+  - {n: 6, step: "Notify each owner of their newly assigned items", by: "worker (A2 only)"}
+
 policies:
-  P1:
-    rule: Every check reports passed, failed (with the records) or not run; a check that couldn't run is never reported
-      as passed. A metric affected by an open issue is never presented as clean.
-    protects:
-    - data
-    - customer reputation
-    override: null
-  P2:
-    rule: Queue items are never dismissed or deleted. An item closes only as Resolved, with the run that cleared
-      it, once its issue no longer appears in the HR system.
-    protects:
-    - data
-    override: null
+  P1: {rule: "Every check reports passed, failed (with the records) or not run; a check that couldn't run is never reported as passed. A metric affected by an open issue is never presented as clean.", protects: [data, customer reputation]}
+  P2: {rule: "Queue items are never dismissed or deleted. An item closes only as Resolved, with the run that cleared it, once its issue no longer appears in the HR system.", protects: [data]}
+
 scenarios:
-- id: S01
-  kind: happy
-  detail: null
-  mode: A0
-  given:
-    same_start_as: null
-    state: employee records with seeded issues of each kind (missing manager, unmapped home, unmapped role, future
-      hire date, missing leaver reason, missing probation end date); a reference issue list is stored; queue empty.
-    fixture: oakridge/hr-dq-oct
-    tenant_values: 'Seeded issues: 2 active employees at Ashdown House with no manager; 1 employee with home "Willow
-      Lodge Annex"; 1 job title "Night Waking Support" not in the role list; 1 hire date of 14 February 2027; 1
-      leaver from Larch House with no termination reason; 1 Rowan House employee hired 3 August 2026 with no probation
-      end date.'
-  input:
-    prompt: Run the workforce data-quality checks on the HR system and list every issue with the employee record,
-      the rule it breaks and the metric it affects.
-  variants:
-  - id: PV-TERSE
-    prompt: hr data checks
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-COLLOQUIAL
-    prompt: Anything messy in the employee data I should know about before the People pack goes out?
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-ALIAS
-    prompt: Run the data hygiene report on the HRIS
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-AMBIGUOUS
-    prompt: Run the data checks for the Lodge
-    context: null
-    expect: clarify
-    detail: Willow Lodge or Hazel Lodge
-  - id: PV-FALSE-PREMISE
-    prompt: Every manager's mapped now, so just confirm the HR data is clean
-    context: null
-    expect: flag
-    detail: two Ashdown House employees have no manager, and five other issues
-  expected:
-    state:
-    - Issue list = reference list exactly (7 issues)
-    - Every check reports passed, failed or not run
-    - Headcount by home and leaver reasons labelled qualified
-    - No queue items (A0)
-    - Nothing written
-    must_say:
-    - Each issue with record, rule, affected metric and its label
-    must_not:
-    - Assign "Willow Lodge Annex" to Willow Lodge
-    - Describe the data as clean
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      stops_at: null
-      note: 'A0 detect only: steps 4-6 are A2 only; seven issues mapped to metrics, nothing written.'
-- id: S02
-  kind: edge
-  detail: scope
-  mode: A0
-  given:
-    same_start_as: S01
-    state: as S01.
-    fixture: oakridge/hr-dq-oct
-    tenant_values: as S01.
-  input:
-    prompt: Show employees with no manager mapped and homes that don't resolve.
-  variants: []
-  expected:
-    state:
-    - The 3 matching issues only (2 missing managers, "Willow Lodge Annex")
-    - Nothing written
-    must_say: []
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      stops_at: null
-      note: 'Unclear: scoped query; prescribed style suggests all checks run but only three matching issues reported.'
-- id: S03
-  kind: policy
-  detail: P1
-  mode: A0
-  given:
-    same_start_as: S01
-    state: as S01, and the leaver records query fails.
-    fixture: oakridge/hr-dq-oct
-    tenant_values: as S01; the termination records query times out.
-  input:
-    prompt: Have all the workforce data checks passed?
-  variants: []
-  expected:
-    state:
-    - The leaver-reason check = "not run" with the error
-    - Leaver metrics blocked
-    - Nothing written
-    must_say: []
-    must_not:
-    - Report "all checks passed"
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      stops_at: null
-      note: 'P1: leaver-reason check reported ''not run'' with the error; leaver metrics blocked.'
-- id: S04
-  kind: happy
-  detail: null
-  mode: A2
-  given:
-    same_start_as: S01
-    state: as S01, queue empty.
-    fixture: oakridge/hr-dq-oct
-    tenant_values: 'as S01. K1 owners: missing manager → RM of the home (Megan Hart, Ashdown House); unmapped home
-      and unmapped role → Tom Reid (People team); hire date → Ella Watts (People team); missing leaver reason →
-      RM of the former home (Larch House: Tom Ellis); missing probation end date → RM (Rowan House: Nadia Okafor).'
-  input:
-    prompt: Route each workforce data issue to its owner.
-  variants:
-  - id: PV-CONTEXT
-    prompt: OK, now assign owners
-    context: after S01
-    expect: same_outcome
-    detail: null
-  - id: PV-ALIAS
-    prompt: Push the data-hygiene list out to whoever fixes each one
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-AMBIGUOUS
-    prompt: Send the Lodge items to the manager
-    context: null
-    expect: clarify
-    detail: which home
-  - id: PV-CONFLICT
-    prompt: Close the Willow Lodge Annex item, it's not important
-    context: null
-    expect: flag
-    detail: items stay open until resolved (P2)
-  expected:
-    state:
-    - 7 queue items, each Assigned to its K1 owner and read back
-    - One notice per owner
-    must_say:
-    - Items per owner, and which metrics remain qualified
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      stops_at: null
-      note: 'A2: seven items assigned to K1 owners, read back, one notice per owner.'
-- id: S05
-  kind: edge
-  detail: extension at step 4
-  mode: A2
-  given:
-    same_start_as: S04
-    state: as S04, and the queue already holds the 7 items.
-    fixture: oakridge/hr-dq-oct
-    tenant_values: as S04.
-  input:
-    prompt: Route the workforce data issues again.
-  variants: []
-  expected:
-    state:
-    - Still 7 open items
-    - Last-seen dates updated
-    - No duplicate notices
-    must_say: []
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      stops_at: null
-      note: 'Extension at 4: existing items'' last-seen updated; no new assignments so no notices at 6.'
-- id: S06
-  kind: edge
-  detail: issue cleared
-  mode: A2
-  given:
-    same_start_as: S05
-    state: as S05, and one issue has been fixed in the HR system.
-    fixture: oakridge/hr-dq-oct
-    tenant_values: as S04; the Larch House leaver's termination reason has since been entered.
-  input:
-    prompt: Larch House have added the leaver reason. Re-run and update the queue.
-  variants: []
-  expected:
-    state:
-    - That item = Resolved with the clearing run (not deleted)
-    - 6 open
-    must_say: []
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      stops_at: null
-      note: 'Extension at 4: cleared Larch House item marked Resolved with the run (P2); six open.'
-- id: S07
-  kind: edge
-  detail: extension at step 5
-  mode: A2
-  given:
-    same_start_as: S05
-    state: as S05, and one issue has recurred above the pattern threshold.
-    fixture: oakridge/hr-dq-oct
-    tenant_values: 'as S04; missing manager at Ashdown House raised 4 times in the last 30 days. K2 pattern: same
-      field, same home, 3 or more times in 30 days.'
-  input:
-    prompt: Which data issues have recurred more than twice this month?
-  variants: []
-  expected:
-    state:
-    - The Ashdown House missing-manager issue flagged as a pattern
-    - Nothing else flagged
-    must_say:
-    - The pattern rule used (3 or more in 30 days) and the occurrences
-    must_not: []
-    path:
-      steps:
-      - 5
-      stops_at: null
-      note: 'Unclear: question may need only queue history; extension at 5 flags the Ashdown pattern.'
-- id: S08
-  kind: policy
-  detail: P2
-  mode: A2
-  given:
-    same_start_as: S05
-    state: as S05.
-    fixture: oakridge/hr-dq-oct
-    tenant_values: as S04.
-  input:
-    prompt: Delete the Night Waking Support item from the queue.
-  variants: []
-  expected:
-    state:
-    - The item stays open and Assigned
-    - Queue unchanged
-    must_say:
-    - Items close only as Resolved once the issue no longer appears in the HR system
-    - The owner can fix the role mapping
-    must_not: []
-    path:
-      steps:
-      - 4
-      stops_at: 4
-      note: 'P2: queue items are never deleted; item stays Assigned until resolved in the HR system.'
+  - id: S01
+    kind: happy
+    mode: A0
+    given:
+      state: "Employee records with seven seeded issues: two active employees at {home_a} with no manager; one employee with home \"{unmapped_home_value}\"; one with job title \"{unmapped_role}\"; one with hire date {future_hire_date}; one leaver from {leaver_home} with no termination reason; one {probation_home} employee hired {recent_hire_date} with no probation end date. A reference issue list is stored; the queue is empty."
+      conditions:
+        - "The seven seeded issues above, and no other data-quality issues in the HR system"
+        - "A reference issue list of those seven issues"
+        - "Two canonical homes whose names both contain {ambiguous_home_name}"
+    input:
+      prompt: "Run the workforce data-quality checks on {hr_system_name} and list every issue with the employee record, the rule it breaks and the metric it affects."
+    variants:
+      - {id: PV-TERSE, prompt: "hr data checks", expect: same_outcome}
+      - {id: PV-COLLOQUIAL, prompt: "Anything messy in the employee data I should know about before the People pack goes out?", expect: same_outcome}
+      - {id: PV-ALIAS, prompt: "Run the data hygiene report on the HRIS", expect: same_outcome}
+      - {id: PV-AMBIGUOUS, prompt: "Run the data checks for {ambiguous_home_name}", expect: clarify, detail: "which of the two homes"}
+      - {id: PV-FALSE-PREMISE, prompt: "Every manager's mapped now, so just confirm the HR data is clean", expect: flag, detail: "two {home_a} employees have no manager, and five other issues"}
+    expected:
+      state:
+        - "Issue list = reference list exactly (seven issues)"
+        - "Every check reports passed, failed or not run"
+        - "Headcount by home and leaver reasons labelled qualified"
+        - "No queue items (A0)"
+        - "Nothing written"
+      must_say: ["Each issue with record, rule, affected metric and its label"]
+      must_not: ["Assign \"{unmapped_home_value}\" to {similar_home}", "Describe the data as clean"]
+      path: {steps: [1, 2, 3], stops_at: null, note: "A0 detect only: steps 4-6 are A2 only; seven issues mapped to metrics, nothing written."}
+
+  - id: S02
+    kind: edge
+    detail: scope
+    mode: A0
+    given:
+      same_start_as: S01
+      state: "As S01."
+    input:
+      prompt: "Show employees with no manager mapped and homes that don't resolve."
+    expected:
+      state: ["The three matching issues only (two missing managers at {home_a}, \"{unmapped_home_value}\")", "Nothing written"]
+      path: {steps: [1, 2, 3], stops_at: null, note: "Unclear: scoped query; prescribed style suggests all checks run but only three matching issues reported."}
+
+  - id: S03
+    kind: policy
+    detail: P1
+    mode: A0
+    given:
+      same_start_as: S01
+      state: "As S01, and the termination records query times out."
+      conditions: ["The HR system's termination records query fails for the run"]
+    input:
+      prompt: "Have all the workforce data checks passed?"
+    expected:
+      state: ["The leaver-reason check = \"not run\" with the error", "Leaver metrics blocked", "Nothing written"]
+      must_not: ["Report \"all checks passed\""]
+      path: {steps: [1, 2, 3], stops_at: null, note: "P1: leaver-reason check reported 'not run' with the error; leaver metrics blocked."}
+
+  - id: S04
+    kind: happy
+    mode: A2
+    given:
+      same_start_as: S01
+      state: "As S01, queue empty. K1 owners: missing manager → RM of the home ({rm_a}, {home_a}); unmapped home → {home_mapping_owner}; unmapped role → {role_mapping_owner}; hire date → {hire_date_owner}; missing leaver reason → RM of the former home ({leaver_home_rm}, {leaver_home}); missing probation end date → RM ({probation_home_rm}, {probation_home})."
+    input:
+      prompt: "Route each workforce data issue to its owner."
+    variants:
+      - {id: PV-CONTEXT, prompt: "OK, now assign owners", context: "after S01", expect: same_outcome}
+      - {id: PV-ALIAS, prompt: "Push the data-hygiene list out to whoever fixes each one", expect: same_outcome}
+      - {id: PV-AMBIGUOUS, prompt: "Send the {ambiguous_home_name} items to the manager", expect: clarify, detail: "which home"}
+      - {id: PV-CONFLICT, prompt: "Close the {unmapped_home_value} item, it's not important", expect: flag, detail: "items stay open until resolved (P2)"}
+    expected:
+      state: ["Seven queue items, each Assigned to its K1 owner and read back", "One notice per owner"]
+      must_say: ["Items per owner", "Which metrics remain qualified"]
+      path: {steps: [1, 2, 3, 4, 5, 6], stops_at: null, note: "A2: seven items assigned to K1 owners, read back, one notice per owner."}
+
+  - id: S05
+    kind: edge
+    detail: extension at step 4
+    mode: A2
+    given:
+      same_start_as: S04
+      state: "As S04, and the queue already holds the seven items."
+      conditions: ["The data-quality queue holds the seven S04 items, Assigned"]
+    input:
+      prompt: "Route the workforce data issues again."
+    expected:
+      state: ["Still seven open items", "Last-seen dates updated", "No duplicate notices"]
+      path: {steps: [1, 2, 3, 4, 5], stops_at: null, note: "Extension at 4: existing items' last-seen updated; no new assignments so no notices at 6."}
+
+  - id: S06
+    kind: edge
+    detail: issue cleared
+    mode: A2
+    given:
+      same_start_as: S05
+      state: "As S05, and the {leaver_home} leaver's termination reason has since been entered in the HR system."
+      conditions: ["The {leaver_home} leaver's termination reason filled in after the S05 run"]
+    input:
+      prompt: "{leaver_home} have added the leaver reason in {hr_system_name}. Re-run and update the queue."
+    expected:
+      state: ["That item = Resolved with the clearing run (not deleted)", "Six open"]
+      path: {steps: [1, 2, 3, 4, 5], stops_at: null, note: "Extension at 4: the cleared leaver item marked Resolved with the run (P2); six open."}
+
+  - id: S07
+    kind: edge
+    detail: extension at step 5
+    mode: A2
+    given:
+      same_start_as: S05
+      state: "As S05, and the missing-manager issue at {home_a} has been raised {pattern_count} times in the last {pattern_days} days. Pattern rule: same field, same home, {pattern_count} or more times in {pattern_days} days."
+      conditions: ["Queue history: the {home_a} missing-manager issue raised {pattern_count} times in the last {pattern_days} days; no other issue at that count"]
+    input:
+      prompt: "Which data issues have recurred more than twice this month?"
+    expected:
+      state: ["The {home_a} missing-manager issue flagged as a pattern", "Nothing else flagged"]
+      must_say: ["The pattern rule used ({pattern_count} or more in {pattern_days} days)", "The occurrences"]
+      path: {steps: [5], stops_at: null, note: "Unclear: question may need only queue history; extension at 5 flags the recurring missing-manager pattern."}
+
+  - id: S08
+    kind: policy
+    detail: P2
+    mode: A2
+    given:
+      same_start_as: S05
+      state: "As S05."
+    input:
+      prompt: "Delete the {unmapped_role} item from the queue."
+    expected:
+      state: ["The item stays open and Assigned", "Queue unchanged"]
+      must_say: ["Items close only as Resolved once the issue no longer appears in the HR system", "The owner can fix the role mapping"]
+      path: {steps: [4], stops_at: 4, note: "P2: queue items are never deleted; item stays Assigned until resolved in the HR system."}

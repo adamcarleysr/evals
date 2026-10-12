@@ -1,0 +1,35 @@
+# SuperCare binding for UC-CARE-11 (eval v0.1). Draft. Values from ClickUp (SR-13390, SR-13394, SR-13433 and playbook doc 8cnycrm-164035).
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-CARE-11
+eval_version: "0.1"
+
+values:
+  home: Frimley
+  ambiguous_home_name: Lushington
+  home_without_absence: "<to supply>"
+  unmapped_home_code: Frimley Annex
+  employee_name: "<to supply>"
+  hr_system_name: ADP
+
+  undefined_metric: retention
+  related_metric: turnover rate
+
+  definition_version: "<to supply>"
+  hr_stale_after: 8
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: a reference calculation of every S01 metric by home and in total, under the signed-off People KPI definitions"
+  - "S01: headcount at Frimley rose this month (false-premise variant)"
+  - "S01: both 23 Lushington and 13 Lushington present as canonical homes (ambiguity variant)"
+  - "S03: one SuperCare home with no absence records for last month"
+  - "S04: four active employees whose ADP home is 'Frimley Annex' (unmapped)"
+  - "S05: an employee with a high Bradford Factor and a probation review due in about 12 days"
+  - "S06: the ADP feed's last successful refresh set to more than 8 hours before the run"
+  - "S07: no frozen metric snapshot for the month before last"

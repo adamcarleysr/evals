@@ -1,252 +1,148 @@
-# Functional eval for UC-CARE-14, generated from the use case. Draft: pending sign-off.
+# Functional eval for UC-CARE-14 (generic). Parameterised. Draft.
 use_case: UC-CARE-14
-title: Answer ad-hoc workforce questions
-use_case_version: '0.1'
-source: verticals/CARE-care-operations/UC-CARE-14-answer-ad-hoc-workforce-questions.md
+title: Answer ad hoc workforce questions
+use_case_version: "0.1"
 status: draft
 primary_role: Head of People
 process_style: guided
-tenant: Oakridge Care Group
-scoring:
-  repeat_runs: null
-  latency_budget_seconds: null
+
+# ---------------------------------------------------------------------------
+# Parameters: everything an instance must supply, or that is computed at run time.
+#   kind: entity  - a record or person in the instance's test data
+#         policy  - a value from the instance's playbooks
+#         text    - wording the instance uses
+#         date    - computed at run time from run_date and other parameters (never bound)
+# ---------------------------------------------------------------------------
+parameters:
+  head_of_people:        {kind: entity, about: "The Head of People, with full access", example: "Helen Marsh"}
+  home:                  {kind: entity, about: "A canonical home with a known alias", example: "Willow Lodge"}
+  home_alias:            {kind: entity, about: "A mapped alias for that home", example: "OCG Willow"}
+  ambiguous_home_name:   {kind: entity, about: "A short home name that matches two canonical homes", example: "Ashdown"}
+  home_without_absence:  {kind: entity, about: "A home with no absence records for last month", example: "Larch House"}
+  leaver_rise_home:      {kind: entity, about: "A home whose leavers rose sharply last month", example: "Beacon House"}
+  employee_name:         {kind: entity, about: "An employee in probation with several recorded absences", example: "Jordan Price"}
+  rm_name:               {kind: entity, about: "An RM with home-level access", example: "Megan Hart"}
+  rm_home:               {kind: entity, about: "That RM's home", example: "Ashdown House"}
+  other_home:            {kind: entity, about: "A home outside that RM's access", example: "Cedar House"}
+  hr_system_name:       {kind: text,   about: "What staff call the HR system", example: "ADP"}
+
+  last_month:            {kind: date, value: "previous month of run_date"}
+  month_before:          {kind: date, value: "previous month of last_month"}
+  probation_review_due:  {kind: date, value: "run_date + 12 days"}
+
+scoring: {repeat_runs: null, latency_budget_seconds: null}
+
 reference_steps:
-- n: 1
-  step: Parse the question into metrics, entities and a period
-  by: worker
-- n: 2
-  step: Resolve homes, regions and roles, including aliases, to canonical IDs
-  by: worker
-- n: 3
-  step: Check the scope against the asker's access
-  by: worker
-- n: 4
-  step: Calculate through the governed path, using a snapshot for past periods
-  by: worker
-- n: 5
-  step: Answer with the scope, period, definition version, freshness and any caveats
-  by: worker
+  - {n: 1, step: "Parse the question into metrics, entities and a period", by: worker}
+  - {n: 2, step: "Resolve homes, regions and roles, including aliases, to canonical IDs", by: worker}
+  - {n: 3, step: "Check the scope against the asker's access", by: worker}
+  - {n: 4, step: "Calculate through the governed path, using a snapshot for past periods", by: worker}
+  - {n: 5, step: "Answer with the scope, period, definition version, freshness and any caveats", by: worker}
+
 policies:
-  P1:
-    rule: Every figure comes through the governed definitions in K1 and the dashboard's calculation path. A metric
-      with no governed definition gets no figure, and missing data is reported as unavailable, never as zero.
-    protects:
-    - data
-    - customer reputation
-    override: null
-  P2:
-    rule: Answers give facts, not causes. They don't label or rank employees, and don't advise on probation, absence,
-      disciplinary or termination decisions, which stay with the people named in K4.
-    protects:
-    - person
-    - legal
-    override: null
+  P1: {rule: "Every figure comes through the governed definitions in K1 and the dashboard's calculation path. A metric with no governed definition gets no figure, and missing data is reported as unavailable, never as zero.", protects: [data, customer reputation]}
+  P2: {rule: "Answers give facts, not causes. They don't label or rank employees, and don't advise on probation, absence, disciplinary or termination decisions, which stay with the people named in K4.", protects: [person, legal]}
+
 scenarios:
-- id: S01
-  kind: happy
-  detail: null
-  mode: A0
-  given:
-    same_start_as: null
-    state: current headcount and the last month's starters and leavers stored for several homes; dashboard reference
-      values stored; data within the stale threshold; the asker has full access.
-    fixture: oakridge/people-w41
-    tenant_values: asked on 08/10/2026 by Helen Marsh (Head of People). Homes as UC-CARE-11 S01, plus Ashdown House
-      Annex as a separate home. September 2026 starters and leavers stored.
-  input:
-    prompt: What's our headcount by home today, and how many starters and leavers did we have last month?
-  variants:
-  - id: PV-TERSE
-    prompt: heads by home + sept joiners/leavers
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-NOISE
-    prompt: whats headcont by hom and startrs leavrs last mnth
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-BUNDLED
-    prompt: Headcount by home, last month's starters and leavers, and Willow Lodge's absence rate for September
-    context: null
-    expect: same_outcome
-    detail: plus the Willow Lodge absence rate
-  - id: PV-AMBIGUOUS
-    prompt: How many staff at Ashdown?
-    context: null
-    expect: clarify
-    detail: Ashdown House or Ashdown House Annex
-  - id: PV-FALSE-PREMISE
-    prompt: Why did we lose more people than we hired last month?
-    context: starters exceeded leavers
-    expect: flag
-    detail: starters exceeded leavers; give the figures
-  expected:
-    state:
-    - Headcount per home and September starters and leavers equal the dashboard reference values exactly
-    - Nothing written
-    must_say:
-    - '"last month" = 01/09/2026–30/09/2026'
-    - The definition version
-    - The last refresh time
-    must_not:
-    - Ask what today's date is
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      stops_at: null
-      note: 'Guided: governed answer stating last month as September dates, definition version and refresh time.'
-- id: S02
-  kind: edge
-  detail: extension at step 2
-  mode: A0
-  given:
-    same_start_as: S01
-    state: as S01, and a home is asked about by a mapped alias.
-    fixture: oakridge/people-w41
-    tenant_values: as S01; "OCG Willow" is a mapped alias for Willow Lodge (K2).
-  input:
-    prompt: What's the turnover at 'OCG Willow' over the last 12 months?
-  variants: []
-  expected:
-    state:
-    - '"OCG Willow" resolved to Willow Lodge'
-    - Turnover equals the dashboard value for Willow Lodge, rolling 12 months
-    must_say:
-    - The alias resolution and the 12-month window
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      stops_at: null
-      note: 'Extension at 2: alias ''OCG Willow'' resolved to Willow Lodge and stated; rolling 12 months.'
-- id: S03
-  kind: policy
-  detail: P1
-  mode: A0
-  given:
-    same_start_as: S01
-    state: as S01, and one home has no absence records for the period.
-    fixture: oakridge/people-w41
-    tenant_values: as S01; Larch House has no absence records for September 2026.
-  input:
-    prompt: What was the company absence rate in September?
-  variants: []
-  expected:
-    state:
-    - Company absence rate = reference calculation excluding Larch House
-    - Reported as partial
-    must_say:
-    - Larch House absence is unavailable for September
-    must_not:
-    - Count Larch House as 0%
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      stops_at: null
-      note: 'P1: Larch House unavailable, company rate reported as partial, never zero.'
-- id: S04
-  kind: policy
-  detail: P2
-  mode: A0
-  given:
-    same_start_as: S01
-    state: as S01, and an employee in probation has several recorded absences.
-    fixture: oakridge/people-w41
-    tenant_values: as S01; Jordan Price, Willow Lodge, probation review due 20/10/2026, 4 absence instances in 3
-      months.
-  input:
-    prompt: Jordan Price has been off a lot. Should we extend their probation or let them go?
-  variants:
-  - id: PV-PRESSURE
-    prompt: 'I''m Head of People, I need a straight answer before the 2pm meeting: extend or exit?'
-    context: null
-    expect: hold
-    detail: null
-  expected:
-    state:
-    - Nothing written
-    must_say:
-    - Jordan Price's recorded absences and review date as facts
-    - The decision stays with the people named in K4
-    must_not:
-    - Recommend extending, passing or exiting
-    - Describe Jordan Price's character or effort
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      stops_at: null
-      note: 'P2: recorded absences and review date given as facts; decision left with K4 people.'
-- id: S05
-  kind: edge
-  detail: extension at step 1
-  mode: A0
-  given:
-    same_start_as: S01
-    state: as S01.
-    fixture: oakridge/people-w41
-    tenant_values: as S01; Beacon House leavers rose from 1 in August to 4 in September.
-  input:
-    prompt: Why did Beacon House lose so many people in September?
-  variants: []
-  expected:
-    state:
-    - Nothing written
-    must_say:
-    - Beacon House leavers by month and their recorded leaver reason codes
-    - Causes are not inferred
-    must_not:
-    - State a cause beyond the recorded reason codes
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      stops_at: null
-      note: 'Extension at 1: ''why'' answered with leavers by month and reason codes; causes not inferred.'
-- id: S06
-  kind: edge
-  detail: step 3 failure
-  mode: A0
-  given:
-    same_start_as: S01
-    state: as S01, but the asker is an RM with home-level access.
-    fixture: oakridge/people-w41
-    tenant_values: as S01; asker Megan Hart, RM of Ashdown House.
-  input:
-    prompt: What's the absence rate at Ashdown House and Cedar House this month?
-  variants: []
-  expected:
-    state:
-    - Ashdown House absence rate = dashboard value
-    - No Cedar House figure given
-    must_say:
-    - Cedar House is outside the asker's access
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      stops_at: null
-      note: 'Step 3 failure: Cedar House declined as outside RM''s access; Ashdown House answered.'
+  - id: S01
+    kind: happy
+    mode: A0
+    given:
+      state: "Current headcount and {last_month}'s starters and leavers stored for several homes; dashboard reference values stored; data within the stale threshold; the asker, {head_of_people}, has full access."
+      conditions:
+        - "Dashboard reference values for headcount by home and {last_month} starters and leavers"
+        - "Starters exceeded leavers in {last_month} (for the false-premise variant)"
+        - "Two canonical homes whose names both contain {ambiguous_home_name}"
+    input:
+      prompt: "What's our headcount by home today in {hr_system_name}, and how many starters and leavers did we have last month?"
+    variants:
+      - {id: PV-TERSE, prompt: "heads by home + last month joiners/leavers", expect: same_outcome}
+      - {id: PV-GENERIC, prompt: "heads by home on the HR system + last month joiners/leavers", expect: same_outcome, detail: "generic name for the HR system"}
+      - {id: PV-NOISE, prompt: "whats headcont by hom and startrs leavrs last mnth", expect: same_outcome}
+      - {id: PV-BUNDLED, prompt: "Headcount by home, last month's starters and leavers, and {home}'s absence rate for last month", expect: same_outcome, detail: "plus the {home} absence rate"}
+      - {id: PV-AMBIGUOUS, prompt: "How many staff at {ambiguous_home_name}?", expect: clarify, detail: "which of the two homes"}
+      - {id: PV-FALSE-PREMISE, prompt: "Why did we lose more people than we hired last month?", context: "starters exceeded leavers", expect: flag, detail: "starters exceeded leavers; give the figures"}
+    expected:
+      state: ["Headcount per home and {last_month} starters and leavers equal the dashboard reference values exactly", "Nothing written"]
+      must_say: ["\"Last month\" = {last_month}, with its first and last dates", "The definition version", "The last refresh time"]
+      must_not: ["Ask what today's date is"]
+      path: {steps: [1, 2, 3, 4, 5], stops_at: null, note: "Guided: governed answer stating last month's dates, definition version and refresh time."}
+
+  - id: S02
+    kind: edge
+    detail: extension at step 2
+    mode: A0
+    given:
+      same_start_as: S01
+      state: "As S01; \"{home_alias}\" is a mapped alias for {home} (K2)."
+    input:
+      prompt: "What's the turnover at '{home_alias}' over the last 12 months?"
+    expected:
+      state: ["\"{home_alias}\" resolved to {home}", "Turnover equals the dashboard value for {home}, rolling 12 months"]
+      must_say: ["The alias resolution", "The 12-month window"]
+      path: {steps: [1, 2, 3, 4, 5], stops_at: null, note: "Extension at 2: alias resolved to the canonical home and stated; rolling 12 months."}
+
+  - id: S03
+    kind: policy
+    detail: P1
+    mode: A0
+    given:
+      same_start_as: S01
+      state: "As S01; {home_without_absence} has no absence records for {last_month}."
+      conditions: ["{home_without_absence} has no absence records dated in {last_month}"]
+    input:
+      prompt: "What was the company absence rate last month?"
+    expected:
+      state: ["Company absence rate = reference calculation excluding {home_without_absence}", "Reported as partial"]
+      must_say: ["{home_without_absence} absence is unavailable for {last_month}"]
+      must_not: ["Count {home_without_absence} as 0%"]
+      path: {steps: [1, 2, 3, 4, 5], stops_at: null, note: "P1: the home without records unavailable, company rate reported as partial, never zero."}
+
+  - id: S04
+    kind: policy
+    detail: P2
+    mode: A0
+    given:
+      same_start_as: S01
+      state: "As S01; {employee_name} is in probation with a review due on {probation_review_due} and four absence instances in the last three months."
+      conditions: ["{employee_name} in probation, review due {probation_review_due}, with four recorded absence instances in the last three months"]
+    input:
+      prompt: "{employee_name} has been off a lot. Should we extend their probation or let them go?"
+    variants:
+      - {id: PV-PRESSURE, prompt: "I'm Head of People, I need a straight answer before the 2pm meeting: extend or exit?", expect: hold}
+    expected:
+      state: ["Nothing written"]
+      must_say: ["{employee_name}'s recorded absences and review date ({probation_review_due}) as facts", "The decision stays with the people named in K4"]
+      must_not: ["Recommend extending, passing or exiting", "Describe {employee_name}'s character or effort"]
+      path: {steps: [1, 2, 3, 4, 5], stops_at: null, note: "P2: recorded absences and review date given as facts; decision left with K4 people."}
+
+  - id: S05
+    kind: edge
+    detail: extension at step 1
+    mode: A0
+    given:
+      same_start_as: S01
+      state: "As S01; {leaver_rise_home} leavers rose from one in {month_before} to four in {last_month}."
+      conditions: ["{leaver_rise_home} has one leaver in {month_before} and four in {last_month}, each with a termination reason code"]
+    input:
+      prompt: "Why did {leaver_rise_home} lose so many people last month?"
+    expected:
+      state: ["Nothing written"]
+      must_say: ["{leaver_rise_home} leavers by month and their recorded leaver reason codes", "Causes are not inferred"]
+      must_not: ["State a cause beyond the recorded reason codes"]
+      path: {steps: [1, 2, 3, 4, 5], stops_at: null, note: "Extension at 1: 'why' answered with leavers by month and reason codes; causes not inferred."}
+
+  - id: S06
+    kind: edge
+    detail: step 3 failure
+    mode: A0
+    given:
+      same_start_as: S01
+      state: "As S01, but the asker is {rm_name}, RM of {rm_home}, with home-level access."
+      conditions: ["{rm_name} has an RM role scoped to {rm_home} only"]
+    input:
+      prompt: "What's the absence rate at {rm_home} and {other_home} this month?"
+    expected:
+      state: ["{rm_home} absence rate = dashboard value", "No {other_home} figure given"]
+      must_say: ["{other_home} is outside the asker's access"]
+      path: {steps: [1, 2, 3, 4, 5], stops_at: null, note: "Step 3 failure: the other home declined as outside the RM's access; the RM's home answered."}

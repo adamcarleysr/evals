@@ -1,0 +1,35 @@
+# SuperCare binding for UC-CARE-07 (eval v0.1). Draft. Values checked against ClickUp
+# (SR-13376 description and test prompt; playbook pages ADP Scope & Field Mapping,
+# Employee / Home Canonical Mapping for ADP, Canonical Organisation Dimensions).
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-CARE-07
+eval_version: "0.1"
+
+values:
+  home: Norwood
+  home_short: SC Norwood
+  leave_worker: "<to supply>"
+  overlap_worker: "<to supply>"
+  overlap_worker_first_name: "<to supply>"
+  active_staff_count: "<to supply>"
+  hr_system_name: ADP
+
+  day_requirement: "<to supply>"
+  night_requirement: "<to supply>"
+  rota_refresh_interval: 2
+  stale_after: 8
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: Norwood's ADP rota for the current week with Wednesday night one short, a worker on approved annual leave rostered on Thursday day, a worker on overlapping Friday day and night shifts, and Saturday night fully covered"
+  - "S01: a user who manages no single home (for the missing-home variant)"
+  - "S02: no staffing requirement configured for Norwood"
+  - "S03: the overlapping worker recorded as sick leave on Monday and Tuesday"
+  - "S04: the last successful ADP rota refresh more than 8 hours ago"
+  - "S06: ADP returning rota entries per employee only, with the count of active employees mapped to Norwood (OU-103)"

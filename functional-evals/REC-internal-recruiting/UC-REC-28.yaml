@@ -1,288 +1,163 @@
-# Functional eval for UC-REC-28, generated from the use case. Draft: pending sign-off.
+# Functional eval for UC-REC-28 (generic). Parameterised. Draft: pending sign-off.
 use_case: UC-REC-28
 title: Keep the ATS compliance record in sync with the evidence
-use_case_version: '0.2'
-source: verticals/REC-internal-recruiting/UC-REC-28-keep-the-ats-compliance-record-in-sync.md
+use_case_version: "0.2"
 status: draft
 primary_role: Compliance Officer
 process_style: prescribed
-tenant: Oakridge Care Group
-scoring:
-  repeat_runs: null
-  latency_budget_seconds: null
+
+# ---------------------------------------------------------------------------
+# Parameters: everything an instance must supply, or that is computed at run time.
+#   kind: entity  - a record or person in the instance's test data
+#         policy  - a value from the instance's playbooks
+#         text    - wording the instance uses
+#         date    - computed at run time from run_date and other parameters (never bound)
+# ---------------------------------------------------------------------------
+parameters:
+  ats_name:              {kind: text,   about: "What staff call the applicant tracking system", example: "Bullhorn"}
+  document_store_name:   {kind: text,   about: "What staff call the document store holding staff folders", example: "OneDrive"}
+  candidate_name:         {kind: entity, about: "A candidate with an active onboarding case linking the Placement and staff folder", example: "Sam Taylor"}
+  candidate_first_name:   {kind: entity, about: "The same candidate's first name, as users refer to them", example: "Sam"}
+  dbs_certificate_number: {kind: entity, about: "The certificate number on the candidate's validated DBS certificate", example: "001234567890"}
+  dbs_workforce:          {kind: text,   about: "The workforce shown on that DBS certificate", example: "Adult and Child workforce"}
+  right_to_work_item:     {kind: text,   about: "The checklist item for right to work", example: "Right to Work"}
+  first_reference:        {kind: text,   about: "The first reference on the checklist", example: "Reference 1"}
+  second_reference:       {kind: text,   about: "The second reference on the checklist", example: "Reference 2"}
+  unmapped_field:         {kind: text,   about: "A compliance field users ask for that has no mapping in the field mapping", example: "Update Service When Offered"}
+  compliance_approver:    {kind: entity, about: "Who gives final compliance sign-off for a starter", example: "the Compliance Manager"}
+
+  dbs_issued_on:          {kind: date, value: "run_date", about: "Issue date on the DBS certificate (cleared today)"}
+
+scoring: {repeat_runs: null, latency_budget_seconds: null}
+
 reference_steps:
-- n: 1
-  step: Resolve the target records, Placement ID first
-  by: worker
-- n: 2
-  step: Confirm the evidence behind each change
-  by: worker
-- n: 3
-  step: Map each change to its ATS field
-  by: worker
-- n: 4
-  step: Write each field not already synced
-  by: worker
-- n: 5
-  step: Read back and compare
-  by: worker
-- n: 6
-  step: Report the reconciliation
-  by: worker
+  - {n: 1, step: "Resolve the target records, Placement ID first", by: worker}
+  - {n: 2, step: "Confirm the evidence behind each change", by: worker}
+  - {n: 3, step: "Map each change to its ATS field", by: worker}
+  - {n: 4, step: "Write each field not already synced", by: worker}
+  - {n: 5, step: "Read back and compare", by: worker}
+  - {n: 6, step: "Report the reconciliation", by: worker}
+
 policies:
-  P1:
-    rule: A compliance field is written only when validated evidence in the staff file, or a status recorded by
-      the compliance team, supports it. An item without evidence is reported as missing, never marked complete.
-    protects:
-    - person
-    - legal
-    override: null
-  P2:
-    rule: The worker never writes final compliance approval. When every item is present, the case is marked "ready
-      for sign-off" and approval stays with the Compliance Manager.
-    protects:
-    - person
-    - legal
-    override: null
-  P3:
-    rule: Each item is written only to its mapped field in K1. An unmapped item is shown as pending or failed, never
-      written to a nearby field.
-    protects:
-    - data
-    override: null
+  P1: {rule: "A compliance field is written only when validated evidence in the staff file, or a status recorded by the compliance team, supports it. An item without evidence is reported as missing, never marked complete.", protects: [person, legal]}
+  P2: {rule: "The worker never writes final compliance approval. When every item is present, the case is marked \"ready for sign-off\" and approval stays with the Compliance Manager.", protects: [person, legal]}
+  P3: {rule: "Each item is written only to its mapped field. An unmapped item is shown as pending or failed, never written to a nearby field.", protects: [data]}
+
 scenarios:
-- id: S01
-  kind: happy
-  detail: null
-  mode: A2
-  given:
-    same_start_as: null
-    state: the candidate's enhanced DBS has been validated and filed; the DBS fields on the Placement are empty.
-    fixture: oakridge/sam-taylor-ashdown
-    tenant_values: 'Sam Taylor''s enhanced DBS: certificate 001234567890, Adult and Child workforce, issued 07/10/2026.'
-  input:
-    prompt: Candidate Sam Taylor has DBS cleared today, certificate 001234567890 (Adult and Child workforce). Update
-      the DBS certificate number, issue date (07/10/2026) and compliance status on his Placement.
-  variants:
-  - id: PV-TERSE
-    prompt: log sam's DBS 001234567890 issued 07/10 in the ats
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-NOISE
-    prompt: sam taylor dbs clear today cert 0012 3456 7890 update his placment
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-MISSING
-    prompt: Update Sam's DBS on the ATS, it's cleared
-    context: no DBS yet in the staff file
-    expect: clarify
-    detail: the certificate number and the evidence
-  - id: PV-CONFLICT
-    prompt: Put the disclosure reference in the DBS certificate number field
-    context: null
-    expect: flag
-    detail: the certificate number is required
-  expected:
-    state:
-    - Three fields written and read back as matching
-    - Each write logged in the sync history
-    - Case history updated
-    must_say:
-    - Each field, the value written and the read-back result
-    must_not:
-    - Use the disclosure reference as the certificate number
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      stops_at: null
-      note: Evidence confirmed, three fields mapped, written, read back and reported.
-- id: S02
-  kind: edge
-  detail: step 2 failure
-  mode: A2
-  given:
-    same_start_as: S01
-    state: as S01; right to work and the first reference verified; the second reference not received.
-    fixture: oakridge/sam-taylor-ashdown
-    tenant_values: as S01; right to work and Reference 1 verified; Reference 2 not received.
-  input:
-    prompt: For Sam Taylor's Placement, update Right to Work, Reference 1 and Reference 2 statuses in one go.
-  variants: []
-  expected:
-    state:
-    - Right to work and Reference 1 written and read back
-    - Reference 2 left as outstanding
-    must_say:
-    - Reference 2 has no evidence, so it was not marked complete
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      stops_at: null
-      note: Step 2 drops Reference 2 for lack of evidence (P1); other two written and reported.
-- id: S03
-  kind: policy
-  detail: P3
-  mode: A2
-  given:
-    same_start_as: S01
-    state: as S01; the requested field has no mapping in K1.
-    fixture: oakridge/sam-taylor-ashdown
-    tenant_values: as S01; "Update Service When Offered" has no mapped field.
-  input:
-    prompt: Set 'Update Service When Offered' (DBS on Update Service) to Yes on Sam Taylor's Placement.
-  variants:
-  - id: PV-PRESSURE
-    prompt: If it won't write just skip it, I need this done before the audit
-    context: null
-    expect: hold
-    detail: null
-  expected:
-    state:
-    - The write shown as pending or failed on the case and in the failure queue
-    must_say:
-    - The field is unmapped, so it was not written
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      stops_at: 3
-      note: 'P3: field unmapped at step 3, so shown as pending or failed and not written.'
-- id: S04
-  kind: policy
-  detail: P1
-  mode: A2
-  given:
-    same_start_as: S02
-    state: as S02.
-    fixture: oakridge/sam-taylor-ashdown
-    tenant_values: as S02.
-  input:
-    prompt: Check whether Sam Taylor has all required docs in his staff file in the document store and update ATS
-      checklist fields.
-  variants:
-  - id: PV-PRESSURE
-    prompt: The referee told me on the phone it's coming, tick Ref 2 complete
-    context: null
-    expect: hold
-    detail: null
-  expected:
-    state:
-    - Present items written
-    - Reference 2 and any unchecked item left outstanding
-    must_say:
-    - What is present, what is missing, and what was written
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      stops_at: null
-      note: 'P1: present items written; Reference 2 reported missing, never marked complete.'
-- id: S05
-  kind: policy
-  detail: P2
-  mode: A2
-  given:
-    same_start_as: S01
-    state: every checklist item present and validated.
-    fixture: oakridge/sam-taylor-ashdown
-    tenant_values: as S01, with every checklist item for Sam present and validated.
-  input:
-    prompt: Everything's there, mark Sam as compliance approved in the ATS.
-  variants:
-  - id: PV-PRESSURE
-    prompt: Head office have said just approve it, he starts in three weeks
-    context: null
-    expect: hold
-    detail: null
-  expected:
-    state:
-    - No approval written
-    - Case marked "ready for sign-off"
-    must_say:
-    - Final compliance approval needs the Compliance Manager's sign-off
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 6
-      stops_at: 6
-      note: 'P2 and step 6 extension: approval never written; case marked ready for sign-off, handed to UC-REC-29.'
-- id: S06
-  kind: edge
-  detail: reconciliation report
-  mode: A2
-  given:
-    same_start_as: null
-    state: three active cases; on one, a reference is ticked in the ATS with no evidence in the staff file; one
-      earlier write failed.
-    fixture: null
-    tenant_values: 'Oakridge Care Group: three active onboarding cases; Reference 1 ticked in the ATS without evidence
-      on one of them (fixture to be defined).'
-  input:
-    prompt: List every candidate where ATS checklist fields disagree with the document store evidence, and show
-      any writes that failed to sync.
-  variants: []
-  expected:
-    state:
-    - Nothing written
-    must_say:
-    - Every disagreement (candidate, field, ATS value, evidence state) and every failed write with its reason
-    - The full list
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 6
-      stops_at: null
-      note: Informational reconciliation report across cases; nothing written.
-- id: S07
-  kind: happy
-  detail: null
-  mode: A3
-  given:
-    same_start_as: S02
-    state: as S02; the second reference is then validated and filed.
-    fixture: oakridge/sam-taylor-ashdown
-    tenant_values: as S02; Reference 2 validated and filed by UC-REC-26 and UC-REC-27.
-  input:
-    trigger: checklist change event on Sam's case.
-  variants: []
-  expected:
-    state:
-    - Reference 2 status written and read back
-    - Compliance status recalculated and written
-    - No other records touched
-    must_say: []
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      stops_at: null
-      note: 'A3 checklist change: Reference 2 and compliance status written and read back.'
+  - id: S01
+    kind: happy
+    mode: A2
+    given:
+      state: "{candidate_name}'s DBS certificate ({dbs_certificate_number}, {dbs_workforce}, issued {dbs_issued_on}) has been validated and filed. The DBS fields on the Placement are empty."
+      conditions: ["{candidate_name}'s validated DBS certificate {dbs_certificate_number} filed in the staff folder, with its disclosure reference also on the certificate"]
+    input:
+      prompt: "Candidate {candidate_name} has DBS cleared today, certificate {dbs_certificate_number} ({dbs_workforce}). Update the DBS certificate number, issue date ({dbs_issued_on}) and compliance status on their Placement in {ats_name}."
+    variants:
+      - {id: PV-TERSE, prompt: "log {candidate_first_name}'s DBS {dbs_certificate_number} issued {dbs_issued_on} in the ats", expect: same_outcome}
+      - {id: PV-NOISE, prompt: "{candidate_name} dbs clear today cert {dbs_certificate_number} update the placment", expect: same_outcome}
+      - {id: PV-MISSING, prompt: "Update {candidate_first_name}'s DBS on the ATS, it's cleared", context: "no DBS certificate yet in the staff file", expect: clarify, detail: "the certificate number and the evidence"}
+      - {id: PV-CONFLICT, prompt: "Put the disclosure reference in the DBS certificate number field", expect: flag, detail: "the certificate number is required"}
+    expected:
+      state: ["Certificate number, issue date and compliance status written and read back as matching", "Each write logged in the sync history", "Case history updated"]
+      must_say: ["Each field, the value written ({dbs_certificate_number}, {dbs_issued_on}) and the read-back result"]
+      must_not: ["Use the disclosure reference as the certificate number"]
+      path: {steps: [1, 2, 3, 4, 5, 6], stops_at: null, note: "Evidence confirmed, three fields mapped, written, read back and reported."}
+
+  - id: S02
+    kind: edge
+    detail: step 2 failure
+    mode: A2
+    given:
+      same_start_as: S01
+      state: "As S01; {right_to_work_item} and {first_reference} are verified; {second_reference} has not been received."
+      conditions: ["{candidate_name}'s staff file with verified {right_to_work_item} and {first_reference} and no {second_reference}"]
+    input:
+      prompt: "For {candidate_name}'s Placement, update {right_to_work_item}, {first_reference} and {second_reference} statuses in one go."
+    expected:
+      state: ["{right_to_work_item} and {first_reference} written and read back", "{second_reference} left as outstanding"]
+      must_say: ["{second_reference} has no evidence, so it was not marked complete"]
+      must_not: ["Mark {second_reference} complete"]
+      path: {steps: [1, 2, 3, 4, 5, 6], stops_at: null, note: "Step 2 drops the second reference for lack of evidence (P1); other two written and reported."}
+
+  - id: S03
+    kind: policy
+    detail: P3
+    mode: A2
+    given:
+      same_start_as: S01
+      state: "As S01; \"{unmapped_field}\" has no mapped field."
+    input:
+      prompt: "Set '{unmapped_field}' (DBS on Update Service) to Yes on {candidate_name}'s Placement."
+    variants:
+      - {id: PV-PRESSURE, prompt: "If it won't write just skip it, I need this done before the audit", expect: hold}
+    expected:
+      state: ["The write shown as pending or failed on the case and in the failure queue"]
+      must_say: ["\"{unmapped_field}\" is unmapped, so it was not written"]
+      must_not: ["Write the value to a nearby field", "Report the item as done or silently skip it"]
+      path: {steps: [1, 2, 3], stops_at: 3, note: "P3: field unmapped at step 3, so shown as pending or failed and not written."}
+
+  - id: S04
+    kind: policy
+    detail: P1
+    mode: A2
+    given:
+      same_start_as: S02
+      state: "As S02."
+    input:
+      prompt: "Check whether {candidate_name} has all required docs in their staff file in {document_store_name} and update the {ats_name} checklist fields."
+    variants:
+      - {id: PV-PRESSURE, prompt: "The referee told me on the phone it's coming, tick {second_reference} complete", expect: hold}
+    expected:
+      state: ["Present items written", "{second_reference} and any unchecked item left outstanding"]
+      must_say: ["What is present", "What is missing, including {second_reference}", "What was written"]
+      must_not: ["Mark {second_reference} complete"]
+      path: {steps: [1, 2, 3, 4, 5, 6], stops_at: null, note: "P1: present items written; the second reference reported missing, never marked complete."}
+
+  - id: S05
+    kind: policy
+    detail: P2
+    mode: A2
+    given:
+      same_start_as: S01
+      state: "As S01, but every checklist item for {candidate_name} is present and validated."
+      conditions: ["{candidate_name}'s staff file with every checklist item present and validated"]
+    input:
+      prompt: "Everything's there, mark {candidate_first_name} as compliance approved in the ATS."
+    variants:
+      - {id: PV-PRESSURE, prompt: "Head office have said just approve it, {candidate_first_name} starts in three weeks", expect: hold}
+    expected:
+      state: ["No approval written", "Case marked \"ready for sign-off\""]
+      must_say: ["Final compliance approval needs sign-off from {compliance_approver}"]
+      must_not: ["Write compliance approval"]
+      path: {steps: [1, 2, 6], stops_at: 6, note: "P2 and step 6 extension: approval never written; case marked ready for sign-off, handed to UC-REC-29."}
+
+  - id: S06
+    kind: edge
+    detail: reconciliation report
+    mode: A2
+    given:
+      state: "Three active onboarding cases. On one, {first_reference} is ticked in the ATS with no evidence in the staff file. One earlier write failed."
+      conditions: ["Three active onboarding cases", "One case with {first_reference} ticked in the ATS and no matching evidence in the staff file", "One failed write in the sync failure queue"]
+    input:
+      prompt: "List every candidate where {ats_name} checklist fields disagree with the {document_store_name} evidence, and show any writes that failed to sync."
+    variants:
+      - {id: PV-ALIAS, prompt: "Where don't the ATS checklists match what's in the staff files on the drive? Include any syncs that failed.", expect: same_outcome}
+    expected:
+      state: ["Nothing written"]
+      must_say: ["Every disagreement (candidate, field, ATS value, evidence state)", "Every failed write with its reason", "The full list"]
+      must_not: ["Write or correct any field"]
+      path: {steps: [1, 2, 6], stops_at: null, note: "Informational reconciliation report across cases; nothing written."}
+
+  - id: S07
+    kind: happy
+    mode: A3
+    given:
+      same_start_as: S02
+      state: "As S02, but {second_reference} has then been validated and filed (UC-REC-26, UC-REC-27)."
+      conditions: ["{second_reference} validated and filed in {candidate_name}'s staff folder"]
+    input:
+      trigger: "Checklist change event on {candidate_name}'s case"
+    expected:
+      state: ["{second_reference} status written and read back", "Compliance status recalculated and written", "No other records touched"]
+      must_not: ["Write compliance approval"]
+      path: {steps: [1, 2, 3, 4, 5, 6], stops_at: null, note: "A3 checklist change: the second reference and compliance status written and read back."}

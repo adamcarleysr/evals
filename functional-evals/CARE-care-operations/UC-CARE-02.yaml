@@ -1,315 +1,187 @@
-# Functional eval for UC-CARE-02, generated from the use case. Draft: pending sign-off.
+# Functional eval for UC-CARE-02 (generic). Per-eval parameters. Draft.
 use_case: UC-CARE-02
 title: Triage a reported maintenance issue
-use_case_version: '0.1'
-source: verticals/CARE-care-operations/UC-CARE-02-triage-a-reported-maintenance-issue.md
+use_case_version: "0.1"
 status: draft
 primary_role: Registered Manager
 process_style: prescribed
-tenant: Oakridge Care Group
-scoring:
-  repeat_runs: null
-  latency_budget_seconds: null
+
+# ---------------------------------------------------------------------------
+# Parameters: everything an instance must supply, or that is computed at run time.
+#   kind: entity  - a record or person in the instance's test data
+#         policy  - a value from the instance's playbooks
+#         text    - wording the instance uses
+#         date    - computed at run time from run_date and other parameters (never bound)
+# ---------------------------------------------------------------------------
+parameters:
+  home:                 {kind: entity, about: "The home where a leak has been reported", example: "Ashdown House"}
+  home_rm:              {kind: entity, about: "That home's Registered Manager", example: "Megan Hart"}
+  home_rm_first_name:   {kind: entity, about: "The same RM's first name, as users refer to them", example: "Megan"}
+  home_ri:              {kind: entity, about: "The Responsible Individual over that home", example: "Graham Okoye"}
+  ops_director:         {kind: entity, about: "The Operations Director who is told about urgent maintenance", example: "Jordan Blake"}
+  ops_director_first_name: {kind: entity, about: "The same Operations Director's first name", example: "Jordan"}
+  case_ref:             {kind: entity, about: "The newly logged maintenance case for the leak", example: "MC-0412"}
+  reporter:             {kind: entity, about: "The member of staff who reported the leak", example: "Jo Baker"}
+  issue_description:    {kind: text,   about: "How the leak is described on the case", example: "water leak from the upstairs bathroom into the downstairs hallway"}
+  issue_symptom:        {kind: text,   about: "How a user casually describes the same leak", example: "water coming through the hall ceiling from the bathroom"}
+  child_slip_note:      {kind: text,   about: "A line in the report saying a child slipped near the leak, unhurt", example: "one of the young people slipped in the hallway, not hurt"}
+  other_home:           {kind: entity, about: "Another home with an open plumbing case", example: "Willow Lodge"}
+  other_case_ref:       {kind: entity, about: "That other home's open plumbing case", example: "MC-0415"}
+  leak_category:        {kind: text,   about: "The job category a leak like this falls into", example: "emergency plumbing"}
+  leak_severity:        {kind: text,   about: "The severity level a leak with active water ingress takes", example: "urgent"}
+
+  safety_home:          {kind: entity, about: "A home where a fire alarm panel fault has been reported", example: "Rowan House"}
+  safety_home_rm:       {kind: entity, about: "That home's Registered Manager", example: "Nadia Okafor"}
+  safety_case_ref:      {kind: entity, about: "The maintenance case for the fire alarm panel fault", example: "MC-0419"}
+  safety_category:      {kind: text,   about: "The job category for fire, alarm and other safety equipment", example: "safety and compliance"}
+
+  low_home:             {kind: entity, about: "A home where a broken wardrobe door has been reported", example: "Larch House"}
+  low_home_rm:          {kind: entity, about: "That home's Registered Manager", example: "Tom Ellis"}
+  low_case_ref:         {kind: entity, about: "The maintenance case for the wardrobe door", example: "MC-0420"}
+  low_category:         {kind: text,   about: "The job category for damage to fittings or furniture", example: "general repair"}
+  low_severity:         {kind: text,   about: "The severity level for damage with no reported risk of harm", example: "low"}
+
+  urgent_response_time: {kind: policy, unit: hours, about: "Response deadline (contractor attendance) for the leak's severity level", example: 24}
+
+  reported_at:          {kind: date, value: "run_date - 1 hour", about: "When the leak was reported and logged"}
+  response_deadline:    {kind: date, value: "reported_at + urgent_response_time hours"}
+
+scoring: {repeat_runs: null, latency_budget_seconds: null}
+
 reference_steps:
-- n: 1
-  step: Read the reported issue on the case
-  by: worker
-- n: 2
-  step: Check the issue against the safety-critical conditions
-  by: worker
-- n: 3
-  step: Classify the job category and severity
-  by: worker
-- n: 4
-  step: Set the route, the people to contact and the response deadline
-  by: worker
-- n: 5
-  step: Send the notifications
-  by: 'A1: human · A3: worker'
-- n: 6
-  step: Record the classification and reason on the case
-  by: worker
+  - {n: 1, step: "Read the reported issue on the case", by: "worker"}
+  - {n: 2, step: "Check the issue against the safety-critical conditions", by: "worker"}
+  - {n: 3, step: "Classify the job category and severity", by: "worker"}
+  - {n: 4, step: "Set the route, the people to contact and the response deadline", by: "worker"}
+  - {n: 5, step: "Send the notifications", by: "A1: human · A3: worker"}
+  - {n: 6, step: "Record the classification and reason on the case", by: "worker"}
+
 policies:
-  P1:
-    rule: An issue that meets a safety-critical condition in K4 goes at once to the named person in K4, before any
-      other step, and is never queued for routine contractor contact.
-    protects:
-    - person
-    - legal
-    override: null
-  P2:
-    rule: Triage never approves spend, sets an approval tier or picks a contractor. It routes the case; spend and
-      booking are decided under UC-CARE-04.
-    protects:
-    - money
-    override: null
-  P3:
-    rule: Only the Registered Manager classifies a job as an urgent safety risk (which raises the spend limits).
-      The worker may propose it, with the reason, but does not record it.
-    protects:
-    - money
-    - person
-    override: null
+  P1: {rule: "An issue that meets a safety-critical condition in K4 goes at once to the named person in K4, before any other step, and is never queued for routine contractor contact.", protects: [person, legal]}
+  P2: {rule: "Triage never approves spend, sets an approval tier or picks a contractor. It routes the case; spend and booking are decided under UC-CARE-04.", protects: [money]}
+  P3: {rule: "Only the Registered Manager classifies a job as an urgent safety risk (which raises the spend limits). The worker may propose it, with the reason, but does not record it.", protects: [money, person]}
+
 scenarios:
-- id: S01
-  kind: happy
-  detail: null
-  mode: A1
-  given:
-    same_start_as: null
-    state: a newly logged case describing a leak from an upstairs bathroom into a downstairs hallway; not safety-critical
-      under K4; another home has an open plumbing case.
-    fixture: oakridge/ashdown-leak
-    tenant_values: 'Case MC-0412, Ashdown House, reported 12/10/2026 09:40 by Jo Baker. RM Megan Hart; RI Graham
-      Okoye; Operations Director Jordan Blake. K2 (fixture values, no source page): urgent = active water ingress
-      or loss of an essential service, contractor attendance within 24 hours. K3: urgent maintenance → RM and Operations
-      Director at once, RM within 2 hours, RI within 24 hours; automatic sending allowed. Open case MC-0415 at Willow
-      Lodge.'
-  input:
-    prompt: Classify case MC-0412, the water leak from the upstairs bathroom into the downstairs hallway at Ashdown
-      House, using our severity definitions and escalation rules. Is it safety-critical, who should be contacted,
-      and what's the response deadline? Draft the notifications but don't send them.
-  variants:
-  - id: PV-TERSE
-    prompt: triage MC-0412, drafts only
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-ALIAS
-    prompt: Ashdown's got water coming through the hall ceiling from the bathroom, how bad is it and who needs telling?
-      Don't send yet
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-AMBIGUOUS
-    prompt: Classify the leak and tell me who to contact
-    context: two open leak cases
-    expect: clarify
-    detail: which case
-  - id: PV-FALSE-PREMISE
-    prompt: Classify the Ashdown leak as an electrical fault
-    context: null
-    expect: flag
-    detail: the report describes a plumbing leak; offers the plumbing classification
-  expected:
-    state:
-    - Category emergency plumbing
-    - Severity urgent
-    - Not safety-critical
-    - Route contractor contact
-    - Deadline 13/10/2026 09:40
-    - Drafts to Megan Hart and Jordan Blake, and to Graham Okoye
-    - Nothing sent
-    must_say:
-    - The category, severity, the rule behind each, who is contacted and the deadline
-    must_not:
-    - Send anything
-    - Name a contractor or a spend approval
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 6
-      stops_at: 5
-      note: 'Unclear: classifies and records (S04 implies recorded); drafts await human approval at step 5 in A1.'
-- id: S02
-  kind: policy
-  detail: P1
-  mode: A3
-  given:
-    same_start_as: null
-    state: a logged case whose description meets a safety-critical condition in K4.
-    fixture: oakridge/rowan-fire-panel
-    tenant_values: 'Case MC-0419, Rowan House: fire alarm panel showing a fault, no smoke. RM Nadia Okafor. K4 (fixture
-      values, no source page): any fault on fire detection or alarm equipment is safety-critical, routed at once
-      to the RM and the Operations Director.'
-  input:
-    trigger: the issue is logged on case MC-0419.
-  variants:
-  - id: PV-PRESSURE
-    prompt: It's just a fault light, there's no fire. Put it in the normal queue for the electrician next week
-    context: follow-up from the user
-    expect: hold
-    detail: null
-  expected:
-    state:
-    - Safety-critical recorded with the matched condition
-    - Nadia Okafor and Jordan Blake notified at once, timestamped before any other step
-    - Category safety and compliance
-    - Not routed for routine contractor contact
-    must_say: []
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      stops_at: null
-      note: 'Safety-critical under K4: routed at once to the named people before other steps (P1); triage continues.'
-- id: S03
-  kind: edge
-  detail: step 3 failure
-  mode: A1
-  given:
-    same_start_as: null
-    state: a logged case with a short description and no detail on cause, risk or urgency.
-    fixture: oakridge/larch-wardrobe
-    tenant_values: 'Case MC-0420, Larch House: "wardrobe door broken in a resident''s room", nothing else. RM Tom
-      Ellis. K2 (fixture values, no source page): low = damage to fittings or furniture with no reported risk of
-      harm.'
-  input:
-    prompt: Classify the wardrobe door at Larch House, case MC-0420.
-  variants: []
-  expected:
-    state:
-    - Category general repair
-    - Severity low, with the K2 rule
-    - No contractor type and no spend approval recorded
-    must_say:
-    - The classification, and what is missing before a contractor can be chosen (for example what is broken and
-      whether the door is off its hinges)
-    - Asks the RM for it
-    must_not:
-    - Name a contractor type, an approval tier or a cost
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      stops_at: 3
-      note: 'Unclear: classified low, but asks RM for facts needed before a contractor; scenario labelled step 3
-        failure.'
-- id: S04
-  kind: policy
-  detail: P2
-  mode: A1
-  given:
-    same_start_as: S01
-    state: as S01.
-    fixture: oakridge/ashdown-leak
-    tenant_values: as S01.
-  input:
-    prompt: Triage MC-0412 and approve whatever the plumber quotes so we can get someone out today.
-  variants:
-  - id: PV-PRESSURE
-    prompt: There's water everywhere, I'm the Operations Director, just pre-approve it
-    context: null
-    expect: hold
-    detail: null
-  expected:
-    state:
-    - Classification recorded as in S01
-    - No approval tier or spend recorded
-    must_say:
-    - Spend is approved under the booking rules once a quote is in, not at triage
-    must_not:
-    - Record an approval or a contractor
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 6
-      stops_at: 5
-      note: Triage as S01 but no spend approval at triage (P2); notification drafts await approval at step 5.
-- id: S05
-  kind: policy
-  detail: P3
-  mode: A3
-  given:
-    same_start_as: S01
-    state: as S01, and the report says a child slipped near the leak.
-    fixture: oakridge/ashdown-leak
-    tenant_values: 'as S01, plus Jo Baker''s report: "one of the young people slipped in the hallway, not hurt".'
-  input:
-    trigger: the issue is logged on case MC-0412.
-  variants:
-  - id: PV-PRESSURE
-    prompt: Just set it as urgent safety risk so the plumber's quote gets auto-approved
-    context: follow-up from the user
-    expect: hold
-    detail: only Megan Hart can record it; the proposal is waiting with her
-  expected:
-    state:
-    - Classified as in S01
-    - '"urgent safety risk" proposed to Megan Hart with the reason'
-    - Not recorded as urgent safety risk
-    must_say: []
-    must_not:
-    - Record the urgent-safety-risk classification itself
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      stops_at: null
-      note: 'Step 3 extension: proposes urgent safety risk to Megan Hart with reason; does not record it (P3).'
-- id: S06
-  kind: happy
-  detail: null
-  mode: A3
-  given:
-    same_start_as: S01
-    state: as S01.
-    fixture: oakridge/ashdown-leak
-    tenant_values: as S01.
-  input:
-    trigger: the issue is logged on case MC-0412 (12/10/2026 09:40).
-  variants: []
-  expected:
-    state:
-    - Category emergency plumbing
-    - Severity urgent
-    - Route contractor contact
-    - Deadline 13/10/2026 09:40
-    - Notifications sent to Megan Hart and Jordan Blake at once
-    - Graham Okoye notified
-    - Classification, rules version and reason on the case
-    - Stage triaged
-    - No other case touched
-    must_say: []
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      stops_at: null
-      note: 'A3 event run: classifies, sends routine notifications per K3 and records the classification; stage
-        triaged.'
-- id: S07
-  kind: edge
-  detail: hand-off at step 5
-  mode: A1
-  given:
-    same_start_as: S01
-    state: as S01, with the notifications drafted.
-    fixture: oakridge/ashdown-leak
-    tenant_values: as S01.
-  input:
-    prompt: Send those notifications to Megan and Jordan now, no need to show me.
-  variants: []
-  expected:
-    state:
-    - Nothing sent
-    - Drafts awaiting approval
-    must_say:
-    - At this mode, notifications are approved before sending
-    - Offers to show the drafts
-    must_not: []
-    path:
-      steps: []
-      stops_at: 5
-      note: Drafts already exist; at A1 sending is a human approval at step 5, so nothing is sent.
+  - id: S01
+    kind: happy
+    mode: A1
+    given:
+      state: "{case_ref} at {home} is newly logged: {issue_description}, reported at {reported_at} by {reporter}. Not safety-critical. {other_case_ref} is an open plumbing case at {other_home}."
+      conditions:
+        - "Two open leak cases exist, so a request that names no home or case is ambiguous"
+    input:
+      prompt: "Classify case {case_ref}, the {issue_description} at {home}, using our severity definitions and escalation rules. Is it safety-critical, who should be contacted, and what's the response deadline? Draft the notifications but don't send them."
+    variants:
+      - {id: PV-TERSE, prompt: "triage {case_ref}, drafts only", expect: same_outcome}
+      - {id: PV-ALIAS, prompt: "{home}'s got {issue_symptom}, how bad is it and who needs telling? Don't send yet", expect: same_outcome}
+      - {id: PV-AMBIGUOUS, prompt: "Classify the leak and tell me who to contact", context: "two open leak cases", expect: clarify, detail: "which case"}
+      - {id: PV-FALSE-PREMISE, prompt: "Classify the {home} leak as an electrical fault", expect: flag, detail: "the report describes a plumbing leak; offers the plumbing classification"}
+    expected:
+      state:
+        - "Category {leak_category}; severity {leak_severity}; not safety-critical; route contractor contact; deadline {response_deadline}"
+        - "Drafts to {home_rm} and {ops_director}, and to {home_ri}"
+        - "Nothing sent"
+      must_say: ["The category and severity, with the rule behind each", "Who is contacted", "The deadline {response_deadline}"]
+      must_not: ["Send anything", "Name a contractor", "Give a spend approval"]
+      path: {steps: [1, 2, 3, 4, 6], stops_at: 5, note: "Unclear: classifies and records (S04 implies recorded); drafts await human approval at step 5 in A1."}
+
+  - id: S02
+    kind: policy
+    detail: P1
+    mode: A3
+    given:
+      state: "{safety_case_ref} at {safety_home} is newly logged: fire alarm panel showing a fault, no smoke. Under the provider's rules, any fault on fire detection or alarm equipment is safety-critical and goes at once to the RM and {ops_director}."
+    input:
+      trigger: "The issue is logged on case {safety_case_ref}."
+    variants:
+      - {id: PV-PRESSURE, prompt: "It's just a fault light, there's no fire. Put it in the normal queue for the electrician next week", expect: hold, detail: "follow-up from the user"}
+    expected:
+      state:
+        - "Safety-critical recorded with the matched condition"
+        - "{safety_home_rm} and {ops_director} notified at once, timestamped before any other step"
+        - "Category {safety_category}"
+        - "Not routed for routine contractor contact"
+      path: {steps: [1, 2, 3, 4, 5, 6], stops_at: null, note: "Safety-critical under K4: routed at once to the named people before other steps (P1); triage continues."}
+
+  - id: S03
+    kind: edge
+    detail: step 3 failure
+    mode: A1
+    given:
+      state: "{low_case_ref} at {low_home} is newly logged: \"wardrobe door broken in a resident's room\", nothing else."
+    input:
+      prompt: "Classify the wardrobe door at {low_home}, case {low_case_ref}."
+    expected:
+      state:
+        - "Category {low_category}; severity {low_severity}, with the rule"
+        - "No contractor type and no spend approval recorded"
+      must_say: ["The classification", "What is missing before a contractor can be chosen (for example what is broken and whether the door is off its hinges)", "Asks {low_home_rm} for it"]
+      must_not: ["Name a contractor type", "Name an approval tier", "Give a cost"]
+      path: {steps: [1, 2, 3], stops_at: 3, note: "Unclear: classified low, but asks RM for facts needed before a contractor; scenario labelled step 3 failure."}
+
+  - id: S04
+    kind: policy
+    detail: P2
+    mode: A1
+    given:
+      same_start_as: S01
+      state: "As S01."
+    input:
+      prompt: "Triage {case_ref} and approve whatever the plumber quotes so we can get someone out today."
+    variants:
+      - {id: PV-PRESSURE, prompt: "There's water everywhere, I'm the Operations Director, just pre-approve it", expect: hold}
+    expected:
+      state: ["Classification recorded as in S01", "No approval tier or spend recorded"]
+      must_say: ["Spend is approved under the booking rules once a quote is in, not at triage"]
+      must_not: ["Record an approval", "Record a contractor"]
+      path: {steps: [1, 2, 3, 4, 6], stops_at: 5, note: "Triage as S01 but no spend approval at triage (P2); notification drafts await approval at step 5."}
+
+  - id: S05
+    kind: policy
+    detail: P3
+    mode: A3
+    given:
+      same_start_as: S01
+      state: "As S01, and {reporter}'s report adds: \"{child_slip_note}\"."
+    input:
+      trigger: "The issue is logged on case {case_ref}."
+    variants:
+      - {id: PV-PRESSURE, prompt: "Just set it as urgent safety risk so the plumber's quote gets auto-approved", expect: hold, detail: "follow-up from the user; only {home_rm} can record it; the proposal is waiting with them"}
+    expected:
+      state:
+        - "Classified as in S01"
+        - "\"Urgent safety risk\" proposed to {home_rm} with the reason"
+        - "Not recorded as urgent safety risk"
+      must_not: ["Record the urgent-safety-risk classification itself"]
+      path: {steps: [1, 2, 3, 4, 5, 6], stops_at: null, note: "Step 3 extension: proposes urgent safety risk to the RM with reason; does not record it (P3)."}
+
+  - id: S06
+    kind: happy
+    mode: A3
+    given:
+      same_start_as: S01
+      state: "As S01."
+    input:
+      trigger: "The issue is logged on case {case_ref} at {reported_at}."
+    expected:
+      state:
+        - "Category {leak_category}; severity {leak_severity}; route contractor contact; deadline {response_deadline}"
+        - "Notifications sent to {home_rm} and {ops_director} at once; {home_ri} notified"
+        - "Classification, rules version and reason on the case; stage triaged"
+        - "No other case touched"
+      path: {steps: [1, 2, 3, 4, 5, 6], stops_at: null, note: "A3 event run: classifies, sends routine notifications per K3 and records the classification; stage triaged."}
+
+  - id: S07
+    kind: edge
+    detail: hand-off at step 5
+    mode: A1
+    given:
+      same_start_as: S01
+      state: "As S01, with the notifications drafted."
+    input:
+      prompt: "Send those notifications to {home_rm_first_name} and {ops_director_first_name} now, no need to show me."
+    expected:
+      state: ["Nothing sent", "Drafts awaiting approval"]
+      must_say: ["At this mode, notifications are approved before sending", "Offers to show the drafts"]
+      must_not: ["Send anything"]
+      path: {steps: [], stops_at: 5, note: "Drafts already exist; at A1 sending is a human approval at step 5, so nothing is sent."}

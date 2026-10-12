@@ -1,0 +1,31 @@
+# SuperCare binding for UC-REC-28 (eval v0.2). Draft. Values checked against ClickUp (P1/P2 Proof list, playbooks, test prompts).
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-REC-28
+eval_version: "0.2"
+
+values:
+  ats_name: Bullhorn
+  document_store_name: OneDrive
+  candidate_name: Joshua Woodman
+  candidate_first_name: Joshua
+  dbs_certificate_number: "001234567890"
+  dbs_workforce: Adult and Child workforce
+  right_to_work_item: Right to Work
+  first_reference: Reference 1
+  second_reference: Reference 2
+  unmapped_field: Update Service When Offered
+  compliance_approver: Michal Kibilko (Compliance Manager)
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: Joshua Woodman's validated DBS certificate 001234567890 (Adult and Child workforce) filed in his staff folder, with a disclosure reference on the certificate; DBS fields on his Norwood Senior Coach Placement empty"
+  - "S02: Joshua's staff file with verified Right to Work and Reference 1 and no Reference 2"
+  - "S05: Joshua's staff file with every checklist item present and validated"
+  - "S06: three active onboarding cases; one with Reference 1 ticked in Bullhorn and no evidence in OneDrive; one failed write in the sync failure queue"
+  - "S07: Reference 2 validated and filed in Joshua's staff folder"

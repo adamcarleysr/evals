@@ -1,0 +1,39 @@
+# SuperCare binding for UC-CARE-17 (eval v0.1). Draft. Values from ClickUp (SR-13439, SR-13425 and playbook doc 8cnycrm-164035).
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-CARE-17
+eval_version: "0.1"
+
+values:
+  home_a: Norwood
+  rm_a: Zinnia Persyn
+  similar_home: Frimley
+  unmapped_home_value: Frimley Annex
+  unmapped_role: "<to supply>"
+  leaver_home: Phoenix
+  leaver_home_rm: Abbie Thomas
+  probation_home: Heroes Haven
+  probation_home_rm: Becky Silvester
+  ambiguous_home_name: Lushington
+  hr_system_name: ADP
+
+  home_mapping_owner: "<to supply>"
+  role_mapping_owner: Hayley Harkins
+  hire_date_owner: "<to supply>"
+  pattern_count: 3
+  pattern_days: 30
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: seven seeded ADP issues and no others: two active Norwood employees with no reportsTo; one employee with home 'Frimley Annex'; one job title not in the canonical role list; one hire date about 4 months in the future; one Phoenix leaver with no terminationReasonCode; one Heroes Haven employee hired about 2 months ago with no probationEndDate"
+  - "S01: a reference issue list of those seven issues"
+  - "S01: both 23 Lushington and 13 Lushington present as canonical homes (ambiguity variant)"
+  - "S03: the ADP termination records query made to fail for the run"
+  - "S05: the data-quality queue holding the seven S04 items, Assigned"
+  - "S06: the Phoenix leaver's termination reason filled in after the S05 run"
+  - "S07: queue history with the Norwood missing-manager issue raised 3 times in the last 30 days, no other issue at that count"

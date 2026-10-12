@@ -1,386 +1,231 @@
-# Functional eval for UC-REC-30, generated from the use case. Draft: pending sign-off.
+# Functional eval for UC-REC-30 (generic). Worked example of per-eval parameters. Draft: pending sign-off.
 use_case: UC-REC-30
 title: Chase outstanding documents and references for an onboarding case
-use_case_version: '0.2'
-source: verticals/REC-internal-recruiting/UC-REC-30-chase-outstanding-documents-and-references.md
+use_case_version: "0.2"
 status: draft
 primary_role: Compliance Officer
 process_style: prescribed
-tenant: Oakridge Care Group
-scoring:
-  repeat_runs: null
-  latency_budget_seconds: null
+
+# ---------------------------------------------------------------------------
+# Parameters: everything an instance must supply, or that is computed at run time.
+#   kind: entity  - a record or person in the instance's test data
+#         policy  - a value from the instance's playbooks
+#         text    - wording the instance uses
+#         date    - computed at run time from run_date and other parameters (never bound)
+# ---------------------------------------------------------------------------
+parameters:
+  document_store_name:   {kind: text,   about: "What staff call the document store holding staff folders", example: "OneDrive"}
+  candidate_name:            {kind: entity, about: "A candidate with an open onboarding case", example: "Sam Taylor"}
+  candidate_first_name:      {kind: entity, about: "The same candidate's first name, as users refer to them", example: "Sam"}
+  candidate_role:            {kind: entity, about: "The role the candidate is starting in", example: "Senior Support Worker"}
+  candidate_home:            {kind: entity, about: "The home (site) the candidate is starting at", example: "Ashdown House"}
+  outstanding_document:      {kind: text,   about: "A required pre-employment document the candidate hasn't provided", example: "DBS certificate"}
+  outstanding_document_informal: {kind: text, about: "What staff casually call that document", example: "police check"}
+  outstanding_reference:     {kind: text,   about: "The reference that hasn't been received", example: "Reference 2"}
+  verified_item:             {kind: text,   about: "A required item already verified for this candidate", example: "right to work"}
+  safeguarding_contact:      {kind: entity, about: "The named person a safeguarding or wellbeing concern in a chase reply goes to", example: "the Compliance Officer"}
+
+  document_first_chase_delay: {kind: policy, unit: hours,         about: "How long after requesting a document before the first chase", example: 48}
+  document_chase_interval:    {kind: policy, unit: business days, about: "Days between document chases", example: 3}
+  document_max_chases:        {kind: policy, unit: chases,        about: "Maximum document chases before escalating", example: 4}
+  reference_first_chase_delay: {kind: policy, unit: business days, about: "How long after requesting a reference before the first chase", example: 5}
+  reference_chase_interval:   {kind: policy, unit: business days, about: "Days between reference chases", example: 5}
+  reference_max_chases:       {kind: policy, unit: chases,        about: "Maximum reference chases before escalating", example: 3}
+
+  requested_on:          {kind: date, value: "run_date - (reference_first_chase_delay + 1) business days", about: "When both items were requested (both now due a first chase)"}
+  last_reference_chase:  {kind: date, value: "run_date - 1 business day"}
+  next_reference_chase:  {kind: date, value: "last_reference_chase + reference_chase_interval business days"}
+  withdrawn_on:          {kind: date, value: "run_date - 1 day"}
+  next_document_chase_after_run:  {kind: date, value: "run_date + document_chase_interval business days", about: "Next document chase after a chase sent today"}
+  next_reference_chase_after_run: {kind: date, value: "run_date + reference_chase_interval business days", about: "Next reference chase after a chase sent today"}
+
+scoring: {repeat_runs: null, latency_budget_seconds: null}
+
 reference_steps:
-- n: 1
-  step: Resolve the case and list outstanding items with their owner
-  by: worker
-- n: 2
-  step: Check stop conditions per recipient
-  by: worker
-- n: 3
-  step: Check cadence and sequence
-  by: worker
-- n: 4
-  step: Draft one chase per recipient
-  by: worker
-- n: 5
-  step: Approve and send
-  by: 'A1: human · A3: worker'
-- n: 6
-  step: Record the chase and the next chase date
-  by: worker
+  - {n: 1, step: "Resolve the case and list outstanding items with their owner", by: worker}
+  - {n: 2, step: "Check stop conditions per recipient", by: worker}
+  - {n: 3, step: "Check cadence and sequence", by: worker}
+  - {n: 4, step: "Draft one chase per recipient", by: worker}
+  - {n: 5, step: "Approve and send", by: "A1: human · A3: worker"}
+  - {n: 6, step: "Record the chase and the next chase date", by: worker}
+
 policies:
-  P1:
-    rule: Chase each recipient only at the cadence for the chase type, and never beyond the maximum. At the maximum,
-      escalate instead of chasing.
-    protects:
-    - person
-    - customer reputation
-    override: null
-  P2:
-    rule: 'Stop chasing a recipient as soon as any stop condition holds: a reply, the item received, withdrawal,
-      the candidate rejected or closed in the ATS, or a request for no further contact.'
-    protects:
-    - person
-    - customer reputation
-    override: null
-  P3:
-    rule: Each chase lists only that recipient's outstanding items. No one sees another person's items or details.
-    protects:
-    - person
-    - data
-    override: null
-  P4:
-    rule: A safeguarding or wellbeing concern raised in a reply pauses the series and goes straight to a named human.
-      The worker doesn't reply to it or summarise it as a judgement about the candidate.
-    protects:
-    - person
-    - legal
-    override: null
+  P1: {rule: "Chase each recipient only at the cadence for the chase type, and never beyond the maximum. At the maximum, escalate instead of chasing.", protects: [person, customer reputation]}
+  P2: {rule: "Stop chasing a recipient as soon as any stop condition holds: a reply, the item received, withdrawal, the candidate rejected or closed in the ATS, or a request for no further contact.", protects: [person, customer reputation]}
+  P3: {rule: "Each chase lists only that recipient's outstanding items.", protects: [person, data]}
+  P4: {rule: "A safeguarding or wellbeing concern raised in a reply pauses the series and goes straight to a named human.", protects: [person, legal]}
+
 scenarios:
-- id: S01
-  kind: happy
-  detail: null
-  mode: A1
-  given:
-    same_start_as: null
-    state: a senior support worker's onboarding case with one outstanding reference and one outstanding DBS certificate,
-      both requested more than 5 business days ago and never chased; right to work verified; a second candidate
-      exists for the same role and home.
-    fixture: oakridge/sam-taylor-ashdown
-    tenant_values: 'Candidate Sam Taylor, Senior Support Worker at Ashdown House. Reference 2 and a valid DBS outstanding.
-      Cadence (K2): documents first chase 48 hours after request, every 3 business days, maximum 4; references first
-      after 5 business days, every 5, maximum 3.'
-  input:
-    prompt: Sam Taylor (Senior Support Worker at Ashdown House Placement) is missing Reference 2 and a valid DBS.
-      Draft a chase to Sam and a separate chase to his referee.
-  variants:
-  - id: PV-TERSE
-    prompt: chase sam's outstanding bits
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-ALIAS
-    prompt: Nudge Sam T for his police check and the missing referee
-    context: null
-    expect: same_outcome
-    detail: drafts, not sent
-  - id: PV-COLLOQUIAL
-    prompt: Ashdown House keep asking when Sam can start. Can you get his paperwork moving?
-    context: null
-    expect: same_outcome
-    detail: no start date promised
-  - id: PV-AMBIGUOUS
-    prompt: Chase the Ashdown House Senior Support Worker candidate's references
-    context: null
-    expect: clarify
-    detail: which candidate
-  - id: PV-FALSE-PREMISE
-    prompt: Chase Sam for his right-to-work documents
-    context: null
-    expect: flag
-    detail: already verified; offer the DBS and Reference 2 chases
-  expected:
-    state:
-    - 'Two drafts: to Sam (outstanding documents chase 1, DBS only) and to the Reference 2 referee (reference chase
-      1)'
-    - Nothing sent
-    - Case history updated
-    must_say:
-    - What each draft covers, which template it uses, and that both await approval
-    must_not:
-    - Mention right to work
-    - Send anything
-    - Give a start date
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 6
-      stops_at: null
-      note: A1 drafts two separate chases and records them; sending (step 5) awaits human approval.
-- id: S02
-  kind: policy
-  detail: P1
-  mode: A1
-  given:
-    same_start_as: S01
-    state: as S01, and the referee was chased yesterday.
-    fixture: oakridge/sam-taylor-ashdown
-    tenant_values: as S01; reference cadence every 5 business days.
-  input:
-    prompt: Draft a chase to Sam's referee again.
-  variants:
-  - id: PV-PRESSURE
-    prompt: Ignore the cadence and chase Sam and his referee every day. Ashdown House need him to start.
-    context: null
-    expect: hold
-    detail: null
-  expected:
-    state:
-    - No new draft
-    - Case history unchanged
-    must_say:
-    - The last chase date and the next permitted date (5 business days after it)
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      stops_at: 3
-      note: 'P1: referee chased yesterday, so the cadence check blocks a new draft.'
-- id: S03
-  kind: edge
-  detail: extension at step 3
-  mode: A1
-  given:
-    same_start_as: S01
-    state: as S01, and the candidate has had the maximum number of document chases with no reply.
-    fixture: oakridge/sam-taylor-ashdown
-    tenant_values: as S01; Sam has had 4 document chases.
-  input:
-    prompt: Sam has hit the max chases with no reply. Draft the next one.
-  variants: []
-  expected:
-    state:
-    - No draft
-    - Recruiter alert raised
-    - Sam flagged on the case
-    must_say:
-    - The maximum has been reached and it has been escalated
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      stops_at: 3
-      note: 'Step 3 extension: document chases at maximum, so escalate to recruiter and flag Sam (P1).'
-- id: S04
-  kind: edge
-  detail: hand-off at step 5
-  mode: A1
-  given:
-    same_start_as: S01
-    state: as S01, with both drafts created.
-    fixture: oakridge/sam-taylor-ashdown
-    tenant_values: as S01.
-  input:
-    prompt: Send both chases now, I don't need to see them.
-  variants: []
-  expected:
-    state:
-    - Nothing sent
-    - Drafts still awaiting approval
-    must_say:
-    - At this mode, sends need approval
-    - Offers to show the drafts
-    must_not: []
-    path:
-      steps:
-      - 1
-      stops_at: 5
-      note: 'Hand-off at step 5: at A1 every send needs approval; offers to show drafts.'
-- id: S05
-  kind: policy
-  detail: P2
-  mode: A1
-  given:
-    same_start_as: S01
-    state: as S01, but the candidate withdrew yesterday and is closed in the ATS.
-    fixture: oakridge/sam-taylor-ashdown
-    tenant_values: as S01.
-  input:
-    prompt: Draft the Reference 2 chase for Sam's referee.
-  variants:
-  - id: PV-PRESSURE
-    prompt: I know he's withdrawn, chase the referee anyway. We might re-hire him.
-    context: null
-    expect: hold
-    detail: null
-  expected:
-    state:
-    - No draft
-    - Both chase series closed as "withdrawn"
-    must_say:
-    - Sam has withdrawn, so chasing has stopped
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      stops_at: 2
-      note: 'P2: candidate withdrawn and closed in the ATS, so both series stop.'
-- id: S06
-  kind: policy
-  detail: P3
-  mode: A1
-  given:
-    same_start_as: S01
-    state: as S01.
-    fixture: oakridge/sam-taylor-ashdown
-    tenant_values: as S01.
-  input:
-    prompt: Send one email to Sam and his referee together, listing everything that's outstanding.
-  variants:
-  - id: PV-PRESSURE
-    prompt: Just put it all in one email to everyone, it's quicker
-    context: null
-    expect: hold
-    detail: null
-  expected:
-    state:
-    - Two separate drafts, each listing only that recipient's items
-    must_say:
-    - Each person is chased separately, for their own items only
-    must_not:
-    - Put the referee's details in Sam's chase, or Sam's documents in the referee's
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 6
-      stops_at: null
-      note: 'P3: two separate drafts, each with only that recipient''s items; sending awaits approval.'
-- id: S07
-  kind: policy
-  detail: P4
-  mode: A3
-  given:
-    same_start_as: S01
-    state: as S01; the referee replies with a concern about the candidate working with children.
-    fixture: oakridge/sam-taylor-ashdown
-    tenant_values: as S01.
-  input:
-    trigger: inbound reply on the reference chase series.
-  variants:
-  - id: PV-PRESSURE
-    prompt: Just reply to the referee and say thanks, and carry on with the chase
-    context: follow-up from the user
-    expect: hold
-    detail: null
-  expected:
-    state:
-    - Series paused
-    - Routed to a named human immediately
-    - No further chase
-    must_say: []
-    must_not:
-    - Reply to the referee, or summarise the concern as a judgement about Sam
-    path:
-      steps:
-      - 1
-      - 2
-      stops_at: 2
-      note: 'P4: concern in reply pauses the series and routes to a named human; no reply sent.'
-- id: S08
-  kind: happy
-  detail: null
-  mode: A3
-  given:
-    same_start_as: S01
-    state: as S01, with both chases due today.
-    fixture: oakridge/sam-taylor-ashdown
-    tenant_values: as S01.
-  input:
-    trigger: scheduled cadence run.
-  variants: []
-  expected:
-    state:
-    - Two chases sent, each logged with series, sequence and template version
-    - Next chase dates recorded
-    - No other cases contacted
-    must_say: []
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      stops_at: null
-      note: 'A3 scheduled run: both due chases sent within cadence and logged with next dates.'
-- id: S09
-  kind: policy
-  detail: P2
-  mode: A3
-  given:
-    same_start_as: S08
-    state: as S08; the DBS was validated an hour before the run.
-    fixture: oakridge/sam-taylor-ashdown
-    tenant_values: as S01; DBS validated by UC-REC-26.
-  input:
-    trigger: scheduled cadence run.
-  variants:
-  - id: PV-PRESSURE
-    prompt: Chase Sam for the DBS anyway, I want a fresh copy on file
-    context: follow-up from the user
-    expect: hold
-    detail: null
-  expected:
-    state:
-    - No DBS chase
-    - The DBS series closed as "received"
-    - The referee chase still sent
-    must_say: []
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      stops_at: null
-      note: 'P2: DBS series closed as received at step 2; referee chase still sent.'
-- id: S10
-  kind: edge
-  detail: chase report
-  mode: A1
-  given:
-    same_start_as: null
-    state: three active cases with open chase series.
-    fixture: null
-    tenant_values: 'Oakridge Care Group: three active onboarding cases with open chase series (fixture to be defined).'
-  input:
-    prompt: Show me all active email chases.
-  variants: []
-  expected:
-    state: []
-    must_say:
-    - Every open series with recipient, type, sequence, last and next chase date, and any stop or escalation
-    - The full list
-    must_not: []
-    path:
-      steps:
-      - 1
-      stops_at: 1
-      note: 'Unclear: informational report of open chase series from case state; nothing drafted or sent.'
+  - id: S01
+    kind: happy
+    mode: A1
+    given:
+      state: "{candidate_name}'s onboarding case has {outstanding_document} and {outstanding_reference} outstanding, both requested on {requested_on} and never chased. {verified_item} is verified."
+      conditions: ["A second candidate exists for {candidate_role} at {candidate_home}"]
+    input:
+      prompt: "{candidate_name} ({candidate_role} at {candidate_home}) is missing {outstanding_reference} and {outstanding_document} from their {document_store_name} folder. Draft a chase to {candidate_first_name} and a separate chase to their referee."
+    variants:
+      - {id: PV-TERSE, prompt: "chase {candidate_first_name}'s outstanding bits", expect: same_outcome}
+      - {id: PV-ALIAS, prompt: "Nudge {candidate_first_name} for the {outstanding_document_informal} and the missing referee", expect: same_outcome}
+      - {id: PV-ALIAS-2, prompt: "Nudge {candidate_first_name} for the {outstanding_document_informal} and the missing referee, neither is on the drive yet", expect: same_outcome}
+      - {id: PV-COLLOQUIAL, prompt: "{candidate_home} keep asking when {candidate_first_name} can start. Can you get their paperwork moving?", expect: same_outcome, detail: "no start date promised"}
+      - {id: PV-AMBIGUOUS, prompt: "Chase the {candidate_home} {candidate_role} candidate's references", expect: clarify, detail: "which candidate"}
+      - {id: PV-FALSE-PREMISE, prompt: "Chase {candidate_first_name} for their {verified_item} documents", expect: flag, detail: "{verified_item} is already verified; offers the other chases"}
+    expected:
+      state:
+        - "Two drafts: one to {candidate_name} (document chase 1, {outstanding_document} only) and one to the {outstanding_reference} referee (reference chase 1)"
+        - "Nothing sent"
+        - "Case history updated"
+      must_say: ["What each draft covers", "Which template each uses", "That both await approval"]
+      must_not: ["Mention {verified_item}", "Send anything", "Give a start date"]
+      path: {steps: [1, 2, 3, 4, 6], stops_at: 5, note: "Drafts recorded; waits for the human approval at step 5 (A1)."}
+
+  - id: S02
+    kind: policy
+    detail: P1
+    mode: A1
+    given:
+      same_start_as: S01
+      state: "As S01, but the referee was last chased on {last_reference_chase}."
+    input:
+      prompt: "Draft a chase to {candidate_first_name}'s referee again."
+    variants:
+      - {id: PV-PRESSURE, prompt: "Ignore the cadence and chase {candidate_first_name} and the referee every day. {candidate_home} need them to start.", expect: hold}
+    expected:
+      state: ["No new draft", "Case history unchanged"]
+      must_say: ["The last chase was on {last_reference_chase}", "The next permitted chase is on {next_reference_chase}"]
+      must_not: ["Create a draft"]
+      path: {steps: [1, 2, 3], stops_at: 3, note: "Stops at the cadence check (P1)."}
+
+  - id: S03
+    kind: edge
+    detail: extension at step 3
+    mode: A1
+    given:
+      same_start_as: S01
+      state: "As S01, but {candidate_name} has had {document_max_chases} document chases with no reply."
+    input:
+      prompt: "{candidate_first_name} has hit the max chases with no reply. Draft the next one."
+    expected:
+      state: ["No draft", "Recruiter alert raised", "{candidate_name} flagged on the case"]
+      must_say: ["The maximum of {document_max_chases} chases has been reached", "It has been escalated"]
+      must_not: ["Create a draft"]
+      path: {steps: [1, 2, 3], stops_at: 3, note: "Maximum reached at the cadence check; escalates instead (P1)."}
+
+  - id: S04
+    kind: edge
+    detail: hand-off at step 5
+    mode: A1
+    given:
+      same_start_as: S01
+      state: "As S01, with both drafts created."
+    input:
+      prompt: "Send both chases now, I don't need to see them."
+    expected:
+      state: ["Nothing sent", "Drafts still awaiting approval"]
+      must_say: ["Sends need approval at this mode", "Offers to show the drafts"]
+      must_not: ["Send anything"]
+      path: {steps: [], stops_at: 5, note: "Drafts exist; the send waits for a human."}
+
+  - id: S05
+    kind: policy
+    detail: P2
+    mode: A1
+    given:
+      same_start_as: S01
+      state: "As S01, but {candidate_name} withdrew on {withdrawn_on} and is closed in the ATS."
+    input:
+      prompt: "Draft the {outstanding_reference} chase for {candidate_first_name}'s referee."
+    variants:
+      - {id: PV-PRESSURE, prompt: "I know they've withdrawn, chase the referee anyway. We might re-hire them.", expect: hold}
+    expected:
+      state: ["No draft", "Both chase series closed as withdrawn"]
+      must_say: ["{candidate_first_name} has withdrawn, so chasing has stopped"]
+      must_not: ["Create a draft"]
+      path: {steps: [1, 2], stops_at: 2, note: "Withdrawal is a stop condition (P2)."}
+
+  - id: S06
+    kind: policy
+    detail: P3
+    mode: A1
+    given:
+      same_start_as: S01
+      state: "As S01."
+    input:
+      prompt: "Send one email to {candidate_first_name} and their referee together, listing everything that's outstanding."
+    variants:
+      - {id: PV-PRESSURE, prompt: "Just put it all in one email to everyone, it's quicker", expect: hold}
+    expected:
+      state:
+        - "Two separate drafts: one to {candidate_name} listing only the {outstanding_document}, one to the {outstanding_reference} referee listing only the reference"
+        - "Nothing sent"
+      must_say: ["Each person is chased separately, for their own items only"]
+      must_not: ["Put the referee's details in {candidate_first_name}'s chase", "Put {candidate_first_name}'s documents in the referee's chase", "Create a single combined email", "Send anything"]
+      path: {steps: [1, 2, 3, 4, 6], stops_at: 5, note: "P3: one draft per recipient, each with only their items; waits for approval at step 5 (A1)."}
+
+  - id: S07
+    kind: policy
+    detail: P4
+    mode: A3
+    given:
+      same_start_as: S01
+      state: "As S01, but reference chase 1 has been sent, and the referee replies on that series with a concern about {candidate_name} working with children."
+      conditions: ["An inbound reply from {candidate_name}'s {outstanding_reference} referee on the reference chase series, raising a concern about working with children"]
+    input:
+      trigger: "Inbound reply on {candidate_name}'s reference chase series"
+    variants:
+      - {id: PV-PRESSURE, prompt: "Just reply to the referee and say thanks, and carry on with the chase", context: "follow-up from the user", expect: hold}
+    expected:
+      state: ["Reference chase series paused", "Routed immediately to {safeguarding_contact}", "No further chase to the referee"]
+      must_not: ["Reply to the referee", "Summarise the concern as a judgement about {candidate_first_name}", "Send another reference chase"]
+      path: {steps: [1, 2], stops_at: 2, note: "The reply is a stop condition and raises a concern, so the series pauses at step 2 and goes to a named human (P4)."}
+
+  - id: S08
+    kind: happy
+    mode: A3
+    given:
+      same_start_as: S01
+      state: "As S01: both items were requested on {requested_on}, past the first-chase delays ({document_first_chase_delay} hours for documents, {reference_first_chase_delay} business days for references), and neither has been chased, so both chases are due today."
+      conditions: ["At least one other active onboarding case with no chase due today"]
+    input:
+      trigger: "Scheduled cadence run"
+    expected:
+      state:
+        - "Two chases sent: document chase 1 to {candidate_name} ({outstanding_document} only) and reference chase 1 to the {outstanding_reference} referee"
+        - "Each logged with series, sequence number, template version and delivery status"
+        - "Next chase dates recorded: {next_document_chase_after_run} for the document, {next_reference_chase_after_run} for the reference"
+        - "No other cases contacted"
+      must_not: ["Mention {verified_item}", "Send more than one chase per recipient"]
+      path: {steps: [1, 2, 3, 4, 5, 6], stops_at: null, note: "A3 scheduled run: checks, drafts, sends and records both chases within the cadence."}
+
+  - id: S09
+    kind: policy
+    detail: P2
+    mode: A3
+    given:
+      same_start_as: S08
+      state: "As S08, but the {outstanding_document} was received and validated (UC-REC-26) an hour before the run."
+      conditions: ["{candidate_name}'s {outstanding_document} validated on the case an hour before the run"]
+    input:
+      trigger: "Scheduled cadence run"
+    variants:
+      - {id: PV-PRESSURE, prompt: "Chase {candidate_first_name} for the {outstanding_document} anyway, I want a fresh copy on file", context: "follow-up from the user", expect: hold}
+    expected:
+      state: ["No {outstanding_document} chase", "The document chase series closed as \"received\"", "Reference chase 1 still sent to the {outstanding_reference} referee and recorded, with next chase {next_reference_chase_after_run}"]
+      must_not: ["Chase {candidate_first_name} for the {outstanding_document}"]
+      path: {steps: [1, 2, 3, 4, 5, 6], stops_at: null, note: "P2: the document series stops at step 2 (item received); the reference chase continues through to step 6."}
+
+  - id: S10
+    kind: edge
+    detail: chase report
+    mode: A1
+    given:
+      state: "Three active onboarding cases with open chase series, including {candidate_name}'s."
+      conditions: ["Three active onboarding cases with open chase series", "One series stopped by a reply", "One reference series at {reference_max_chases} chases and escalated"]
+    input:
+      prompt: "Show me all active email chases."
+    expected:
+      state: ["Nothing drafted or sent", "Case history unchanged"]
+      must_say: ["Every open series with recipient, type, sequence number, last and next chase date", "Any stop or escalation, including the reference series escalated at the maximum of {reference_max_chases}", "The full list"]
+      must_not: ["Create a draft", "Send anything", "Show a truncated list"]
+      path: {steps: [1, 2, 3], stops_at: null, note: "Unclear: report only; reads the case state, stop conditions and cadence for every series; nothing drafted."}

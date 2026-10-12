@@ -1,0 +1,41 @@
+# SuperCare binding for UC-REC-10 (eval v0.2). Values from ClickUp (SR-13443, Hiring-Manager Decision Queue Config,
+# Interview Scoring Rubric, Approval Gate Definitions, P1/P2 Proof: Test Prompts). Draft.
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-REC-10
+eval_version: "0.2"
+
+values:
+  queue_manager_name: Sam Bennett
+  queue_manager_misspelt: Sam Bennet
+  queue_manager_first_name: Sam
+  queue_home: Skywalker
+  shared_first_name: Becky
+  candidate_name: Joshua Woodman
+  candidate_first_name: Joshua
+  candidate_home: Norwood
+  hiring_manager_name: Zinnia Persyn
+  hiring_manager_first_name: Zinnia
+  other_home_manager_name: Tash West
+  other_home: Hyde Gardens
+
+  interview_stage: Stage 2
+  later_stage: Home Visit
+  later_stage_short: Stage 3
+  ats_name: Bullhorn
+
+  interview_decision_options: "Progress to Home Visit, Reject, Hold"
+  reminder_after_hours: 48
+  escalation_after_hours: 72
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: two candidates awaiting Stage 2 feedback and one awaiting offer approval at Skywalker (RM Sam Bennett)"
+  - "S01: Becky Silvester (RM) and Becky Hornibrook (deputy, Frimley) both in the decision queue configuration (already true in the Hiring-Manager Decision Queue Config)"
+  - "S01: Joshua Woodman's Stage 2 feedback item for Senior Coach at Norwood waiting in Zinnia Persyn's queue"
+  - "S02: a second Stage 2 feedback item in Zinnia Persyn's queue"

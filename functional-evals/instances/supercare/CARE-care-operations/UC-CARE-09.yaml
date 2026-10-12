@@ -1,0 +1,37 @@
+# SuperCare binding for UC-CARE-09 (eval v0.1). Draft. Values checked against ClickUp
+# (SR-13427 description and test prompt 2; playbook pages ANS Outbound Calling Script,
+# Employee / Home Canonical Mapping for ADP (shift hours), Canonical Organisation Dimensions).
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-CARE-09
+eval_version: "0.1"
+
+values:
+  home: Norwood
+  home_short: SC Norwood
+  home_rm: Zinnia Persyn
+  shift_role: Senior Coach
+  shift_role_short: "<to supply>"
+  shift_hours: 08:00-20:00
+  contact: Joshua Woodman
+  contact_first_name: Joshua
+  contact_short: "<to supply>"
+  ats_name: Bullhorn
+
+  no_answer_attempts: 3
+  no_answer_window: 24
+  max_attempts: 3
+  max_attempts_window: 48
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: an open Saturday Senior Coach day shift (DAY-STD, 08:00-20:00) at Norwood, approved for contact"
+  - "S01: Joshua Woodman's Bullhorn record with a verified phone number and no earlier call attempts"
+  - "S01: a second contact called Joshua and a second open Saturday shift (for the ambiguity variant)"
+  - "S03–S08: a test line for Joshua Woodman that can be answered by someone else, not answered, give a poor line, or carry a disclosure"
+  - "S06: open Sunday shifts at Norwood and a list of people to call"

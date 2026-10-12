@@ -1,0 +1,41 @@
+# SuperCare binding for UC-REC-08 (eval v0.2). Draft. Values from ClickUp.
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-REC-08
+eval_version: "0.2"
+
+values:
+  candidate_name: Joshua Woodman
+  candidate_first_name: Joshua
+  role: Senior Coach
+  home: Norwood
+  interviewer: Chelsea Hennesey
+  interviewer_first_name: Chelsea
+  first_stage: Stage 1
+  second_stage: Stage 2
+  second_stage_type: Teams Virtual Interview
+  third_stage: Stage 3 Home Visit
+  scheduling_stage: Stage 2 Scheduling
+  scheduled_status: Interview Scheduled
+  ats_name: Bullhorn
+  calendar_name: "<to supply>"
+
+  preferred_slots: Monday to Friday, 10am to 4pm
+  second_stage_length: 30
+  buffer_minutes: 30
+  proposal_count: 3
+  reminder_timings: 48 hours and 2 hours before
+  reschedule_notice: 24
+  max_reschedules: 2
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: Joshua Woodman at Stage 2 Scheduling for Senior Coach at Norwood; Chelsea Hennesey's calendar with three free windows this week within Monday to Friday 10am–4pm, with other events nearby"
+  - "S04: Chelsea Hennesey free at the requested slot (run date + 3 business days, 2pm)"
+  - "S07: Chelsea Hennesey free at the rescheduled slot (one business day later, 10am)"
+  - "S08: Joshua Woodman's interview already rescheduled twice"

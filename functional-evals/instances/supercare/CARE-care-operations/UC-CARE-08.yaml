@@ -1,0 +1,43 @@
+# SuperCare binding for UC-CARE-08 (eval v0.1). Draft. Values checked against ClickUp
+# (SR-13428 description and test prompt; playbook pages Employee / Home Canonical Mapping for ADP,
+# ADP Scope & Field Mapping, Approval Gate Definitions, Canonical Organisation Dimensions).
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-CARE-08
+eval_version: "0.1"
+
+values:
+  home: Phoenix
+  home_short: SC Phoenix
+  home_rm: Abbie Thomas
+  home_rm_first_name: Abbie
+  employee_a: Employee A
+  employee_a_id: "1001"
+  employee_a_first_name: "<to supply>"
+  employee_a_short: "<to supply>"
+  employee_b: Employee B
+  employee_b_id: "1002"
+  employee_b_first_name: "<to supply>"
+  employee_b_short: "<to supply>"
+  night_shift_code: NIGHT-STD
+  training_code: TRAIN
+  hr_system_name: ADP
+
+  absence_home: Phoenix
+  absence_deputy: "<to supply>"
+  absence_rm: Abbie Thomas
+
+  rota_approval_time: 4
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: two active ADP employees at Phoenix (OU-202), IDs 1001 and 1002, on NIGHT-STD on consecutive nights"
+  - "S01: a second Phoenix employee with the same first name as employee 1001 (for the ambiguity variant)"
+  - "S04: a TRAIN entry for employee 1001 from 14:00 to 22:00 on the second night"
+  - "S06: a Phoenix Deputy Manager and a support worker with an annual-leave request"
+  - "S07: an ADP test double whose read-back shows employee 1002's new entry unchanged"

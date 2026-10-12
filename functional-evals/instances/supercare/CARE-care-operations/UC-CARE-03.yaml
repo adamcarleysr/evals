@@ -1,0 +1,40 @@
+# SuperCare binding for UC-CARE-03 (eval v0.1). Draft. Values checked against ClickUp
+# (SR-13388, SR-13427, SR-13424, SR-13452 test prompts; playbook pages ANS Outbound Calling Script,
+# Budget Thresholds, Canonical Organisation Dimensions).
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-CARE-03
+eval_version: "0.1"
+
+values:
+  home: Frimley
+  home_rm: Rachel Howard
+  case_ref: "<to supply>"
+  contractor: ABC Plumbing
+  contractor_contact: "<to supply>"
+  job_category: emergency plumbing
+  issue_short: leak
+  trade_person: plumber
+  access_window: Mon-Fri 9am-5pm
+  quote_amount: £180
+  high_quote_amount: £450
+  available_time: 2-4pm
+  job_duration: "<to supply>"
+  access_need: "<to supply>"
+
+  auto_approve_limit: 250
+  no_answer_attempts: 3
+  no_answer_window: 24
+  max_attempts: 3
+  max_attempts_window: 48
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: a triaged emergency plumbing case at Frimley, approved for contact, with ABC Plumbing as the approved contractor and a named contact with a verified number"
+  - "S01: a second open leak case (for the ambiguity variant)"
+  - "S03–S08: a test line for ABC Plumbing's contact that can answer, go to voicemail, not answer, give a poor line or ask to be taken off the list"

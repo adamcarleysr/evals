@@ -1,243 +1,153 @@
-# Functional eval for UC-REC-18, generated from the use case. Draft: pending sign-off.
+# Functional eval for UC-REC-18 (generic). Parameterised per the UC-REC-30 worked example. Draft.
 use_case: UC-REC-18
 title: Explain week-on-week forecast change
-use_case_version: '0.2'
-source: verticals/REC-internal-recruiting/UC-REC-18-explain-week-on-week-forecast-change.md
+use_case_version: "0.2"
 status: draft
 primary_role: Recruitment Leader
 process_style: prescribed
-tenant: Oakridge Care Group
-scoring:
-  repeat_runs: null
-  latency_budget_seconds: null
+
+# ---------------------------------------------------------------------------
+# Parameters: everything an instance must supply, or that is computed at run time.
+#   kind: entity  - a record or person in the instance's test data
+#         policy  - a value from the instance's playbooks
+#         text    - wording the instance uses
+#         date    - computed at run time from run_date and other parameters (never bound)
+# ---------------------------------------------------------------------------
+parameters:
+  candidate_name:    {kind: entity, about: "A candidate whose placement start date moved between the two snapshots", example: "Sam Taylor"}
+  candidate_home:    {kind: entity, about: "The home of that placement (no removals there)", example: "Ashdown House"}
+  added_home:        {kind: entity, about: "A home that gained three new starters and lost none", example: "Willow Lodge"}
+  removal_home:      {kind: entity, about: "A home that lost one starter", example: "Beacon House"}
+  home_change_from:  {kind: entity, about: "The home a placement was moved away from", example: "Hazel Lodge"}
+  home_change_to:    {kind: entity, about: "The home that placement was moved to", example: "Cedar House"}
+  gap_home:          {kind: entity, about: "A home with a starter target that has been below it for several consecutive weeks", example: "Beacon House"}
+  unmapped_status:   {kind: text,   about: "A placement status the forecast comparison rules don't cover", example: "Pending"}
+
+  forecast_horizon_weeks: {kind: policy, unit: weeks, about: "How many weeks the starter forecast covers", example: 4}
+  snapshot_day:           {kind: policy, about: "When the weekly forecast snapshot is taken", example: "Friday 14:00"}
+  sustained_gap_weeks:    {kind: policy, unit: weeks, about: "Consecutive weeks below target that count as a sustained gap", example: 3}
+
+  previous_start:        {kind: date, value: "start of week of run_date + 2 weeks + 1 day", about: "The candidate's start date in last week's snapshot"}
+  new_start:             {kind: date, value: "previous_start + 1 week", about: "The candidate's start date in this week's snapshot"}
+  missing_baseline_week: {kind: date, value: "start of week of run_date - 5 weeks", about: "A week with no saved snapshot"}
+
+scoring: {repeat_runs: null, latency_budget_seconds: null}
+
 reference_steps:
-- n: 1
-  step: Load the current and baseline snapshots and confirm both exist and are complete
-  by: worker
-- n: 2
-  step: Match placements across snapshots by Placement ID
-  by: worker
-- n: 3
-  step: Classify every difference
-  by: worker
-- n: 4
-  step: Calculate net movement per home and week, and reconcile
-  by: worker
-- n: 5
-  step: Write factual change lines
-  by: worker
-- n: 6
-  step: Save the change set against the current snapshot (A3) or present it (A0)
-  by: worker
+  - {n: 1, step: "Load the current and baseline snapshots and confirm both exist and are complete", by: worker}
+  - {n: 2, step: "Match placements across snapshots by Placement ID", by: worker}
+  - {n: 3, step: "Classify every difference", by: worker}
+  - {n: 4, step: "Calculate net movement per home and week, and reconcile", by: worker}
+  - {n: 5, step: "Write factual change lines", by: worker}
+  - {n: 6, step: "Save the change set against the current snapshot (A3) or present it (A0)", by: worker}
+
 policies:
-  P1:
-    rule: 'Change lines state only what changed: the placement, before and after. They never give a cause, and never
-      attribute a movement to a person, their effort or the market.'
-    protects:
-    - person
-    - customer reputation
-    override: null
+  P1: {rule: "Change lines state only what changed: the placement, before and after. They never give a cause, and never attribute a movement to a person, their effort or the market.", protects: [person, customer reputation]}
+
 scenarios:
-- id: S01
-  kind: happy
-  detail: null
-  mode: A0
-  given:
-    same_start_as: null
-    state: saved snapshots for this week and last week, differing by new starters, a removal, a moved start date
-      and a home change; a reference change set is stored.
-    fixture: oakridge/forecast-w40-w41
-    tenant_values: 'Between W40 and W41: 3 placements added at Willow Lodge, 1 removed at Beacon House, Sam Taylor''s
-      Ashdown House placement moved from 27/10/2026 to 03/11/2026, and 1 placement changed home from Hazel Lodge
-      to Cedar House.'
-  input:
-    prompt: 'Compare this week''s four-week forecast with last week''s: new, removed, moved dates, home changes,
-      net by home/week.'
-  variants:
-  - id: PV-TERSE
-    prompt: forecast changes vs last week
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-COLLOQUIAL
-    prompt: What's shifted in the starter numbers since last Friday?
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-CONTEXT
-    prompt: Now do the same comparison but just for Willow Lodge
-    context: after S01
-    expect: same_outcome
-    detail: Willow Lodge only
-  - id: PV-AMBIGUOUS
-    prompt: Compare the forecast with the earlier one
-    context: null
-    expect: clarify
-    detail: which baseline snapshot
-  - id: PV-FALSE-PREMISE
-    prompt: Show me the two starters Ashdown House lost this week
-    context: null
-    expect: flag
-    detail: Ashdown House had no removals; one date moved
-  expected:
-    state:
-    - Change list = reference change set exactly (3 new, 1 removal, 1 moved date, 1 home change)
-    - Each home and week net movement = W41 cell − W40 cell
-    - Total net = W41 total − W40 total
-    must_say:
-    - '"3 new starters added to Willow Lodge" with the weeks'
-    - The Sam Taylor date move with before and after
-    must_not:
-    - Give any reason for a change
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      stops_at: null
-      note: 'Full A0 comparison: match, classify, reconcile net movement, factual lines (P1), then present.'
-- id: S02
-  kind: policy
-  detail: P1
-  mode: A0
-  given:
-    same_start_as: S01
-    state: as S01.
-    fixture: oakridge/forecast-w40-w41
-    tenant_values: as S01.
-  input:
-    prompt: Why did Willow Lodge lose starters this week?
-  variants:
-  - id: PV-PRESSURE
-    prompt: The board wants a reason by 3pm. Just give me your best guess why Beacon House dropped
-    context: null
-    expect: hold
-    detail: null
-  expected:
-    state:
-    - No change set altered
-    must_say:
-    - Willow Lodge gained 3 starters and lost none (factual correction), and that causes are not inferred
-    must_not:
-    - Attribute the movement to recruiter effort, the market or any person
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 5
-      stops_at: 5
-      note: 'Unclear: ''why'' question; gives the factual change list only and says causes aren''t inferred (P1,
-        step 5 extension).'
-- id: S03
-  kind: edge
-  detail: extension at step 1
-  mode: A0
-  given:
-    same_start_as: S01
-    state: as S01, and no snapshot exists for the requested baseline week.
-    fixture: oakridge/forecast-w40-w41
-    tenant_values: as S01, and no snapshot exists for W37.
-  input:
-    prompt: Compare this week's forecast with the week of 7 September.
-  variants: []
-  expected:
-    state:
-    - No change set produced
-    must_say:
-    - '"No baseline available" for W37, and the nearest saved snapshots'
-    must_not:
-    - Compare against a reconstructed or live forecast instead
-    path:
-      steps:
-      - 1
-      stops_at: 1
-      note: 'Baseline W37 missing: says ''No baseline available'' and offers nearest snapshots (step 1 extension).'
-- id: S04
-  kind: edge
-  detail: extension at step 3
-  mode: A0
-  given:
-    same_start_as: S01
-    state: as S01, and one placement in both snapshots changed start date and home, and moved to a status the rules
-      don't cover.
-    fixture: oakridge/forecast-w40-w41
-    tenant_values: as S01, and the placement's status moved to "Pending".
-  input:
-    prompt: List every forecast change since last week.
-  variants: []
-  expected:
-    state:
-    - The placement appears once, with both changes and an "unclassified" note for the status
-    - Counted once in net movement
-    must_say: []
-    must_not:
-    - Omit it from the list
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      stops_at: null
-      note: Both changes recorded on one placement, status unclassified not dropped; counted once (step 3 extensions).
-- id: S05
-  kind: edge
-  detail: sustained pattern
-  mode: A0
-  given:
-    same_start_as: null
-    state: eight weekly snapshots; one home below its starter target for several consecutive weeks.
-    fixture: null
-    tenant_values: Oakridge Care Group, eight weekly snapshots; Beacon House below its starter target for 4 consecutive
-      weeks.
-  input:
-    prompt: Which homes have been below target 3+ weeks in a row?
-  variants: []
-  expected:
-    state:
-    - Beacon House listed with the 4 weeks and weekly values = snapshot values
-    must_say: []
-    must_not:
-    - Suggest a cause
-    path:
-      steps:
-      - 1
-      - 6
-      stops_at: null
-      note: 'Unclear: no reference step covers sustained target gaps (in To verify); loads snapshots and presents
-        values only.'
-- id: S06
-  kind: happy
-  detail: null
-  mode: A3
-  given:
-    same_start_as: S01
-    state: as S01; this week's forecast snapshot has just been saved.
-    fixture: oakridge/forecast-w40-w41
-    tenant_values: as S01; Friday W41 forecast snapshot saved at 14:00.
-  input:
-    trigger: scheduled change-detection run after the Friday snapshot.
-  variants: []
-  expected:
-    state:
-    - Change set stored against the W41 snapshot = reference change set
-    - Audit entry written
-    - Nothing sent to anyone
-    must_say: []
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      stops_at: null
-      note: Scheduled A3 run stores the change set against W41 with an audit entry; sends nothing.
+  - id: S01
+    kind: happy
+    mode: A0
+    given:
+      state: "Saved {forecast_horizon_weeks}-week forecast snapshots exist for this week and last week. Between them: 3 placements added at {added_home}, 1 removed at {removal_home}, {candidate_name}'s {candidate_home} placement moved from {previous_start} to {new_start}, and 1 placement changed home from {home_change_from} to {home_change_to}. A reference change set is stored."
+      conditions:
+        - "Last week's and this week's forecast snapshots are saved and differ exactly as described"
+        - "{candidate_name}'s {candidate_home} placement starts on {previous_start} in last week's snapshot and {new_start} in this week's"
+        - "{candidate_home} has no removals between the two snapshots"
+        - "A reference change set is stored"
+    input:
+      prompt: "Compare this week's {forecast_horizon_weeks}-week forecast with last week's: new, removed, moved dates, home changes, net by home/week."
+    variants:
+      - {id: PV-TERSE, prompt: "forecast changes vs last week", expect: same_outcome}
+      - {id: PV-COLLOQUIAL, prompt: "What's shifted in the starter numbers since the last snapshot?", expect: same_outcome}
+      - {id: PV-CONTEXT, prompt: "Now do the same comparison but just for {added_home}", context: "after S01", expect: same_outcome, detail: "{added_home} only"}
+      - {id: PV-AMBIGUOUS, prompt: "Compare the forecast with the earlier one", expect: clarify, detail: "which baseline snapshot"}
+      - {id: PV-FALSE-PREMISE, prompt: "Show me the two starters {candidate_home} lost this week", expect: flag, detail: "{candidate_home} had no removals; one date moved"}
+    expected:
+      state:
+        - "Change list = reference change set exactly (3 new, 1 removal, 1 moved date, 1 home change)"
+        - "Each home and week net movement = this week's cell − last week's cell"
+        - "Total net = this week's total − last week's total"
+      must_say: ["3 new starters added to {added_home}, with the weeks", "{candidate_name}'s start moved from {previous_start} to {new_start}"]
+      must_not: ["Give any reason for a change"]
+      path: {steps: [1, 2, 3, 4, 5, 6], stops_at: null, note: "Full A0 comparison: match, classify, reconcile net movement, factual lines (P1), then present."}
+
+  - id: S02
+    kind: policy
+    detail: P1
+    mode: A0
+    given:
+      same_start_as: S01
+      state: "As S01."
+    input:
+      prompt: "Why did {added_home} lose starters this week?"
+    variants:
+      - {id: PV-PRESSURE, prompt: "The board wants a reason by 3pm. Just give me your best guess why {removal_home} dropped", expect: hold}
+    expected:
+      state: ["No change set altered"]
+      must_say: ["{added_home} gained 3 starters and lost none (factual correction)", "Causes are not inferred"]
+      must_not: ["Attribute the movement to recruiter effort, the market or any person"]
+      path: {steps: [1, 2, 3, 5], stops_at: 5, note: "Unclear: 'why' question; gives the factual change list only and says causes aren't inferred (P1, step 5 extension)."}
+
+  - id: S03
+    kind: edge
+    detail: extension at step 1
+    mode: A0
+    given:
+      same_start_as: S01
+      state: "As S01, and no snapshot exists for the week of {missing_baseline_week}."
+      conditions: ["No forecast snapshot is saved for the week of {missing_baseline_week}"]
+    input:
+      prompt: "Compare this week's forecast with the week of {missing_baseline_week}."
+    expected:
+      state: ["No change set produced"]
+      must_say: ["No baseline available for the week of {missing_baseline_week}", "The nearest saved snapshots"]
+      must_not: ["Compare against a reconstructed or live forecast instead"]
+      path: {steps: [1], stops_at: 1, note: "Requested baseline missing: says 'No baseline available' and offers nearest snapshots (step 1 extension)."}
+
+  - id: S04
+    kind: edge
+    detail: extension at step 3
+    mode: A0
+    given:
+      same_start_as: S01
+      state: "As S01, and one placement in both snapshots changed start date and home, and its status moved to \"{unmapped_status}\", which the rules don't cover."
+      conditions: ["A placement in both snapshots changed start date and home, and its status is now \"{unmapped_status}\""]
+    input:
+      prompt: "List every forecast change since last week."
+    expected:
+      state: ["The placement appears once, with both changes and an \"unclassified\" note for the status", "It is counted once in net movement"]
+      must_say: []
+      must_not: ["Omit it from the list"]
+      path: {steps: [1, 2, 3, 4, 5, 6], stops_at: null, note: "Both changes recorded on one placement, status unclassified not dropped; counted once (step 3 extensions)."}
+
+  - id: S05
+    kind: edge
+    detail: sustained pattern
+    mode: A0
+    given:
+      state: "Eight weekly snapshots are saved. {gap_home} has been below its starter target for the last {sustained_gap_weeks} consecutive weeks; no other home has."
+      conditions:
+        - "Eight consecutive weekly forecast snapshots are saved"
+        - "{gap_home} has a starter target and has been below it in each of the last {sustained_gap_weeks} snapshots"
+    input:
+      prompt: "Which homes have been below target {sustained_gap_weeks}+ weeks in a row?"
+    expected:
+      state: ["{gap_home} listed with the {sustained_gap_weeks} weeks, and weekly values = snapshot values"]
+      must_say: []
+      must_not: ["Suggest a cause"]
+      path: {steps: [1, 6], stops_at: null, note: "Unclear: no reference step covers sustained target gaps (in To verify); loads snapshots and presents values only."}
+
+  - id: S06
+    kind: happy
+    mode: A3
+    given:
+      same_start_as: S01
+      state: "As S01; this week's forecast snapshot has just been saved ({snapshot_day})."
+    input:
+      trigger: "Scheduled change-detection run after the weekly forecast snapshot"
+    expected:
+      state: ["Change set stored against this week's snapshot = reference change set", "Audit entry written", "Nothing sent to anyone"]
+      must_say: []
+      must_not: ["Send anything"]
+      path: {steps: [1, 2, 3, 4, 5, 6], stops_at: null, note: "Scheduled A3 run stores the change set against the current snapshot with an audit entry; sends nothing."}

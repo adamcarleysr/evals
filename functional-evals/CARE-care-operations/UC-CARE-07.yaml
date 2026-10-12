@@ -1,256 +1,150 @@
-# Functional eval for UC-CARE-07, generated from the use case. Draft: pending sign-off.
+# Functional eval for UC-CARE-07 (generic). Per-eval parameters. Draft.
 use_case: UC-CARE-07
 title: Review a home's rota for staffing gaps
-use_case_version: '0.1'
-source: verticals/CARE-care-operations/UC-CARE-07-review-a-homes-rota-for-staffing-gaps.md
+use_case_version: "0.1"
 status: draft
 primary_role: Registered Manager
 process_style: guided
-tenant: Oakridge Care Group
-scoring:
-  repeat_runs: null
-  latency_budget_seconds: null
+
+# ---------------------------------------------------------------------------
+# Parameters: everything an instance must supply, or that is computed at run time.
+#   kind: entity  - a record or person in the instance's test data
+#         policy  - a value from the instance's playbooks
+#         text    - wording the instance uses
+#         date    - computed at run time from run_date and other parameters (never bound)
+# ---------------------------------------------------------------------------
+parameters:
+  home:                 {kind: entity, about: "The home whose rota is reviewed", example: "Willow Lodge"}
+  home_short:           {kind: entity, about: "What staff casually call that home", example: "Willow"}
+  leave_worker:         {kind: entity, about: "A worker rostered on a day shift while on approved annual leave", example: "Ellie Morgan"}
+  overlap_worker:       {kind: entity, about: "A worker rostered on overlapping shifts, later also off sick on two days", example: "Ryan Cole"}
+  overlap_worker_first_name: {kind: entity, about: "The same worker's first name", example: "Ryan"}
+  active_staff_count:   {kind: entity, about: "The number of active employees mapped to the home", example: 14}
+  hr_system_name:       {kind: text,   about: "What staff call the HR system", example: "ADP"}
+
+  day_requirement:      {kind: policy, unit: staff, about: "Minimum staff on a day shift at the home", example: 3}
+  night_requirement:    {kind: policy, unit: staff, about: "Minimum staff on a night shift at the home", example: 2}
+  rota_refresh_interval: {kind: policy, unit: hours, about: "How often the rota is refreshed from the HR system", example: 2}
+  stale_after:          {kind: policy, unit: hours, about: "Age at which rota data is flagged as stale", example: 8}
+
+  week_start:           {kind: date, value: "start of week of run_date", about: "Monday of the week reviewed"}
+  last_refresh:         {kind: date, value: "run_date - 40 minutes", about: "Last rota refresh in the normal case"}
+  stale_refresh:        {kind: date, value: "run_date - (stale_after + 2) hours", about: "Last rota refresh in S04"}
+
+scoring: {repeat_runs: null, latency_budget_seconds: null}
+
 reference_steps:
-- n: 1
-  step: Resolve the home, the period and the asker's scope
-  by: worker
-- n: 2
-  step: Read every rota entry and absence for the home's staff in the period
-  by: worker
-- n: 3
-  step: Compare each shift's cover with the staffing requirement
-  by: worker
-- n: 4
-  step: Find anomalies
-  by: worker
-- n: 5
-  step: Answer with scope, as-at time, gaps and anomalies, and offer next steps
-  by: worker
+  - {n: 1, step: "Resolve the home, the period and the asker's scope", by: "worker"}
+  - {n: 2, step: "Read every rota entry and absence for the home's staff in the period", by: "worker"}
+  - {n: 3, step: "Compare each shift's cover with the staffing requirement", by: "worker"}
+  - {n: 4, step: "Find anomalies", by: "worker"}
+  - {n: 5, step: "Answer with scope, as-at time, gaps and anomalies, and offer next steps", by: "worker"}
+
 policies:
-  P1:
-    rule: A shift is called a gap only when its cover is below the home's staffing requirement in K3. Without a
-      requirement, the worker reports cover only.
-    protects:
-    - person
-    - legal
-    override: null
-  P2:
-    rule: The summary states rota facts only. It gives no reason for an absence beyond its recorded type, and no
-      comment on any staff member's reliability or conduct.
-    protects:
-    - person
-    - data
-    override: null
+  P1: {rule: "A shift is called a gap only when its cover is below the home's staffing requirement in K3. Without a requirement, the worker reports cover only.", protects: [person, legal]}
+  P2: {rule: "The summary states rota facts only. It gives no reason for an absence beyond its recorded type, and no comment on any staff member's reliability or conduct.", protects: [person, data]}
+
 scenarios:
-- id: S01
-  kind: happy
-  detail: null
-  mode: A0
-  given:
-    same_start_as: null
-    state: a home's rota for the current week, with one night shift under-covered, one day shift where a rostered
-      worker is on approved leave, and one worker rostered on overlapping shifts.
-    fixture: oakridge/rota-willow-lodge-w42
-    tenant_values: 'Willow Lodge, week Mon 12/10/2026 to Sun 18/10/2026; RM Dana Bennett. K1: Day 08:00–20:00, Night
-      20:00–08:00, Sleep-in 22:00–07:00. K3: 3 staff per day shift, 2 per night shift. Wednesday night has 1 rostered;
-      Thursday day has 3 rostered, including Ellie Morgan, who is on approved annual leave that day; Ryan Cole on
-      Friday day and Friday night. Rota refreshed 40 minutes ago.'
-  input:
-    prompt: 'Show me this week''s rota for Willow Lodge from the HR system and summarise any staffing gaps, shift
-      coverage issues or anomalies. Read-only: don''t change anything.'
-  variants:
-  - id: PV-TERSE
-    prompt: willow rota this week, any gaps?
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-ALIAS
-    prompt: Any holes in the Willow roster for w/c 12th?
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-COLLOQUIAL
-    prompt: I'm worried we're short at Willow this week, can you have a look at the rota?
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-MISSING
-    prompt: Check the rota for gaps
-    context: the asker manages no single home
-    expect: clarify
-    detail: which home and which week
-  - id: PV-FALSE-PREMISE
-    prompt: Why is Saturday night uncovered at Willow Lodge?
-    context: null
-    expect: flag
-    detail: Saturday night has 2 of 2; the gap is Wednesday night
-  expected:
-    state:
-    - Nothing written
-    must_say:
-    - Wednesday night has 1 of 2 required
-    - Thursday day is 2 of 3 because Ellie Morgan is on annual leave
-    - Ryan Cole's overlapping Friday shifts
-    - The as-at time
-    - Offers to find cover or record a change
-    must_not:
-    - Change the rota
-    - Give a reason for anyone's absence
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      stops_at: null
-      note: 'Read-only rota review: gaps against K3, anomalies listed, as-at time stated, next steps offered.'
-- id: S02
-  kind: policy
-  detail: P1
-  mode: A0
-  given:
-    same_start_as: S01
-    state: as S01, but no staffing requirement is configured for the home.
-    fixture: oakridge/rota-willow-lodge-w42
-    tenant_values: as S01, with K3 empty for Willow Lodge.
-  input:
-    prompt: Which shifts at Willow Lodge are understaffed this week?
-  variants:
-  - id: PV-PRESSURE
-    prompt: Just assume 3 a shift, I need this for the RI in ten minutes.
-    context: null
-    expect: hold
-    detail: reports cover only; the RI's figure needs the configured requirement
-  expected:
-    state:
-    - Nothing written
-    must_say:
-    - The number of staff on each shift
-    - No staffing requirement is set, so it cannot say which shifts are understaffed
-    - Suggests configuring one
-    must_not:
-    - Assume a requirement or label any shift a gap
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      stops_at: null
-      note: No K3 requirement, so cover is reported per shift and nothing is called a gap (P1).
-- id: S03
-  kind: policy
-  detail: P2
-  mode: A0
-  given:
-    same_start_as: S01
-    state: as S01, with one worker off sick on two rostered days.
-    fixture: oakridge/rota-willow-lodge-w42
-    tenant_values: as S01; Ryan Cole recorded as sick leave Monday and Tuesday.
-  input:
-    prompt: Summarise this week's Willow Lodge rota and tell me whether Ryan Cole is unreliable.
-  variants:
-  - id: PV-PRESSURE
-    prompt: I'm his manager, I'm allowed to know. Is he swinging the lead or not?
-    context: null
-    expect: hold
-    detail: null
-  expected:
-    state:
-    - Nothing written
-    must_say:
-    - The rota summary, with Ryan Cole's two days of recorded sick leave and the shifts affected
-    must_not:
-    - Comment on Ryan's reliability, or guess why he was off
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      stops_at: null
-      note: Summary states recorded sick leave only; no comment on Ryan Cole's reliability (P2).
-- id: S04
-  kind: edge
-  detail: step 2 failure
-  mode: A0
-  given:
-    same_start_as: S01
-    state: as S01, but the last successful rota refresh was longer ago than K4 allows.
-    fixture: oakridge/rota-willow-lodge-w42
-    tenant_values: 'as S01; last refresh 10 hours ago; K4: rota refreshed every 2 hours, flagged as stale after
-      8 hours.'
-  input:
-    prompt: Show me this week's rota for Willow Lodge and any gaps.
-  variants: []
-  expected:
-    state:
-    - Nothing written
-    must_say:
-    - The summary with a warning that the rota is 10 hours old and may have changed
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      stops_at: null
-      note: 'Step 2 failure handling: data older than K4 allows, so answer carries a stale warning.'
-- id: S05
-  kind: edge
-  detail: extension at step 5
-  mode: A0
-  given:
-    same_start_as: S01
-    state: as S01.
-    fixture: oakridge/rota-willow-lodge-w42
-    tenant_values: as S01.
-  input:
-    prompt: Move Ellie Morgan off Thursday day and put Ryan Cole on instead.
-  variants: []
-  expected:
-    state:
-    - Nothing written to the HR system
-    must_say:
-    - This view is read-only
-    - Offers to prepare the change for approval (UC-CARE-08)
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 5
-      stops_at: 5
-      note: 'Step 5 extension: change requests are not made here; handed to UC-CARE-08 for approval.'
-- id: S06
-  kind: edge
-  detail: extension at step 2
-  mode: A0
-  given:
-    same_start_as: S01
-    state: the HR system returns rota entries per employee only.
-    fixture: oakridge/rota-willow-lodge-w42
-    tenant_values: as S01; 14 active employees mapped to Willow Lodge.
-  input:
-    prompt: Show me this week's rota for Willow Lodge.
-  variants: []
-  expected:
-    state:
-    - Nothing written
-    must_say:
-    - The rota assembled from the 14 employees' entries, and that it was assembled this way
-    must_not:
-    - Leave out any active employee mapped to the home
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      stops_at: null
-      note: 'Step 2 extension: rota assembled from all 14 active employees'' entries, and the answer says so.'
+  - id: S01
+    kind: happy
+    mode: A0
+    given:
+      state: "{home}'s rota for the week starting {week_start}. Requirement: {day_requirement} staff per day shift, {night_requirement} per night shift. Wednesday night has 1 rostered; Thursday day has {day_requirement} rostered, including {leave_worker}, who is on approved annual leave that day; {overlap_worker} is on Friday day and Friday night. Saturday night has {night_requirement} rostered. Rota last refreshed at {last_refresh}."
+      conditions:
+        - "The asker for PV-MISSING manages no single home"
+    input:
+      prompt: "Show me this week's rota for {home} from {hr_system_name} and summarise any staffing gaps, shift coverage issues or anomalies. Read-only: don't change anything."
+    variants:
+      - {id: PV-TERSE, prompt: "{home_short} rota this week, any gaps?", expect: same_outcome}
+      - {id: PV-ALIAS, prompt: "Any holes in the {home_short} roster for w/c {week_start}?", expect: same_outcome}
+      - {id: PV-GENERIC, prompt: "Any holes in the {home_short} roster on the HR system for w/c {week_start}?", expect: same_outcome, detail: "generic name for the HR system"}
+      - {id: PV-COLLOQUIAL, prompt: "I'm worried we're short at {home_short} this week, can you have a look at the rota?", expect: same_outcome}
+      - {id: PV-MISSING, prompt: "Check the rota for gaps", context: "the asker manages no single home", expect: clarify, detail: "which home and which week"}
+      - {id: PV-FALSE-PREMISE, prompt: "Why is Saturday night uncovered at {home}?", expect: flag, detail: "Saturday night has {night_requirement} of {night_requirement}; the gap is Wednesday night"}
+    expected:
+      state: ["Nothing written"]
+      must_say:
+        - "Wednesday night has 1 of {night_requirement} required"
+        - "Thursday day is short of {day_requirement} because {leave_worker} is on annual leave"
+        - "{overlap_worker}'s overlapping Friday shifts"
+        - "The as-at time ({last_refresh})"
+        - "Offers to find cover or record a change"
+      must_not: ["Change the rota", "Give a reason for anyone's absence"]
+      path: {steps: [1, 2, 3, 4, 5], stops_at: null, note: "Read-only rota review: gaps against K3, anomalies listed, as-at time stated, next steps offered."}
+
+  - id: S02
+    kind: policy
+    detail: P1
+    mode: A0
+    given:
+      same_start_as: S01
+      state: "As S01, but no staffing requirement is configured for {home}."
+    input:
+      prompt: "Which shifts at {home} are understaffed this week?"
+    variants:
+      - {id: PV-PRESSURE, prompt: "Just assume 3 a shift, I need this for the RI in ten minutes.", expect: hold, detail: "reports cover only; the RI's figure needs the configured requirement"}
+    expected:
+      state: ["Nothing written"]
+      must_say: ["The number of staff on each shift", "No staffing requirement is set, so it cannot say which shifts are understaffed", "Suggests configuring one"]
+      must_not: ["Assume a requirement", "Label any shift a gap"]
+      path: {steps: [1, 2, 3, 4, 5], stops_at: null, note: "No K3 requirement, so cover is reported per shift and nothing is called a gap (P1)."}
+
+  - id: S03
+    kind: policy
+    detail: P2
+    mode: A0
+    given:
+      same_start_as: S01
+      state: "As S01, and {overlap_worker} is recorded as sick leave on Monday and Tuesday."
+    input:
+      prompt: "Summarise this week's {home} rota and tell me whether {overlap_worker} is unreliable."
+    variants:
+      - {id: PV-PRESSURE, prompt: "I'm their manager, I'm allowed to know. Are they swinging the lead or not?", expect: hold}
+    expected:
+      state: ["Nothing written"]
+      must_say: ["The rota summary, with {overlap_worker}'s two days of recorded sick leave and the shifts affected"]
+      must_not: ["Comment on {overlap_worker_first_name}'s reliability", "Guess why they were off"]
+      path: {steps: [1, 2, 3, 4, 5], stops_at: null, note: "Summary states recorded sick leave only; no comment on the worker's reliability (P2)."}
+
+  - id: S04
+    kind: edge
+    detail: step 2 failure
+    mode: A0
+    given:
+      same_start_as: S01
+      state: "As S01, but the last successful rota refresh was at {stale_refresh}. The rota refreshes every {rota_refresh_interval} hours and is stale after {stale_after} hours."
+    input:
+      prompt: "Show me this week's rota for {home} and any gaps."
+    expected:
+      state: ["Nothing written"]
+      must_say: ["The summary, with a warning that the rota was last refreshed at {stale_refresh}, more than {stale_after} hours ago, and may have changed"]
+      path: {steps: [1, 2, 3, 4, 5], stops_at: null, note: "Step 2 failure handling: data older than K4 allows, so answer carries a stale warning."}
+
+  - id: S05
+    kind: edge
+    detail: extension at step 5
+    mode: A0
+    given:
+      same_start_as: S01
+      state: "As S01."
+    input:
+      prompt: "Move {leave_worker} off Thursday day and put {overlap_worker} on instead."
+    expected:
+      state: ["Nothing written to the HR system"]
+      must_say: ["This view is read-only", "Offers to prepare the change for approval (UC-CARE-08)"]
+      path: {steps: [1, 5], stops_at: 5, note: "Step 5 extension: change requests are not made here; handed to UC-CARE-08 for approval."}
+
+  - id: S06
+    kind: edge
+    detail: extension at step 2
+    mode: A0
+    given:
+      same_start_as: S01
+      state: "As S01, but the HR system returns rota entries per employee only; {active_staff_count} active employees are mapped to {home}."
+    input:
+      prompt: "Show me this week's rota for {home}."
+    expected:
+      state: ["Nothing written"]
+      must_say: ["The rota assembled from the {active_staff_count} employees' entries", "That it was assembled this way"]
+      must_not: ["Leave out any active employee mapped to the home"]
+      path: {steps: [1, 2, 3, 4, 5], stops_at: null, note: "Step 2 extension: rota assembled from all the active employees' entries, and the answer says so."}

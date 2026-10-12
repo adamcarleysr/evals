@@ -1,0 +1,50 @@
+# SuperCare binding for UC-CARE-02 (eval v0.1). Draft. Values checked against ClickUp
+# (SR-13399 test prompts; playbook pages Budget Thresholds, Incident Notification Routing Rules,
+# Canonical Organisation Dimensions, Maintenance Closure Workflow).
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-CARE-02
+eval_version: "0.1"
+
+values:
+  home: Frimley
+  home_rm: Rachel Howard
+  home_rm_first_name: Rachel
+  home_ri: Emma Chapman
+  ops_director: Damian Williams
+  ops_director_first_name: Damian
+  case_ref: "<to supply>"
+  reporter: "<to supply>"
+  issue_description: water leak from the upstairs bathroom into the downstairs hallway
+  issue_symptom: "<to supply>"
+  child_slip_note: "<to supply>"
+  other_home: Norwood
+  other_case_ref: "<to supply>"
+  leak_category: emergency plumbing
+  leak_severity: "<to supply>"
+
+  safety_home: Phoenix
+  safety_home_rm: Abbie Thomas
+  safety_case_ref: "<to supply>"
+  safety_category: safety/compliance (fire, locks, alarms)
+
+  low_home: Norwood
+  low_home_rm: Zinnia Persyn
+  low_case_ref: "<to supply>"
+  low_category: general repair
+  low_severity: "<to supply>"
+
+  urgent_response_time: "<to supply>"
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: a newly logged maintenance case at Frimley for the water leak, with a reporter"
+  - "S01: an open plumbing case at Norwood, and a second open leak case (for the ambiguity variant)"
+  - "S02: a newly logged maintenance case at Phoenix for a fire alarm panel fault, no smoke"
+  - "S03: a newly logged maintenance case at Norwood for a broken wardrobe door in a resident's room, no other detail"
+  - "S05: the Frimley leak report with a line saying a young person slipped near the leak, unhurt"

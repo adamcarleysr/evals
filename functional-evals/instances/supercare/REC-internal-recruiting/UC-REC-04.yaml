@@ -1,0 +1,39 @@
+# SuperCare binding for UC-REC-04 (eval v0.2). Draft. Values from ClickUp.
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-REC-04
+eval_version: "0.2"
+
+values:
+  candidate_name: Joshua Woodman
+  candidate_first_name: Joshua
+  role: Senior Coach
+  role_alias: Senior Residential Support Worker
+  home: Norwood
+  home_alias: SC Norwood
+  other_role: Team Leader
+  first_stage: Stage 1
+
+  required_qualification: Level 3 Diploma in Residential Childcare
+  qualification_completion_window: 3
+  minimum_experience: 2 years in residential children's care
+  dimension_count: 5
+  first_stage_threshold: 4.0
+  rejection_threshold: 2.0
+  ats_name: Bullhorn
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: Joshua Woodman's CV on his Senior Coach at Norwood JobSubmission showing over 2 years in a residential children's home, Level 3 Diploma in Residential Childcare, right to work and an enhanced DBS on the Update Service"
+  - "S01: a second candidate called Joshua on an open JobOrder (for the ambiguity variant)"
+  - "S02: a version of Joshua Woodman's CV without the Level 3 Diploma"
+  - "S03: a version of Joshua Woodman's CV with right-to-work information removed"
+  - "S04: a second applicant for Senior Coach at Norwood whose CV scores below 2.0"
+  - "S05: a version of Joshua Woodman's CV showing less than 2 years in residential children's care"
+  - "S07: a version of Joshua Woodman's CV with the Level 3 equivalent gained overseas"
+  - "S08: several applicants for Senior Coach at Norwood (for the missing-detail variant)"
