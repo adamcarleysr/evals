@@ -14,6 +14,7 @@ process_style: prescribed
 #         date    - computed at run time from run_date and other parameters (never bound)
 # ---------------------------------------------------------------------------
 parameters:
+  document_store_name:   {kind: text,   about: "What staff call the document store holding staff folders", example: "OneDrive"}
   candidate_name:        {kind: entity, about: "A candidate with an active onboarding case and a linked staff folder", example: "Sam Taylor"}
   candidate_first_name:  {kind: entity, about: "The same candidate's first name, as users refer to them", example: "Sam"}
   candidate_role:        {kind: entity, about: "The role on the candidate's Placement", example: "Senior Support Worker"}
@@ -51,10 +52,11 @@ scenarios:
       state: "\"{staging_file}\" in staging is {candidate_name}'s {dbs_document}, already classified. {candidate_name} ({candidate_role} at {candidate_home}) has one staff folder, with no existing DBS file."
       conditions: ["A second candidate exists for {candidate_role} at {candidate_home}"]
     input:
-      prompt: "Rename '{staging_file}' in staging for {candidate_name} using the naming convention and file it in their staff folder."
+      prompt: "Rename '{staging_file}' in staging for {candidate_name} using the naming convention and file it in their staff folder in {document_store_name}."
     variants:
       - {id: PV-TERSE, prompt: "file {staging_file} for {candidate_first_name}", expect: same_outcome}
       - {id: PV-ALIAS, prompt: "Pop {candidate_first_name}'s {dbs_document_informal} scan into their staff file properly", expect: same_outcome}
+      - {id: PV-COLLOQUIAL, prompt: "Move {staging_file} out of staging into {candidate_first_name}'s folder on the drive, named properly", expect: same_outcome}
       - {id: PV-AMBIGUOUS, prompt: "File the new scan for the {candidate_home} {candidate_role}", expect: clarify, detail: "which candidate"}
       - {id: PV-CONFLICT, prompt: "File it as 'DBS {candidate_first_name} final.pdf'", expect: flag, detail: "the naming convention applies; offers \"{dbs_filed_name}\""}
     expected:

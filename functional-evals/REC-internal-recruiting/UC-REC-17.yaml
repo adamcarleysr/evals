@@ -14,6 +14,7 @@ process_style: prescribed
 #         date    - computed at run time from run_date and other parameters (never bound)
 # ---------------------------------------------------------------------------
 parameters:
+  ats_name:              {kind: text,   about: "What staff call the applicant tracking system", example: "Bullhorn"}
   candidate_name:        {kind: entity, about: "A candidate with an eligible placement starting in the forecast horizon", example: "Sam Taylor"}
   candidate_role:        {kind: entity, about: "The role on that placement", example: "Senior Support Worker"}
   candidate_home:        {kind: entity, about: "The canonical home of that placement", example: "Ashdown House"}
@@ -60,10 +61,11 @@ scenarios:
         - "{ambiguous_home_name} matches two canonical homes: {ambiguous_home_options}"
         - "A reference calculation of the grid is stored"
     input:
-      prompt: "Build the {forecast_horizon_weeks}-week starter forecast grouped by home and week. Exclude cancelled/withdrawn/deferred."
+      prompt: "Build the {forecast_horizon_weeks}-week starter forecast from the placements in {ats_name}, grouped by home and week. Exclude cancelled/withdrawn/deferred."
     variants:
       - {id: PV-TERSE, prompt: "{forecast_horizon_weeks} wk starter forecast", expect: same_outcome}
       - {id: PV-ALIAS, prompt: "Who's starting across the houses in the next few weeks, by week?", expect: same_outcome}
+      - {id: PV-COLLOQUIAL, prompt: "Go through the placements in the ATS and tell me who's starting at each home, week by week, over the next {forecast_horizon_weeks} weeks", expect: same_outcome}
       - {id: PV-BUNDLED, prompt: "Build the forecast by home and week and list the placements behind {candidate_home}", expect: same_outcome, detail: "plus the {candidate_home} placement list including {candidate_name}"}
       - {id: PV-AMBIGUOUS, prompt: "Forecast for {ambiguous_home_name}", expect: clarify, detail: "{ambiguous_home_options}"}
       - {id: PV-FALSE-PREMISE, prompt: "Why isn't {candidate_name} in the {other_home} forecast?", expect: flag, detail: "their placement is at {candidate_home}; shows where they are counted"}

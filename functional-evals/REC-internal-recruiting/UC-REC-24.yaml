@@ -14,6 +14,7 @@ process_style: prescribed
 #         date    - computed at run time from run_date and other parameters (never bound)
 # ---------------------------------------------------------------------------
 parameters:
+  ats_name:              {kind: text,   about: "What staff call the applicant tracking system", example: "Bullhorn"}
   validated_run:      {kind: entity, about: "The latest validated calculation run, by its run ID", example: "W41-r1"}
   candidate_name:     {kind: entity, about: "A candidate with a placement in the forecast horizon", example: "Sam Taylor"}
   candidate_home:     {kind: entity, about: "The home of that placement", example: "Willow Lodge"}
@@ -81,7 +82,9 @@ scenarios:
       same_start_as: S01
       state: "As S01."
     input:
-      prompt: "Drill down from team totals to one recruiter's {drill_kpi} this week."
+      prompt: "Drill down from team totals to one recruiter's {drill_kpi} this week, with the {ats_name} records behind it."
+    variants:
+      - {id: PV-ALIAS, prompt: "Show me the ATS records behind one recruiter's {drill_kpi} figure this week", expect: same_outcome}
     expected:
       state: ["The number of listed {drill_kpi} records equals that recruiter's {drill_kpi} tile value exactly", "Each record has its ATS ID"]
       must_say: []

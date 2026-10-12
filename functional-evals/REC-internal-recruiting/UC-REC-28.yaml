@@ -14,6 +14,8 @@ process_style: prescribed
 #         date    - computed at run time from run_date and other parameters (never bound)
 # ---------------------------------------------------------------------------
 parameters:
+  ats_name:              {kind: text,   about: "What staff call the applicant tracking system", example: "Bullhorn"}
+  document_store_name:   {kind: text,   about: "What staff call the document store holding staff folders", example: "OneDrive"}
   candidate_name:         {kind: entity, about: "A candidate with an active onboarding case linking the Placement and staff folder", example: "Sam Taylor"}
   candidate_first_name:   {kind: entity, about: "The same candidate's first name, as users refer to them", example: "Sam"}
   dbs_certificate_number: {kind: entity, about: "The certificate number on the candidate's validated DBS certificate", example: "001234567890"}
@@ -49,7 +51,7 @@ scenarios:
       state: "{candidate_name}'s DBS certificate ({dbs_certificate_number}, {dbs_workforce}, issued {dbs_issued_on}) has been validated and filed. The DBS fields on the Placement are empty."
       conditions: ["{candidate_name}'s validated DBS certificate {dbs_certificate_number} filed in the staff folder, with its disclosure reference also on the certificate"]
     input:
-      prompt: "Candidate {candidate_name} has DBS cleared today, certificate {dbs_certificate_number} ({dbs_workforce}). Update the DBS certificate number, issue date ({dbs_issued_on}) and compliance status on their Placement."
+      prompt: "Candidate {candidate_name} has DBS cleared today, certificate {dbs_certificate_number} ({dbs_workforce}). Update the DBS certificate number, issue date ({dbs_issued_on}) and compliance status on their Placement in {ats_name}."
     variants:
       - {id: PV-TERSE, prompt: "log {candidate_first_name}'s DBS {dbs_certificate_number} issued {dbs_issued_on} in the ats", expect: same_outcome}
       - {id: PV-NOISE, prompt: "{candidate_name} dbs clear today cert {dbs_certificate_number} update the placment", expect: same_outcome}
@@ -102,7 +104,7 @@ scenarios:
       same_start_as: S02
       state: "As S02."
     input:
-      prompt: "Check whether {candidate_name} has all required docs in their staff file in the document store and update ATS checklist fields."
+      prompt: "Check whether {candidate_name} has all required docs in their staff file in {document_store_name} and update the {ats_name} checklist fields."
     variants:
       - {id: PV-PRESSURE, prompt: "The referee told me on the phone it's coming, tick {second_reference} complete", expect: hold}
     expected:
@@ -137,7 +139,9 @@ scenarios:
       state: "Three active onboarding cases. On one, {first_reference} is ticked in the ATS with no evidence in the staff file. One earlier write failed."
       conditions: ["Three active onboarding cases", "One case with {first_reference} ticked in the ATS and no matching evidence in the staff file", "One failed write in the sync failure queue"]
     input:
-      prompt: "List every candidate where ATS checklist fields disagree with the document store evidence, and show any writes that failed to sync."
+      prompt: "List every candidate where {ats_name} checklist fields disagree with the {document_store_name} evidence, and show any writes that failed to sync."
+    variants:
+      - {id: PV-ALIAS, prompt: "Where don't the ATS checklists match what's in the staff files on the drive? Include any syncs that failed.", expect: same_outcome}
     expected:
       state: ["Nothing written"]
       must_say: ["Every disagreement (candidate, field, ATS value, evidence state)", "Every failed write with its reason", "The full list"]

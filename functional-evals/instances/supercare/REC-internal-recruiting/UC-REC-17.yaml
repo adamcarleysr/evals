@@ -5,6 +5,7 @@ eval: UC-REC-17
 eval_version: "0.2"
 
 values:
+  ats_name: Bullhorn
   candidate_name: Joshua Woodman
   candidate_role: Senior Coach
   candidate_home: Norwood

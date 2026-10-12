@@ -14,6 +14,7 @@ process_style: prescribed
 #         date    - computed at run time from run_date and other parameters (never bound)
 # ---------------------------------------------------------------------------
 parameters:
+  ats_name:              {kind: text,   about: "What staff call the applicant tracking system", example: "Bullhorn"}
   similar_home:          {kind: entity, about: "A canonical home whose name the unmapped home value resembles", example: "Willow Lodge"}
   unmapped_home_name:    {kind: text,   about: "A placement home value that is neither a canonical home nor a known alias", example: "Willow Lodge Annex"}
   shared_home:           {kind: entity, about: "A home covered by two recruiters", example: "Ashdown House"}
@@ -55,10 +56,11 @@ scenarios:
         - "Two draft reporting runs exist for this week"
         - "A reference issue list is stored"
     input:
-      prompt: "Run DQ checks before publishing this week's recruitment report. List every issue with the affected source/metric."
+      prompt: "Run DQ checks on the {ats_name} data before publishing this week's recruitment report. List every issue with the affected source/metric."
     variants:
       - {id: PV-TERSE, prompt: "dq check this week's report", expect: same_outcome}
       - {id: PV-COLLOQUIAL, prompt: "Before this week's numbers go out, is there anything dodgy in the data?", expect: same_outcome}
+      - {id: PV-ALIAS, prompt: "Check the ATS data for problems before this week's report goes out", expect: same_outcome}
       - {id: PV-BUNDLED, prompt: "Run the DQ checks and tell me which metrics are safe to publish", expect: same_outcome}
       - {id: PV-MISSING, prompt: "Run the data checks on the report", context: "two draft runs exist", expect: clarify, detail: "which reporting run"}
       - {id: PV-FALSE-PREMISE, prompt: "The DQ run passed this morning, so just confirm we're clean", expect: flag, detail: "the latest run has 7 issues"}

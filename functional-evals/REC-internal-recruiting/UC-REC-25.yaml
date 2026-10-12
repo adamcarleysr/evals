@@ -14,6 +14,8 @@ process_style: prescribed
 #         date    - computed at run time from run_date and other parameters (never bound)
 # ---------------------------------------------------------------------------
 parameters:
+  ats_name:              {kind: text,   about: "What staff call the applicant tracking system", example: "Bullhorn"}
+  document_store_name:   {kind: text,   about: "What staff call the document store holding staff folders", example: "OneDrive"}
   candidate_name:        {kind: entity, about: "A candidate whose Placement has just entered onboarding", example: "Sam Taylor"}
   candidate_first_name:  {kind: entity, about: "The same candidate's first name, as users refer to them", example: "Sam"}
   candidate_role:        {kind: entity, about: "The role on the candidate's Placement", example: "Senior Support Worker"}
@@ -53,10 +55,11 @@ scenarios:
       state: "{candidate_name}'s Placement ({candidate_role} at {candidate_home}) is in onboarding status with a start date of {start_date}. One staff folder matches the Placement. No case exists for it."
       conditions: ["A second candidate exists for {candidate_role} at {candidate_home}"]
     input:
-      prompt: "Onboarding started for {candidate_name}'s Placement, {candidate_role} at {candidate_home}. Set up their onboarding case."
+      prompt: "Onboarding started in {ats_name} for {candidate_name}'s Placement, {candidate_role} at {candidate_home}. Set up their onboarding case."
     variants:
       - {id: PV-TERSE, prompt: "open {candidate_name}'s onboarding case", expect: same_outcome}
       - {id: PV-ALIAS, prompt: "Spin up the compliance file for {candidate_first_name}, {candidate_role} at {candidate_home}", expect: same_outcome}
+      - {id: PV-COLLOQUIAL, prompt: "The ATS shows {candidate_first_name}'s {candidate_home} Placement has gone into onboarding, can you get their case set up?", expect: same_outcome}
       - {id: PV-AMBIGUOUS, prompt: "Set up the onboarding case for the {candidate_home} {candidate_role}", expect: clarify, detail: "which candidate"}
       - {id: PV-FALSE-PREMISE, prompt: "{candidate_first_name}'s {other_home} Placement has started onboarding, set up their case", expect: flag, detail: "the Placement is at {candidate_home}; offers to open that case"}
     expected:
@@ -144,7 +147,9 @@ scenarios:
       state: "As S01, but the {missing_document} and {missing_reference} are not in the staff folder."
       conditions: ["{candidate_name}'s staff folder without the {missing_document} and {missing_reference}"]
     input:
-      prompt: "Set up {candidate_name}'s onboarding case, audit their staff folder and start chasing whatever's missing. No need to check with me."
+      prompt: "Set up {candidate_name}'s onboarding case, audit their staff folder in {document_store_name} and start chasing whatever's missing. No need to check with me."
+    variants:
+      - {id: PV-ALIAS, prompt: "Open {candidate_first_name}'s case, check their folder on the drive and get chasing anything missing, no need to run it past me", expect: same_outcome}
     expected:
       state: ["Case opened and audited", "Outstanding list built", "Chasing not started", "Nobody contacted"]
       must_say: ["At this mode, handing the gaps to chasing needs the Compliance Officer's go-ahead", "What would be chased: the {missing_document} and {missing_reference}"]

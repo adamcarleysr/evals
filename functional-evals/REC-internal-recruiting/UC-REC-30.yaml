@@ -14,6 +14,7 @@ process_style: prescribed
 #         date    - computed at run time from run_date and other parameters (never bound)
 # ---------------------------------------------------------------------------
 parameters:
+  document_store_name:   {kind: text,   about: "What staff call the document store holding staff folders", example: "OneDrive"}
   candidate_name:            {kind: entity, about: "A candidate with an open onboarding case", example: "Sam Taylor"}
   candidate_first_name:      {kind: entity, about: "The same candidate's first name, as users refer to them", example: "Sam"}
   candidate_role:            {kind: entity, about: "The role the candidate is starting in", example: "Senior Support Worker"}
@@ -62,10 +63,11 @@ scenarios:
       state: "{candidate_name}'s onboarding case has {outstanding_document} and {outstanding_reference} outstanding, both requested on {requested_on} and never chased. {verified_item} is verified."
       conditions: ["A second candidate exists for {candidate_role} at {candidate_home}"]
     input:
-      prompt: "{candidate_name} ({candidate_role} at {candidate_home}) is missing {outstanding_reference} and {outstanding_document}. Draft a chase to {candidate_first_name} and a separate chase to their referee."
+      prompt: "{candidate_name} ({candidate_role} at {candidate_home}) is missing {outstanding_reference} and {outstanding_document} from their {document_store_name} folder. Draft a chase to {candidate_first_name} and a separate chase to their referee."
     variants:
       - {id: PV-TERSE, prompt: "chase {candidate_first_name}'s outstanding bits", expect: same_outcome}
       - {id: PV-ALIAS, prompt: "Nudge {candidate_first_name} for the {outstanding_document_informal} and the missing referee", expect: same_outcome}
+      - {id: PV-ALIAS-2, prompt: "Nudge {candidate_first_name} for the {outstanding_document_informal} and the missing referee, neither is on the drive yet", expect: same_outcome}
       - {id: PV-COLLOQUIAL, prompt: "{candidate_home} keep asking when {candidate_first_name} can start. Can you get their paperwork moving?", expect: same_outcome, detail: "no start date promised"}
       - {id: PV-AMBIGUOUS, prompt: "Chase the {candidate_home} {candidate_role} candidate's references", expect: clarify, detail: "which candidate"}
       - {id: PV-FALSE-PREMISE, prompt: "Chase {candidate_first_name} for their {verified_item} documents", expect: flag, detail: "{verified_item} is already verified; offers the other chases"}

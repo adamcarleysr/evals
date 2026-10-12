@@ -5,6 +5,7 @@ eval: UC-REC-23
 eval_version: "0.2"
 
 values:
+  ats_name: Bullhorn
   alias_home: Frimley
   home_alias: SC Frimley
   unmapped_home_name: Frimley Annex

@@ -14,6 +14,7 @@ process_style: guided
 #         date    - computed at run time from run_date and other parameters (never bound)
 # ---------------------------------------------------------------------------
 parameters:
+  ats_name:              {kind: text,   about: "What staff call the applicant tracking system", example: "Bullhorn"}
   alias_home:             {kind: entity, about: "A canonical home with a known alias in the organisation dimensions", example: "Willow Lodge"}
   home_alias:             {kind: text,   about: "A mapped alias for alias_home", example: "OCG Willow"}
   unmapped_home_name:     {kind: text,   about: "A home name close to alias_home that is neither a canonical home nor a known alias", example: "Willow Lodge Annex"}
@@ -56,10 +57,11 @@ scenarios:
         - "{ambiguous_home_name} matches two canonical homes: {ambiguous_home_options}"
         - "Dashboard reference values are stored"
     input:
-      prompt: "How many {target_kpi} did the team close last month vs target? What's the trend on {trend_kpi} over 6 weeks?"
+      prompt: "How many {target_kpi} did the team close in {ats_name} last month vs target? What's the trend on {trend_kpi} over 6 weeks?"
     variants:
       - {id: PV-TERSE, prompt: "{target_kpi} last month v target", expect: same_outcome, detail: "{target_kpi} part only"}
       - {id: PV-NOISE, prompt: "how many {target_kpi} did we do last mnth vs targit and {trend_kpi} trend 6 wks", expect: same_outcome}
+      - {id: PV-ALIAS, prompt: "What does the ATS say for {target_kpi} last month against target, and the {trend_kpi} trend over 6 weeks?", expect: same_outcome}
       - {id: PV-BUNDLED, prompt: "{target_kpi} last month vs target, {trend_kpi} trend over six weeks, and starters forecast for {alias_home}", expect: same_outcome, detail: "plus the {alias_home} forecast"}
       - {id: PV-AMBIGUOUS, prompt: "How's {ambiguous_home_name} doing on {home_kpi}?", expect: clarify, detail: "{ambiguous_home_options}"}
       - {id: PV-FALSE-PREMISE, prompt: "Why did {target_kpi} fall last month?", context: "{target_kpi} rose", expect: flag, detail: "{target_kpi} rose; gives the figures"}

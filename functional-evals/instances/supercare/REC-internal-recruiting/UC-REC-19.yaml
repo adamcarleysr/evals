@@ -5,6 +5,7 @@ eval: UC-REC-19
 eval_version: "0.2"
 
 values:
+  ats_name: Bullhorn
   similar_home: Frimley
   unmapped_home_name: Frimley Annex
   shared_home: "<to supply>"

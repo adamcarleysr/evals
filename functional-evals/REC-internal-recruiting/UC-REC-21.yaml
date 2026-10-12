@@ -14,6 +14,7 @@ process_style: prescribed
 #         date    - computed at run time from run_date and other parameters (never bound)
 # ---------------------------------------------------------------------------
 parameters:
+  ats_name:              {kind: text,   about: "What staff call the applicant tracking system", example: "Bullhorn"}
   validated_run:        {kind: entity, about: "This week's reporting run that passes every check, by its run ID", example: "W41-r1"}
   mismatch_home:        {kind: entity, about: "A home whose per-week forecast cells don't sum to its headline in S02", example: "Willow Lodge"}
   removal_home:         {kind: entity, about: "A home that lost a forecast starter this week", example: "Beacon House"}
@@ -62,11 +63,12 @@ scenarios:
         - "Last week's report version exists"
         - "Two earlier weeks have no report (for the PV-MISSING variant)"
     input:
-      prompt: "Generate this week's {report_day} leadership email draft: KPIs, {forecast_horizon_weeks}-week starter forecast, week-on-week movement, exceptions, commentary."
+      prompt: "Generate this week's {report_day} leadership email draft from the {ats_name} data: KPIs, {forecast_horizon_weeks}-week starter forecast, week-on-week movement, exceptions, commentary."
     variants:
       - {id: PV-TERSE, prompt: "{report_day} email draft", expect: same_outcome}
       - {id: PV-ALIAS, prompt: "Do the {report_alias} for this week", expect: same_outcome}
       - {id: PV-COLLOQUIAL, prompt: "Build this week's recruitment report but don't send it yet", expect: same_outcome}
+      - {id: PV-ALIAS-2, prompt: "Build this week's recruitment report off the ATS numbers but don't send it yet", expect: same_outcome}
       - {id: PV-MISSING, prompt: "Draft the leadership report", context: "on a Monday, two weeks unreported", expect: clarify, detail: "which week"}
       - {id: PV-FALSE-PREMISE, prompt: "Resend last week's report with this week's forecast slotted in", expect: flag, detail: "each report comes from one run; offers this week's build"}
     expected:

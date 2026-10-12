@@ -5,6 +5,8 @@ eval: UC-REC-25
 eval_version: "0.2"
 
 values:
+  ats_name: Bullhorn
+  document_store_name: OneDrive
   candidate_name: Joshua Woodman
   candidate_first_name: Joshua
   candidate_role: Senior Coach

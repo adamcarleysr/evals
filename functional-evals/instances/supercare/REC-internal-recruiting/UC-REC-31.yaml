@@ -5,6 +5,7 @@ eval: UC-REC-31
 eval_version: "0.2"
 
 values:
+  ats_name: Bullhorn
   candidate_name: Joshua Woodman
   active_case_count: "<to supply>"
   old_case_count: "<to supply>"

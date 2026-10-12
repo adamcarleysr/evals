@@ -5,6 +5,7 @@ eval: UC-REC-24
 eval_version: "0.2"
 
 values:
+  ats_name: Bullhorn
   validated_run: "<to supply>"
   candidate_name: Joshua Woodman
   candidate_home: Norwood

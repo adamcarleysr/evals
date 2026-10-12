@@ -14,6 +14,7 @@ process_style: prescribed
 #         date    - computed at run time from run_date and other parameters (never bound)
 # ---------------------------------------------------------------------------
 parameters:
+  ats_name:              {kind: text,   about: "What staff call the applicant tracking system", example: "Bullhorn"}
   candidate_name:        {kind: entity, about: "A candidate with an active onboarding case in the viewer's scope", example: "Sam Taylor"}
   active_case_count:     {kind: entity, about: "How many active onboarding cases are in the viewer's scope in the test data", example: 12}
   old_case_count:        {kind: entity, about: "How many of those cases are older than the age threshold (fewer than active_case_count)", example: 2}
@@ -47,10 +48,11 @@ scenarios:
       state: "{active_case_count} active onboarding cases in the viewer's scope, {old_case_count} of them opened more than {age_threshold} days ago. {candidate_name}'s case is at {evidence_stage} with {outstanding_reference} and the {outstanding_document} outstanding, expected start {start_date}."
       conditions: ["{active_case_count} active onboarding cases in one compliance user's scope", "{old_case_count} of them opened more than {age_threshold} days ago", "{candidate_name}'s case at {evidence_stage} with {outstanding_reference} and the {outstanding_document} outstanding"]
     input:
-      prompt: "Show the compliance case view for all active onboarding cases. Highlight cases older than {age_threshold} days."
+      prompt: "Show the compliance case view for all active onboarding cases in {ats_name}. Highlight cases older than {age_threshold} days."
     variants:
       - {id: PV-TERSE, prompt: "case view, flag {age_threshold}+ days", expect: same_outcome}
       - {id: PV-COLLOQUIAL, prompt: "What's going on with all our new starters' paperwork?", expect: same_outcome}
+      - {id: PV-ALIAS, prompt: "Show me everyone onboarding in the ATS and how their compliance is going", expect: same_outcome}
       - {id: PV-MISSING, prompt: "Highlight the old ones", context: "no view open, no age given", expect: clarify, detail: "which view and what age"}
       - {id: PV-FALSE-PREMISE, prompt: "Show me the {active_case_count} cases that are over {age_threshold} days old", expect: flag, detail: "only {old_case_count} cases are over {age_threshold} days"}
     expected:

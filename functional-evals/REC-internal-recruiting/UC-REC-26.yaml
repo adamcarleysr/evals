@@ -14,6 +14,7 @@ process_style: prescribed
 #         date    - computed at run time from run_date and other parameters (never bound)
 # ---------------------------------------------------------------------------
 parameters:
+  document_store_name:   {kind: text,   about: "What staff call the document store holding staff folders", example: "OneDrive"}
   candidate_name:         {kind: entity, about: "A candidate with an active onboarding case and a linked staff folder", example: "Sam Taylor"}
   candidate_first_name:   {kind: entity, about: "The same candidate's first name, as users refer to them", example: "Sam"}
   candidate_role:         {kind: entity, about: "The role on the candidate's Placement", example: "Senior Support Worker"}
@@ -58,10 +59,11 @@ scenarios:
       state: "{candidate_name} ({candidate_role} at {candidate_home}) has five new documents in their staff folder: a passport, an {dbs_document} issued on {dbs_issued_on}, a signed {received_reference} on letterhead, a council tax bill dated {address_proof_dated} and a {role_qualification} qualification certificate. No verbal verification of references is recorded."
       conditions: ["Five new documents of those types in {candidate_name}'s staff folder", "A second staff folder named for {candidate_name} (for the ambiguity variant)"]
     input:
-      prompt: "Open the 5 newest docs in {candidate_name}'s staff file, classify each to a checklist type from content, and extract dates/identifiers."
+      prompt: "Open the 5 newest docs in {candidate_name}'s staff file in {document_store_name}, classify each to a checklist type from content, and extract dates/identifiers."
     variants:
       - {id: PV-TERSE, prompt: "classify {candidate_first_name}'s new docs", expect: same_outcome}
       - {id: PV-NOISE, prompt: "opn the 5 newst docs in {candidate_name} staf file n sort them", expect: same_outcome}
+      - {id: PV-ALIAS, prompt: "Go through {candidate_first_name}'s 5 latest uploads on the drive and work out what each one is, with any dates and reference numbers", expect: same_outcome}
       - {id: PV-AMBIGUOUS, prompt: "Classify {candidate_name}'s new documents", context: "two staff folders named for {candidate_name} exist", expect: clarify, detail: "which folder or Placement"}
       - {id: PV-FALSE-PREMISE, prompt: "Classify {candidate_first_name}'s new docs and tick off {missing_reference}, it's in there", expect: flag, detail: "no {missing_reference} among them; it stays outstanding"}
     expected:

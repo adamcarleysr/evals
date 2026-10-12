@@ -5,6 +5,8 @@ eval: UC-REC-28
 eval_version: "0.2"
 
 values:
+  ats_name: Bullhorn
+  document_store_name: OneDrive
   candidate_name: Joshua Woodman
   candidate_first_name: Joshua
   dbs_certificate_number: "001234567890"
