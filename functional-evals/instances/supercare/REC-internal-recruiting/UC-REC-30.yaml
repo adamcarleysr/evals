@@ -1,0 +1,33 @@
+# SuperCare binding for UC-REC-30 (eval v0.2). Worked example. Draft.
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-REC-30
+eval_version: "0.2"
+
+values:
+  candidate_name: "<SuperCare test candidate>"
+  candidate_first_name: "<first name>"
+  candidate_role: Senior Support Worker
+  candidate_home: "<SuperCare home>"
+  outstanding_document: DBS certificate
+  outstanding_document_informal: police check
+  outstanding_reference: Reference 2
+  verified_item: right to work
+
+  document_first_chase_delay: 48
+  document_chase_interval: 3
+  document_max_chases: 4
+  reference_first_chase_delay: 5
+  reference_chase_interval: 5
+  reference_max_chases: 3
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: a second candidate for the same role and home (for the ambiguity variant)"
+  - "S03: the test candidate with the maximum document chases already sent and no reply"
+  - "S05: the test candidate marked withdrawn and closed in the ATS"
