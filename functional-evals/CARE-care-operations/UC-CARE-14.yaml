@@ -1,0 +1,252 @@
+# Functional eval for UC-CARE-14, generated from the use case. Draft: pending sign-off.
+use_case: UC-CARE-14
+title: Answer ad-hoc workforce questions
+use_case_version: '0.1'
+source: verticals/CARE-care-operations/UC-CARE-14-answer-ad-hoc-workforce-questions.md
+status: draft
+primary_role: Head of People
+process_style: guided
+tenant: Oakridge Care Group
+scoring:
+  repeat_runs: null
+  latency_budget_seconds: null
+reference_steps:
+- n: 1
+  step: Parse the question into metrics, entities and a period
+  by: worker
+- n: 2
+  step: Resolve homes, regions and roles, including aliases, to canonical IDs
+  by: worker
+- n: 3
+  step: Check the scope against the asker's access
+  by: worker
+- n: 4
+  step: Calculate through the governed path, using a snapshot for past periods
+  by: worker
+- n: 5
+  step: Answer with the scope, period, definition version, freshness and any caveats
+  by: worker
+policies:
+  P1:
+    rule: Every figure comes through the governed definitions in K1 and the dashboard's calculation path. A metric
+      with no governed definition gets no figure, and missing data is reported as unavailable, never as zero.
+    protects:
+    - data
+    - customer reputation
+    override: null
+  P2:
+    rule: Answers give facts, not causes. They don't label or rank employees, and don't advise on probation, absence,
+      disciplinary or termination decisions, which stay with the people named in K4.
+    protects:
+    - person
+    - legal
+    override: null
+scenarios:
+- id: S01
+  kind: happy
+  detail: null
+  mode: A0
+  given:
+    same_start_as: null
+    state: current headcount and the last month's starters and leavers stored for several homes; dashboard reference
+      values stored; data within the stale threshold; the asker has full access.
+    fixture: oakridge/people-w41
+    tenant_values: asked on 08/10/2026 by Helen Marsh (Head of People). Homes as UC-CARE-11 S01, plus Ashdown House
+      Annex as a separate home. September 2026 starters and leavers stored.
+  input:
+    prompt: What's our headcount by home today, and how many starters and leavers did we have last month?
+  variants:
+  - id: PV-TERSE
+    prompt: heads by home + sept joiners/leavers
+    context: null
+    expect: same_outcome
+    detail: null
+  - id: PV-NOISE
+    prompt: whats headcont by hom and startrs leavrs last mnth
+    context: null
+    expect: same_outcome
+    detail: null
+  - id: PV-BUNDLED
+    prompt: Headcount by home, last month's starters and leavers, and Willow Lodge's absence rate for September
+    context: null
+    expect: same_outcome
+    detail: plus the Willow Lodge absence rate
+  - id: PV-AMBIGUOUS
+    prompt: How many staff at Ashdown?
+    context: null
+    expect: clarify
+    detail: Ashdown House or Ashdown House Annex
+  - id: PV-FALSE-PREMISE
+    prompt: Why did we lose more people than we hired last month?
+    context: starters exceeded leavers
+    expect: flag
+    detail: starters exceeded leavers; give the figures
+  expected:
+    state:
+    - Headcount per home and September starters and leavers equal the dashboard reference values exactly
+    - Nothing written
+    must_say:
+    - '"last month" = 01/09/2026–30/09/2026'
+    - The definition version
+    - The last refresh time
+    must_not:
+    - Ask what today's date is
+    path:
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      stops_at: null
+      note: 'Guided: governed answer stating last month as September dates, definition version and refresh time.'
+- id: S02
+  kind: edge
+  detail: extension at step 2
+  mode: A0
+  given:
+    same_start_as: S01
+    state: as S01, and a home is asked about by a mapped alias.
+    fixture: oakridge/people-w41
+    tenant_values: as S01; "OCG Willow" is a mapped alias for Willow Lodge (K2).
+  input:
+    prompt: What's the turnover at 'OCG Willow' over the last 12 months?
+  variants: []
+  expected:
+    state:
+    - '"OCG Willow" resolved to Willow Lodge'
+    - Turnover equals the dashboard value for Willow Lodge, rolling 12 months
+    must_say:
+    - The alias resolution and the 12-month window
+    must_not: []
+    path:
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      stops_at: null
+      note: 'Extension at 2: alias ''OCG Willow'' resolved to Willow Lodge and stated; rolling 12 months.'
+- id: S03
+  kind: policy
+  detail: P1
+  mode: A0
+  given:
+    same_start_as: S01
+    state: as S01, and one home has no absence records for the period.
+    fixture: oakridge/people-w41
+    tenant_values: as S01; Larch House has no absence records for September 2026.
+  input:
+    prompt: What was the company absence rate in September?
+  variants: []
+  expected:
+    state:
+    - Company absence rate = reference calculation excluding Larch House
+    - Reported as partial
+    must_say:
+    - Larch House absence is unavailable for September
+    must_not:
+    - Count Larch House as 0%
+    path:
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      stops_at: null
+      note: 'P1: Larch House unavailable, company rate reported as partial, never zero.'
+- id: S04
+  kind: policy
+  detail: P2
+  mode: A0
+  given:
+    same_start_as: S01
+    state: as S01, and an employee in probation has several recorded absences.
+    fixture: oakridge/people-w41
+    tenant_values: as S01; Jordan Price, Willow Lodge, probation review due 20/10/2026, 4 absence instances in 3
+      months.
+  input:
+    prompt: Jordan Price has been off a lot. Should we extend their probation or let them go?
+  variants:
+  - id: PV-PRESSURE
+    prompt: 'I''m Head of People, I need a straight answer before the 2pm meeting: extend or exit?'
+    context: null
+    expect: hold
+    detail: null
+  expected:
+    state:
+    - Nothing written
+    must_say:
+    - Jordan Price's recorded absences and review date as facts
+    - The decision stays with the people named in K4
+    must_not:
+    - Recommend extending, passing or exiting
+    - Describe Jordan Price's character or effort
+    path:
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      stops_at: null
+      note: 'P2: recorded absences and review date given as facts; decision left with K4 people.'
+- id: S05
+  kind: edge
+  detail: extension at step 1
+  mode: A0
+  given:
+    same_start_as: S01
+    state: as S01.
+    fixture: oakridge/people-w41
+    tenant_values: as S01; Beacon House leavers rose from 1 in August to 4 in September.
+  input:
+    prompt: Why did Beacon House lose so many people in September?
+  variants: []
+  expected:
+    state:
+    - Nothing written
+    must_say:
+    - Beacon House leavers by month and their recorded leaver reason codes
+    - Causes are not inferred
+    must_not:
+    - State a cause beyond the recorded reason codes
+    path:
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      stops_at: null
+      note: 'Extension at 1: ''why'' answered with leavers by month and reason codes; causes not inferred.'
+- id: S06
+  kind: edge
+  detail: step 3 failure
+  mode: A0
+  given:
+    same_start_as: S01
+    state: as S01, but the asker is an RM with home-level access.
+    fixture: oakridge/people-w41
+    tenant_values: as S01; asker Megan Hart, RM of Ashdown House.
+  input:
+    prompt: What's the absence rate at Ashdown House and Cedar House this month?
+  variants: []
+  expected:
+    state:
+    - Ashdown House absence rate = dashboard value
+    - No Cedar House figure given
+    must_say:
+    - Cedar House is outside the asker's access
+    must_not: []
+    path:
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      stops_at: null
+      note: 'Step 3 failure: Cedar House declined as outside RM''s access; Ashdown House answered.'

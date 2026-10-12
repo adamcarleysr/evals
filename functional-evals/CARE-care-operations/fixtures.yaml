@@ -1,0 +1,434 @@
+# Fixtures for CARE functional evals. Draft: pending sign-off. All names and data are fictional.
+# superreach_state: Superreach's own state (maintenance case state, approvals, queues, snapshots, pack versions); not an external system.
+# reference_data: stored reference values the evals score against.
+# Every scenario in UC-CARE-01 to 17 names a fixture, so `unnamed` is empty. The eval files use `given.same_start_as` for "after".
+tenant: Oakridge Care Group
+shared:
+  homes:
+  - Ashdown House (North region, RI Graham Okoye; access window Monday to Friday, 9am to 5pm)
+  - Willow Lodge (North region, RI Graham Okoye; known alias "OCG Willow", UC-CARE-14 K2)
+  - Larch House (North region, RI Graham Okoye)
+  - Rowan House (South region, RI Aisha Khan)
+  - Beacon House (South region)
+  - Hazel Lodge (South region)
+  - Cedar House (South region)
+  - Ashdown House Annex (separate home in UC-CARE-14 S01 and the UC-CARE-11 S01 PV-AMBIGUOUS variant only; see conflicts)
+  not_homes:
+  - '"Willow Lodge Annex": unmapped home value on an employee record (UC-CARE-17 S01)'
+  - '"OCG-ASH2": unmapped home code on 4 active employees (UC-CARE-11 S04)'
+  regions:
+  - "North (RI Graham Okoye): Ashdown House, Willow Lodge, Larch House"
+  - "South (RI Aisha Khan): Rowan House, Beacon House, Hazel Lodge, Cedar House"
+  roles:
+  - Support Worker
+  - Senior Support Worker
+  - Team Leader
+  - Senior Coach (UC-CARE-13 S02 filter only; see conflicts)
+  employment_types: [permanent, bank, fixed-term]
+  users:
+  - name: Megan Hart
+    role: Registered Manager, Ashdown House (also in probation, hired 15 June 2026, in UC-CARE-15 S04)
+  - name: Dana Bennett
+    role: Registered Manager, Willow Lodge
+  - name: Tom Ellis
+    role: Registered Manager, Larch House
+  - name: Nadia Okafor
+    role: Registered Manager, Rowan House
+  - name: Sian Hughes
+    role: Registered Manager, Hazel Lodge
+  - name: Priya Shah
+    role: Deputy, Ashdown House
+  - name: Graham Okoye
+    role: Responsible Individual, North region
+  - name: Aisha Khan
+    role: Responsible Individual, South region
+  - name: Jordan Blake
+    role: Operations Director (senior approver for maintenance spend, UC-CARE-04 K2)
+  - name: Alex Rowe
+    role: Senior leader (incident escalation, UC-CARE-06)
+  - name: Ruth Collins
+    role: Head of Care (first escalation for an RM's own probation review, UC-CARE-15 K3)
+  - name: Helen Marsh
+    role: Head of People (full access; weekly People pack recipient and sign-off)
+  - name: Sam Okafor
+    role: Confidential-tier recipient of the weekly People pack; export approver (UC-CARE-12 K3)
+  - name: Tom Reid
+    role: People team (overdue probation alerts; owner of unmapped home and role issues)
+  - name: Ella Watts
+    role: People team (owner of hire-date issues)
+  - name: Jo Baker
+    role: Support worker, Ashdown House (reporter of MC-0412)
+  - name: Sol Reyes
+    role: Night worker, Ashdown House (second reporter, UC-CARE-01 S05)
+  contractors:
+  - Brookside Plumbing, contact Dave Morris, verified number on file, insurance on file
+  - Northgate Plumbing, contact Kay Byrne (UC-CARE-04 S06 only)
+  playbook_values:
+  # Maintenance (UC-CARE-01 to 05)
+  - {knowledge_item: K3, use_case: UC-CARE-01, value: Closure sign-off by the RM within 48 hours, else escalated to the RI}
+  - {knowledge_item: K3, use_case: UC-CARE-01, value: Policy-override holder may bypass the sign-off gate with a logged justification (holder not named)}
+  - {knowledge_item: K4, use_case: UC-CARE-01, value: 'Recurrence = 2 or more cases of the same category at the home within 90 days, told to the RM and RI; safety reinspection within 7 days'}
+  - {knowledge_item: K2, use_case: UC-CARE-02, value: 'Urgent = active water ingress or loss of an essential service, contractor attendance within 24 hours (fixture value, no source page)'}
+  - {knowledge_item: K2, use_case: UC-CARE-02, value: 'Low = damage to fittings or furniture with no reported risk of harm (fixture value, no source page)'}
+  - {knowledge_item: K3, use_case: UC-CARE-02, value: 'Urgent maintenance: RM and Operations Director at once, RM within 2 hours, RI within 24 hours; automatic sending allowed'}
+  - {knowledge_item: K4, use_case: UC-CARE-02, value: 'Any fault on fire detection or alarm equipment is safety-critical, routed at once to the RM and the Operations Director (fixture value, no source page)'}
+  - {knowledge_item: K2, use_case: UC-CARE-03, value: 'No answer: 3 attempts over 24 hours; maximum 3 attempts per contact per case in 48 hours; then the home''s RM'}
+  - {knowledge_item: K4, use_case: UC-CARE-03, value: Emergency plumbing auto-approve up to £250}
+  - {knowledge_item: K1, use_case: UC-CARE-04, value: 'Emergency plumbing: auto-approve up to £250, RM £251–£500, senior approver above £500'}
+  - {knowledge_item: K1, use_case: UC-CARE-04, value: 'General repair: auto-approve up to £150, RM £151–£400, senior approver above £400 (also UC-CARE-05 S02 K1)'}
+  - {knowledge_item: K2, use_case: UC-CARE-04, value: 'RM approval within 4 hours, else the RI (Graham Okoye); senior approver Operations Director Jordan Blake, within 24 hours'}
+  - {knowledge_item: K2, use_case: UC-CARE-04, value: Gate override holder may override with a logged justification (holder not named)}
+  - {knowledge_item: K3, use_case: UC-CARE-04, value: 'Ashdown House access window Monday to Friday, 9am to 5pm (also UC-CARE-03)'}
+  - {knowledge_item: K4, use_case: UC-CARE-04, value: 'Duplicate booking = same issue, same home, within 48 hours (fixture value)'}
+  - {knowledge_item: K2, use_case: UC-CARE-05, value: 'Spend = invoiced amount, by case closure date; recipients per home: its RI; reports run on the first working day of the month, 9am (fixture values)'}
+  # Incidents (UC-CARE-06)
+  - {knowledge_item: K1, use_case: UC-CARE-06, value: 'Medication error, High: RM and Deputy immediately; RI within 4 hours; clinical psychologist and parents or guardians within 24 hours; RM approves the parent notification'}
+  - {knowledge_item: K1, use_case: UC-CARE-06, value: 'Safeguarding concern, Critical: RM, RI and senior leader immediately; Ofsted and LADO within 24 hours; RI approves external notifications'}
+  - {knowledge_item: K1, use_case: UC-CARE-06, value: 'Property damage, Medium: RM immediately; RI if over £500; Operations Director within 24 hours; automated notification acceptable'}
+  - {knowledge_item: K1, use_case: UC-CARE-06, value: 'Missing child, Critical: RM, RI, police and senior leader immediately; Ofsted, parents or guardians and placing authority within 24 hours; RM coordinates with the police; RI approves the Ofsted notification'}
+  - {knowledge_item: K1, use_case: UC-CARE-06, value: '"resident fall, no injury" is not a category in the routing rules'}
+  - {knowledge_item: K3, use_case: UC-CARE-06, value: Escalate 2 hours before the deadline}
+  - {knowledge_item: K4, use_case: UC-CARE-06, value: 'Ofsted notification approver RI, escalation to the senior leader'}
+  # Rota and shifts (UC-CARE-07 to 10)
+  - {knowledge_item: K1, use_case: UC-CARE-07, value: 'Day 08:00–20:00, Night 20:00–08:00, Sleep-in 22:00–07:00'}
+  - {knowledge_item: K3, use_case: UC-CARE-07, value: 'Willow Lodge: 3 staff per day shift, 2 per night shift'}
+  - {knowledge_item: K4, use_case: UC-CARE-07, value: 'Rota refreshed every 2 hours, flagged as stale after 8 hours (UC-CARE-10 K4: stale after 8 hours)'}
+  - {knowledge_item: K2, use_case: UC-CARE-08, value: 'Night 20:00–08:00, code NIGHT-STD'}
+  - {knowledge_item: K4, use_case: UC-CARE-08, value: 'Rota change approved by the RM or Deputy, escalation to the RI after 4 hours; absence entries approved by the RM'}
+  - {knowledge_item: K2, use_case: UC-CARE-09, value: 'No answer: 3 attempts over 24 hours; overall maximum 3 attempts per contact per shift in 48 hours, then the RM'}
+  - {knowledge_item: K1, use_case: UC-CARE-10, value: 'Contractor booking £320 is in the RM approval band, 4-hour limit'}
+  # People analytics (UC-CARE-11 to 17)
+  - {knowledge_item: K1, use_case: UC-CARE-11, value: 'Definitions v1.0: headcount (active employees, point-in-time); starters and leavers (hire and termination date in period, monthly); turnover (leavers in period ÷ average headcount, rolling 12 months); absence rate (sick days lost ÷ working days available, monthly); probation completion rate (quarterly); average tenure (months from hire date); leaver reasons (by termination reason code); no retention metric'}
+  - {knowledge_item: K4, use_case: UC-CARE-11, value: HR data stale threshold 8 hours}
+  - {knowledge_item: K1, use_case: UC-CARE-12, value: 'Weekly list: Helen Marsh (Head of People), Sam Okafor (Confidential tier); monthly adds RIs Graham Okoye (North) and Aisha Khan (South) and each RM''s home-level extract'}
+  - {knowledge_item: K3, use_case: UC-CARE-12, value: 'RM tier: internal, own home only; export approver Sam Okafor'}
+  - {knowledge_item: K4, use_case: UC-CARE-12, value: Block threshold 24 hours}
+  - {knowledge_item: K5, use_case: UC-CARE-12, value: Weekly send time 12:00 (Friday)}
+  - {knowledge_item: K3, use_case: UC-CARE-13, value: 'Warning threshold 8 hours, block threshold 24 hours; alert to the People team after 3 failed refreshes'}
+  - {knowledge_item: K2, use_case: UC-CARE-14, value: '"OCG Willow" is a mapped alias for Willow Lodge'}
+  - {knowledge_item: K2, use_case: UC-CARE-15, value: 'Initial reminder at 14 days; urgent at 7 days copying the RI; overdue alert on the date to manager, RI and People team; final notice at 7 days overdue with escalation to the Head of People'}
+  - {knowledge_item: K3, use_case: UC-CARE-15, value: 'Megan Hart (RM, Ashdown House), Dana Bennett (RM, Willow Lodge), Graham Okoye (RI), Tom Reid (People team), Helen Marsh (Head of People); an RM''s review owner is the RI (Graham Okoye), first escalation Ruth Collins (Head of Care)'}
+  - {knowledge_item: K1, use_case: UC-CARE-15, value: An extension is approved by the RI}
+  - {knowledge_item: K2, use_case: UC-CARE-16, value: '3 instances in rolling 3 months → informal conversation reminder to the RM; 5 instances in rolling 6 months → formal meeting required; 10 or more consecutive days → return-to-work meeting mandatory, occupational health referral if recurring; unauthorised absence counts double and alerts the RM and RI immediately'}
+  - {knowledge_item: K3, use_case: UC-CARE-16, value: 'Megan Hart (RM, Ashdown House), Dana Bennett (RM, Willow Lodge), Graham Okoye (RI)'}
+  - {knowledge_item: K1, use_case: UC-CARE-17, value: 'Issue owners: missing manager → RM of the home; unmapped home and unmapped role → Tom Reid; hire date → Ella Watts; missing leaver reason → RM of the former home; missing probation end date → RM'}
+  - {knowledge_item: K2, use_case: UC-CARE-17, value: 'Pattern: same field, same home, 3 or more times in 30 days'}
+fixtures:
+  oakridge/ashdown-leak:
+    description: Maintenance case MC-0412, a leak from the upstairs bathroom into the downstairs hallway at Ashdown House, from report (12/10/2026) to sign-off.
+    used_by: [UC-CARE-01 S01, UC-CARE-01 S02, UC-CARE-01 S03, UC-CARE-01 S04, UC-CARE-01 S05, UC-CARE-01 S06, UC-CARE-01 S07,
+      UC-CARE-01 S08, UC-CARE-01 S09, UC-CARE-01 S10, UC-CARE-02 S01, UC-CARE-02 S04, UC-CARE-02 S05, UC-CARE-02 S06,
+      UC-CARE-02 S07, UC-CARE-03 S01, UC-CARE-03 S02, UC-CARE-03 S03, UC-CARE-03 S04, UC-CARE-03 S05, UC-CARE-03 S06,
+      UC-CARE-03 S07, UC-CARE-03 S08, UC-CARE-04 S01, UC-CARE-04 S02, UC-CARE-04 S03, UC-CARE-04 S05, UC-CARE-04 S06,
+      UC-CARE-04 S07, UC-CARE-04 S08]
+    records:
+    - {system: superreach_state, record: 'Case MC-0412, Ashdown House, reported 12/10/2026 09:40 by Jo Baker: leak from the upstairs bathroom into the downstairs hallway; category emergency plumbing. Stage depends on the scenario (logged, triaged, approved for contact, contractor engaged, booking confirmed, job complete, sign-off)'}
+    - {system: superreach_state, record: 'Full case history to booking (UC-CARE-01 S10): report, triage, Brookside call 13/10/2026, quote £180, availability Thursday 15/10/2026 14:00–16:00 (about 2 hours, water isolated on arrival), auto-approval, booking'}
+    - {system: superreach_state, record: 'Open case MC-0415 at Willow Lodge (an open plumbing case in UC-CARE-02 S01; see conflicts)'}
+    - {system: superreach_state, record: Current version of the contractor call script}
+    - {system: email, record: 'Addresses for Megan Hart, Graham Okoye, Jordan Blake and Dave Morris (Brookside Plumbing)'}
+    - {system: voice calls, record: 'Brookside Plumbing, contact Dave Morris, verified number; scripted answer per scenario (default: quotes £180, available Thursday 15/10/2026 14:00–16:00, insurance on file)'}
+    - {system: calendar, record: 'Ashdown House access window Monday to Friday, 9am to 5pm; booking slot Thursday 15/10/2026 14:00–16:00 once booked'}
+    - {system: document store, record: 'Brookside Plumbing invoice £180 for MC-0412 (UC-CARE-01 S01); warranty record target for the follow-on'}
+    variations:
+    - 'UC-CARE-01 S01: stage job complete; completion reported 15/10/2026 16:10; invoice £180 equals quote; no earlier same-category case at Ashdown House'
+    - 'UC-CARE-01 S02, S04: sign-off request sent to Megan Hart, not answered'
+    - 'UC-CARE-01 S03: invoice £240 against the £180 quote, no explanation recorded'
+    - 'UC-CARE-01 S05: MC-0412 at stage triaged; Sol Reyes reports the same hallway leak on 12/10/2026'
+    - 'UC-CARE-01 S06: sign-off request unanswered past 48 hours'
+    - 'UC-CARE-01 S07: plus closed case MC-0371, Ashdown House, emergency plumbing, 28/08/2026'
+    - 'UC-CARE-01 S08, S10: stage booking confirmed; S08 trigger is completion reported 15/10/2026 16:10'
+    - 'UC-CARE-01 S09: stage booking confirmed, no completion report'
+    - 'UC-CARE-02 S01, S04, S06, S07: newly logged case, not yet triaged; S07 with notifications drafted'
+    - 'UC-CARE-02 S05: Jo Baker''s report adds "one of the young people slipped in the hallway, not hurt"'
+    - 'UC-CARE-03 S01, S02: triaged 12/10/2026, approved for contact, no earlier calls; S02 with script and email prepared'
+    - 'UC-CARE-03 S03: Dave Morris answers 13/10/2026: £180, Thursday 15/10/2026 14:00–16:00, about 2 hours, water isolated on arrival, insurance on file'
+    - 'UC-CARE-03 S04: Dave Morris''s voicemail answers'
+    - 'UC-CARE-03 S05: no answer on any attempt'
+    - 'UC-CARE-03 S06: Dave Morris quotes £450 and asks "so can I put you down for Thursday?"'
+    - 'UC-CARE-03 S07: audio breaks up; availability heard, quote unclear'
+    - 'UC-CARE-03 S08: Dave Morris says "take me off your list"'
+    - 'UC-CARE-04 S01, S02, S07: quote £180 captured, no booking; another home has an open booking'
+    - 'UC-CARE-04 S03: Brookside quote £450 (RM band)'
+    - 'UC-CARE-04 S05: as S03, no response from Megan Hart 4 hours after the request'
+    - 'UC-CARE-04 S06: Brookside booking made; plus a £170 quote from Northgate Plumbing (Kay Byrne) for the same leak on 13/10/2026'
+    - 'UC-CARE-04 S08: quote captured 13/10/2026 by UC-CARE-03'
+  oakridge/rowan-fire-panel:
+    description: Newly logged safety-critical case MC-0419, fire alarm panel fault at Rowan House.
+    used_by: [UC-CARE-02 S02]
+    records:
+    - {system: superreach_state, record: 'Case MC-0419, Rowan House: "fire alarm panel showing a fault, no smoke"; just logged'}
+    - {system: email, record: 'Addresses for Nadia Okafor (RM) and Jordan Blake (Operations Director)'}
+    variations: []
+  oakridge/larch-wardrobe:
+    description: Newly logged case MC-0420 at Larch House with a one-line description and no detail.
+    used_by: [UC-CARE-02 S03]
+    records:
+    - {system: superreach_state, record: 'Case MC-0420, Larch House: "wardrobe door broken in a resident''s room", nothing else'}
+    - {system: email, record: Address for Tom Ellis (RM)}
+    variations: []
+  oakridge/rowan-roof:
+    description: Case MC-0423 at Rowan House with a captured £2,500 roof quote above the senior approver's level.
+    used_by: [UC-CARE-04 S04]
+    records:
+    - {system: superreach_state, record: 'Case MC-0423, Rowan House, general repair (roof), captured quote £2,500; no booking'}
+    - {system: email, record: 'Addresses for Nadia Okafor (RM) and Jordan Blake (senior approver)'}
+    variations: []
+  oakridge/maintenance-spend-oct-2026:
+    description: Closed maintenance cases for October 2026 across four homes, for the monthly spend reports.
+    used_by: [UC-CARE-05 S01, UC-CARE-05 S02, UC-CARE-05 S03, UC-CARE-05 S04, UC-CARE-05 S05, UC-CARE-05 S06, UC-CARE-05 S07]
+    records:
+    - {system: superreach_state, record: 'Ashdown House: MC-0409 general repair £120 (auto); MC-0412 emergency plumbing £180 (auto); total £300'}
+    - {system: superreach_state, record: 'Willow Lodge: MC-0415 safety and compliance £650 (RM approval, Dana Bennett); MC-0416 garden and external £90 (auto); total £740'}
+    - {system: superreach_state, record: 'Larch House: MC-0420 general repair £95 (auto); total £95'}
+    - {system: superreach_state, record: 'Rowan House: MC-0419 safety and compliance £320 (auto); total £320'}
+    - {system: superreach_state, record: All cases closed in October 2026 and invoiced at the quote}
+    - {system: email, record: 'Addresses for Graham Okoye (Ashdown House, Willow Lodge, Larch House) and Aisha Khan (Rowan House); Dave Morris exists as a contractor contact (UC-CARE-05 S03)'}
+    variations:
+    - 'UC-CARE-05 S02: plus Willow Lodge MC-0417 general repair £300, booked with no approval recorded (Willow Lodge total £1,040)'
+    - 'UC-CARE-05 S03, S05: reports drafted'
+    - 'UC-CARE-05 S06: scheduled run on 02/11/2026'
+    - 'UC-CARE-05 S07: as S06, but MC-0412''s invoice has not arrived'
+  oakridge/incident-willow-lodge-medication:
+    description: High-severity medication error at Willow Lodge recorded at 14:00 today, no notifications yet.
+    used_by: [UC-CARE-06 S01]
+    records:
+    - {system: incident system, record: 'INC-WL-2026-00117, medication error, High, Willow Lodge, recorded 14:00 today'}
+    - {system: email, record: 'Addresses for Dana Bennett (RM), the Willow Lodge Deputy (not named), Graham Okoye (RI), the clinical psychologist and parents or guardians'}
+    variations: []
+  oakridge/incident-ashdown-safeguarding:
+    description: Critical safeguarding concern at Ashdown House recorded yesterday, no notifications yet.
+    used_by: [UC-CARE-06 S02, UC-CARE-06 S04, UC-CARE-06 S06, UC-CARE-06 S07, UC-CARE-06 S08, UC-CARE-06 S10]
+    records:
+    - {system: incident system, record: 'INC-AH-2026-00203, safeguarding concern, Critical, Ashdown House, recorded yesterday'}
+    - {system: email, record: 'Addresses for Megan Hart (RM), Graham Okoye (RI), Alex Rowe (senior leader), Ofsted and the LADO'}
+    variations:
+    - 'UC-CARE-06 S04: Ofsted draft held for RI approval'
+    - 'UC-CARE-06 S07: at A3; Ofsted notification still unapproved at the escalation lead time (2 hours before the deadline)'
+    - 'UC-CARE-06 S08: all drafts created'
+    - 'UC-CARE-06 S10: incident system connection unavailable'
+  oakridge/incident-larch-damage:
+    description: Medium-severity property damage (£300) at Larch House, below the RI threshold.
+    used_by: [UC-CARE-06 S03]
+    records:
+    - {system: incident system, record: 'INC-LH-2026-00088, property damage £300, Medium, Larch House'}
+    - {system: email, record: 'Addresses for Tom Ellis (RM) and Jordan Blake (Operations Director)'}
+    variations: []
+  oakridge/incident-rowan-missing:
+    description: Critical missing-child incident at Rowan House.
+    used_by: [UC-CARE-06 S05]
+    records:
+    - {system: incident system, record: 'INC-RH-2026-00051, missing child, Critical, Rowan House'}
+    - {system: email, record: 'Addresses for the Rowan House RM, the RI, the senior leader, Ofsted, parents or guardians and the placing authority (no names given in the scenario; shared users give Nadia Okafor, Aisha Khan and Alex Rowe)'}
+    variations: []
+  oakridge/incident-hazel-fall:
+    description: An incident at Hazel Lodge whose category is not in the routing rules.
+    used_by: [UC-CARE-06 S09]
+    records:
+    - {system: incident system, record: 'Incident at Hazel Lodge recorded as "resident fall, no injury" (no reference given)'}
+    variations: []
+  oakridge/rota-willow-lodge-w42:
+    description: Willow Lodge rota for Mon 12/10/2026 to Sun 18/10/2026 with an under-covered night, a leave clash and an overlap.
+    used_by: [UC-CARE-07 S01, UC-CARE-07 S02, UC-CARE-07 S03, UC-CARE-07 S04, UC-CARE-07 S05, UC-CARE-07 S06]
+    records:
+    - {system: HR system, record: 'Willow Lodge rota, week Mon 12/10/2026 to Sun 18/10/2026; Wednesday night 1 rostered'}
+    - {system: HR system, record: 'Thursday day 3 rostered, including Ellie Morgan, who has approved annual leave that day'}
+    - {system: HR system, record: Ryan Cole rostered on Friday day and Friday night}
+    - {system: HR system, record: 14 active employees mapped to Willow Lodge (UC-CARE-07 S06)}
+    - {system: superreach_state, record: Rota refreshed 40 minutes ago}
+    variations:
+    - 'UC-CARE-07 S02: K3 empty for Willow Lodge'
+    - 'UC-CARE-07 S03: Ryan Cole recorded as sick leave Monday and Tuesday'
+    - 'UC-CARE-07 S04: last refresh 10 hours ago'
+    - 'UC-CARE-07 S06: HR system returns rota entries per employee only'
+  oakridge/rota-larch-swap:
+    description: An RM-agreed night-shift swap between two Larch House staff.
+    used_by: [UC-CARE-08 S01, UC-CARE-08 S02, UC-CARE-08 S03, UC-CARE-08 S04, UC-CARE-08 S05, UC-CARE-08 S07]
+    records:
+    - {system: HR system, record: 'Leah Brooks (ID 1001), Larch House, Night (NIGHT-STD) Wednesday 14/10/2026'}
+    - {system: HR system, record: 'Owen Price (ID 1002), Larch House, Night (NIGHT-STD) Thursday 15/10/2026'}
+    - {system: email, record: 'Address for Tom Ellis (RM)'}
+    variations:
+    - 'UC-CARE-08 S02: Tom Ellis approves the write plan at 10:15 on 13/10/2026'
+    - 'UC-CARE-08 S03: Owen Price asks in chat'
+    - 'UC-CARE-08 S04: Leah Brooks has TRAIN on Thursday 15/10/2026 14:00–22:00'
+    - 'UC-CARE-08 S05: write plan prepared'
+    - 'UC-CARE-08 S07: Owen Price''s Wednesday entry reads back as off'
+  oakridge/rota-ashdown-absence:
+    description: An absence entry at Ashdown House approved by a Deputy where the RM is required.
+    used_by: [UC-CARE-08 S06]
+    records:
+    - {system: HR system, record: '2 days'' annual leave for an Ashdown House support worker (not named), approved by Deputy Priya Shah'}
+    variations: []
+  oakridge/open-shift-hazel-saturday:
+    description: Open Senior Support Worker day shift at Hazel Lodge, Saturday 17/10/2026, with a bank worker to call.
+    used_by: [UC-CARE-09 S01, UC-CARE-09 S02, UC-CARE-09 S03, UC-CARE-09 S04, UC-CARE-09 S05, UC-CARE-09 S06, UC-CARE-09 S07, UC-CARE-09 S08]
+    records:
+    - {system: superreach_state, record: 'Open shift: Hazel Lodge, Senior Support Worker, day, Saturday 17/10/2026 08:00–20:00; approved for contact in S02 onwards'}
+    - {system: ATS, record: 'Bank worker Jamie Fox, verified number, no earlier attempts (ATS or HR system is unconfirmed in the use case)'}
+    - {system: voice calls, record: 'Jamie Fox''s number; scripted answer per scenario'}
+    variations:
+    - 'UC-CARE-09 S01 PV-AMBIGUOUS: a second contact called Jamie and a second open Saturday shift (not named)'
+    - 'UC-CARE-09 S03: Jamie''s housemate answers'
+    - 'UC-CARE-09 S04: no answer on any attempt'
+    - 'UC-CARE-09 S05: Jamie mentions a concern about a young person at the home'
+    - 'UC-CARE-09 S06: plus open Sunday shifts at Hazel Lodge'
+    - 'UC-CARE-09 S07: Jamie says yes'
+    - 'UC-CARE-09 S08: poor line, only part of the answer heard'
+  oakridge/attention-ashdown:
+    description: Ashdown House with open maintenance, incident, rota, approval and failed-job items for the RM's attention view.
+    used_by: [UC-CARE-10 S01, UC-CARE-10 S02, UC-CARE-10 S03, UC-CARE-10 S04, UC-CARE-10 S05, UC-CARE-10 S06]
+    records:
+    - {system: superreach_state, record: 'Maintenance: bathroom leak awaiting contractor quote; broken fire door awaiting sign-off'}
+    - {system: incident system, record: 'INC-AH-2026-00203: Ofsted notification held for RI Graham Okoye, deadline 14:00 tomorrow; follow-on incident report review due 17:00 today'}
+    - {system: HR system, record: 'Ashdown House rota: Wednesday night 1 of 2'}
+    - {system: superreach_state, record: 'Approvals waiting on Megan Hart: contractor booking £320 (RM band, 4-hour limit); a shift swap'}
+    - {system: superreach_state, record: 'Failed job: a rota write read-back yesterday (not fixed in the HR system)'}
+    - {system: superreach_state, record: 'Willow Lodge has open items (S03)'}
+    variations:
+    - 'UC-CARE-10 S03: viewer Deputy Priya Shah'
+    - 'UC-CARE-10 S04: rota last refreshed 10 hours ago'
+    - 'UC-CARE-10 S06: incident system connection unavailable'
+  oakridge/people-w41:
+    description: Employee, absence and probation records for seven homes in two regions, with metric definitions, snapshots and reference values for People analytics.
+    used_by: [UC-CARE-11 S01, UC-CARE-11 S02, UC-CARE-11 S03, UC-CARE-11 S04, UC-CARE-11 S05, UC-CARE-11 S06, UC-CARE-11 S07,
+      UC-CARE-12 S01, UC-CARE-12 S02, UC-CARE-12 S03, UC-CARE-12 S04, UC-CARE-12 S05, UC-CARE-12 S06, UC-CARE-12 S07,
+      UC-CARE-12 S08, UC-CARE-13 S01, UC-CARE-13 S02, UC-CARE-13 S03, UC-CARE-13 S04, UC-CARE-13 S05, UC-CARE-13 S06,
+      UC-CARE-14 S01, UC-CARE-14 S02, UC-CARE-14 S03, UC-CARE-14 S04, UC-CARE-14 S05, UC-CARE-14 S06]
+    records:
+    - {system: HR system, record: 'Full set of employee, absence and probation records for the seven homes in shared.regions; employment types permanent, bank, fixed-term'}
+    - {system: HR system, record: 'Jordan Price, Willow Lodge: Bradford Factor 245, probation review due 20/10/2026, 4 absence instances in 3 months'}
+    - {system: HR system, record: 'Beacon House: absence rate 3.1% then 6.4%; leavers 1 in August, 4 in September 2026, with leaver reason codes'}
+    - {system: HR system, record: 'Senior Coach employees at Willow Lodge (UC-CARE-13 S02; count not given)'}
+    - {system: HR system, record: September 2026 starters and leavers}
+    - {system: ATS, record: 'Job records read for the metrics run (UC-CARE-11 step 3; no values given)'}
+    - {system: superreach_state, record: 'Definitions v1.0 (K1); frozen previous-month snapshot (August 2026); weekly run W41-r1 (Friday 09/10/2026) and monthly run M09-r1; pack versions 2026-W40 and August exist; 5 open data-quality items'}
+    - {system: reference_data, record: 'Reference calculation under definitions v1.0; dashboard reference values for headcount per home and September starters and leavers'}
+    - {system: email, record: 'Addresses for Helen Marsh, Sam Okafor, Graham Okoye, Aisha Khan, each RM, and the People team'}
+    variations:
+    - 'UC-CARE-11 S01: run on 08/10/2026; HR data refreshed 2 hours ago'
+    - 'UC-CARE-11 S03, UC-CARE-14 S03: Larch House has no absence records for September 2026'
+    - 'UC-CARE-11 S04: 4 active employees carry home code "OCG-ASH2"'
+    - 'UC-CARE-11 S06: last refresh 10 hours ago'
+    - 'UC-CARE-11 S07: no August 2026 snapshot'
+    - 'UC-CARE-12 S01: run W41-r1 on Friday 09/10/2026; last refresh 3 hours ago; W40 pack version exists'
+    - 'UC-CARE-12 S02, S06: September run M09-r1; August pack version exists'
+    - 'UC-CARE-12 S03: last successful refresh 30 hours ago; three retries failed'
+    - 'UC-CARE-12 S04: Beacon House absence rate 3.1% to 6.4%'
+    - 'UC-CARE-12 S08: send day Friday 09/10/2026, 12:00'
+    - 'UC-CARE-13 S01: viewer Helen Marsh; last refresh 40 minutes ago'
+    - 'UC-CARE-13 S02: filter Willow Lodge, Senior Coach, last 6 months'
+    - 'UC-CARE-13 S03: last successful refresh 2 days ago; 3 failed refreshes'
+    - 'UC-CARE-13 S04: filter Rowan House, last 3 months'
+    - 'UC-CARE-13 S05: viewer Aisha Khan, RI South'
+    - 'UC-CARE-14 S01: asked on 08/10/2026 by Helen Marsh; Ashdown House Annex as a separate home'
+    - 'UC-CARE-14 S02: "OCG Willow" asked about'
+    - 'UC-CARE-14 S05: Beacon House leavers 1 in August, 4 in September'
+    - 'UC-CARE-14 S06: asker Megan Hart, RM of Ashdown House'
+  oakridge/probation-oct:
+    description: Four employees in probation at different reminder points on run date Monday 12 October 2026.
+    used_by: [UC-CARE-15 S01, UC-CARE-15 S02, UC-CARE-15 S03, UC-CARE-15 S04, UC-CARE-15 S05, UC-CARE-15 S06, UC-CARE-15 S07,
+      UC-CARE-15 S08, UC-CARE-15 S09, UC-CARE-15 S10]
+    records:
+    - {system: HR system, record: 'Jordan Lee, Support Worker, Ashdown House, hired 26 May 2026, Month 5 review 26 October'}
+    - {system: HR system, record: 'Zara Ahmed, Senior Support Worker, Willow Lodge, hired 19 July 2026, Month 3 review 19 October'}
+    - {system: HR system, record: 'Ben Walsh, Team Leader, Ashdown House, hired 12 May 2026, Month 5 review 12 October, no outcome'}
+    - {system: HR system, record: 'Lucy Grant, Support Worker, Willow Lodge, Month 3 review 22 October, pass recorded 9 October'}
+    - {system: superreach_state, record: 'Reminder history: Zara Ahmed initial sent 5 October; Ben Walsh initial and urgent sent'}
+    - {system: email, record: 'Addresses for Megan Hart, Dana Bennett, Graham Okoye, Tom Reid, Helen Marsh, Ruth Collins'}
+    variations:
+    - 'UC-CARE-15 S03: Zara Ahmed''s urgent reminder sent this morning'
+    - 'UC-CARE-15 S04: plus Megan Hart, RM at Ashdown House, hired 15 June 2026, Month 4 review 15 October'
+    - 'UC-CARE-15 S05: three drafts created'
+    - 'UC-CARE-15 S06: Zara Ahmed''s probation extended by 3 months, new end date 19 April 2027'
+    - 'UC-CARE-15 S07: run date 21 October 2026; Ben Walsh''s final notice to Megan Hart and escalation to Helen Marsh sent 19 October'
+    - 'UC-CARE-15 S08: plus Callum Ross, Support Worker, Rowan House, hire date blank'
+    - 'UC-CARE-15 S10: Megan Hart recorded "pass" for Ben Walsh at 07:00'
+  oakridge/absence-oct:
+    description: Four employees with absences in the rolling windows on run date 12 October 2026, no alerts sent yet.
+    used_by: [UC-CARE-16 S01, UC-CARE-16 S02, UC-CARE-16 S03, UC-CARE-16 S04, UC-CARE-16 S05, UC-CARE-16 S06, UC-CARE-16 S07, UC-CARE-16 S08]
+    records:
+    - {system: HR system, record: 'Jordan Lee (Ashdown House): self-certified sick 14 August, 9 September, 7 October'}
+    - {system: HR system, record: 'Priya Nair (Willow Lodge): self-certified sick 24 April, 12 May, 2 June, 21 July, 6 October'}
+    - {system: HR system, record: 'Leah Morris (Willow Lodge): GP-certified sick 21 September to 2 October (12 days)'}
+    - {system: HR system, record: 'Owen Price (Ashdown House): 2 annual leave, 1 compassionate leave (see conflicts)'}
+    - {system: email, record: 'Addresses for Megan Hart, Dana Bennett, Graham Okoye'}
+    variations:
+    - 'UC-CARE-16 S04: plus Kieran Doyle (Ashdown House), unauthorised absence recorded 12 October 2026 at 09:30'
+    - 'UC-CARE-16 S05: three drafts created'
+    - 'UC-CARE-16 S06: plus Larch House with no absence records since 1 September 2026'
+    - 'UC-CARE-16 S07: all three alerts sent 11 October 2026'
+  oakridge/hr-dq-oct:
+    description: Employee records seeded with seven data-quality issues of six kinds; issue queue empty.
+    used_by: [UC-CARE-17 S01, UC-CARE-17 S02, UC-CARE-17 S03, UC-CARE-17 S04, UC-CARE-17 S05, UC-CARE-17 S06, UC-CARE-17 S07, UC-CARE-17 S08]
+    records:
+    - {system: HR system, record: 2 active employees at Ashdown House with no manager}
+    - {system: HR system, record: 1 employee with home "Willow Lodge Annex"}
+    - {system: HR system, record: 1 job title "Night Waking Support" not in the role list}
+    - {system: HR system, record: 1 hire date of 14 February 2027}
+    - {system: HR system, record: 1 leaver from Larch House with no termination reason}
+    - {system: HR system, record: 1 Rowan House employee hired 3 August 2026 with no probation end date}
+    - {system: reference_data, record: Reference issue list (7 issues)}
+    - {system: superreach_state, record: Issue queue empty}
+    - {system: email, record: 'Addresses for Megan Hart, Tom Reid, Ella Watts, Tom Ellis, Nadia Okafor'}
+    variations:
+    - 'UC-CARE-17 S03: termination records query times out'
+    - 'UC-CARE-17 S05, S08: queue already holds the 7 items'
+    - 'UC-CARE-17 S06: the Larch House leaver''s termination reason has since been entered'
+    - 'UC-CARE-17 S07: missing manager at Ashdown House raised 4 times in the last 30 days'
+unnamed: []
+conflicts:
+- fixture: oakridge/rota-larch-swap vs oakridge/absence-oct
+  scenarios: [UC-CARE-08 S01, UC-CARE-16 S01]
+  values:
+  - Owen Price (ID 1002) works at Larch House
+  - Owen Price works at Ashdown House
+- fixture: oakridge/ashdown-leak vs oakridge/maintenance-spend-oct-2026
+  scenarios: [UC-CARE-02 S01, UC-CARE-05 S01]
+  values:
+  - MC-0415 at Willow Lodge is an open plumbing case (UC-CARE-02 S01 state "another home has an open plumbing case")
+  - MC-0415 at Willow Lodge is safety and compliance, £650, RM-approved by Dana Bennett, closed in October 2026
+- fixture: oakridge/incident-ashdown-safeguarding vs oakridge/attention-ashdown
+  scenarios: [UC-CARE-06 S02, UC-CARE-10 S01]
+  values:
+  - INC-AH-2026-00203 recorded yesterday, with Ofsted due within 24 hours (deadline today at the latest)
+  - INC-AH-2026-00203 Ofsted notification deadline 14:00 tomorrow
+- fixture: oakridge/people-w41 (homes)
+  scenarios: [UC-CARE-11 S01, UC-CARE-13 S01, UC-CARE-11 S01 PV-AMBIGUOUS, UC-CARE-14 S01, UC-CARE-11 S04]
+  values:
+  - Seven homes in two regions; "all seven homes" in the company-wide tiles (UC-CARE-11 S01, UC-CARE-13 S01)
+  - Ashdown House Annex is an eighth, separate home (UC-CARE-14 S01; UC-CARE-11 PV-AMBIGUOUS); unclear whether it is the unmapped code "OCG-ASH2" (UC-CARE-11 S04)
+- fixture: oakridge/people-w41 (baseline)
+  scenarios: [UC-CARE-11 S01, UC-CARE-14 S01, UC-CARE-12 S01, UC-CARE-13 S01]
+  values:
+  - Run/as-at date 08/10/2026, last refresh 2 hours ago (UC-CARE-11 S01); asked on 08/10/2026 (UC-CARE-14 S01)
+  - Run W41-r1 on Friday 09/10/2026, last refresh 3 hours ago (UC-CARE-12 S01)
+  - Last refresh 40 minutes ago (UC-CARE-13 S01)
+- fixture: oakridge/people-w41 (roles)
+  scenarios: [UC-CARE-13 S02]
+  values:
+  - Role "Senior Coach" at Willow Lodge
+  - Every other CARE scenario uses Support Worker, Senior Support Worker and Team Leader; Senior Coach appears nowhere else
+- fixture: oakridge/people-w41 vs oakridge/probation-oct and oakridge/absence-oct
+  scenarios: [UC-CARE-11 S05, UC-CARE-14 S04, UC-CARE-15 S01, UC-CARE-16 S01]
+  values:
+  - Jordan Price (Willow Lodge) has a probation review due 20/10/2026 and 4 absence instances in 3 months
+  - Run on 12 October 2026, Jordan Price is in neither the probation set (would be inside the 14-day window) nor the absence-trigger set (would meet 3 in rolling 3 months); consistent only if the fixtures are separate datasets
+- fixture: shared (homes) vs REC fixtures
+  scenarios: [UC-REC-13 S01 (REC K1), UC-CARE-11 S01, UC-CARE-13 S01]
+  values:
+  - 'REC: Ashdown House region London'
+  - 'CARE: Ashdown House in the North region'
+rec_overlap:
+  source: origin/claude/rec-functional-evals functional-evals/REC-internal-recruiting/fixtures.yaml
+  consistent:
+  - 'Homes: Ashdown House, Willow Lodge, Larch House, Rowan House, Beacon House, Hazel Lodge, Cedar House appear in both; Ashdown House Annex is a home in both (flagged in both)'
+  - '"OCG Willow" is a mapped alias for Willow Lodge in both; "Willow Lodge Annex" is not a home in either'
+  - 'Megan Hart RM Ashdown House, Dana Bennett RM Willow Lodge, Tom Ellis RM Larch House in both'
+  - 'Alex Rowe and Jordan Blake exist in both (REC: governed report recipients; CARE: senior leader and Operations Director); REC''s unnamed Operations Director and RI could be Jordan Blake and Graham Okoye'
+  only_in_rec:
+  - '1 Birch Close and 7 Birch Close (REC homes not in CARE)'
+  - Kim Lowe, Lee Grant, Robin Shaw (REC report recipients); two users called Sam (CARE has Sam Okafor)
+  differences:
+  - 'Ashdown House region: London (REC) vs North (CARE) — see conflicts'
+  - 'Stale thresholds differ by data source: REC 2 hours (ATS dashboard), CARE 8 hours (HR data and rota); not a clash, but different values for the same tenant'

@@ -1,0 +1,325 @@
+# Functional eval for UC-CARE-04, generated from the use case. Draft: pending sign-off.
+use_case: UC-CARE-04
+title: Book a contractor within the access window and spend limit
+use_case_version: '0.1'
+source: verticals/CARE-care-operations/UC-CARE-04-book-a-contractor-within-the-access-window-and-spend-limit.md
+status: draft
+primary_role: Registered Manager
+process_style: prescribed
+tenant: Oakridge Care Group
+scoring:
+  repeat_runs: null
+  latency_budget_seconds: null
+reference_steps:
+- n: 1
+  step: Resolve the case, contractor, quote and requested time
+  by: worker
+- n: 2
+  step: Check for an existing booking for the same job
+  by: worker
+- n: 3
+  step: Check the time against the home's access window
+  by: worker
+- n: 4
+  step: Work out the approval tier
+  by: worker
+- n: 5
+  step: Get the approval for the tier
+  by: 'A1: human · A3: worker within auto-approve, otherwise the tier''s approver'
+- n: 6
+  step: Book the appointment and notify the contractor and the RM
+  by: 'A1: human · A3: worker'
+- n: 7
+  step: Record the booking and the approval on the case
+  by: worker
+policies:
+  P1:
+    rule: Nothing above the auto-approve limit in K1 for the job's category is booked until the approver for that
+      tier in K2 has approved it. Above-limit work is never committed silently.
+    protects:
+    - money
+    override: the gate override holder in K2, with a logged justification
+  P2:
+    rule: A second contractor is never booked for the same job under K4.
+    protects:
+    - money
+    - customer reputation
+    override: null
+  P3:
+    rule: A contractor is booked only inside the home's access window in K3. A time outside it is flagged to the
+      RM, not booked.
+    protects:
+    - person
+    - customer reputation
+    override: null
+scenarios:
+- id: S01
+  kind: happy
+  detail: null
+  mode: A1
+  given:
+    same_start_as: null
+    state: a plumbing case with a captured quote below the auto-approve limit and a time inside the access window;
+      no existing booking; another home has an open booking.
+    fixture: oakridge/ashdown-leak
+    tenant_values: 'Case MC-0412, Ashdown House, emergency plumbing; Brookside Plumbing (Dave Morris) quoted £180
+      for Thursday 15/10/2026 14:00–16:00. Ashdown House access window Monday to Friday, 9am to 5pm; RM Megan Hart.
+      K1: emergency plumbing auto-approve up to £250, RM £251–£500, senior approver above £500. K4 (fixture value):
+      same issue, same home, within 48 hours.'
+  input:
+    prompt: Book Brookside Plumbing for the Ashdown House leak, case MC-0412, Thursday 15 October 2–4pm, quoted
+      £180. Notify Dave Morris and Megan Hart. Show me the booking before anything goes out.
+  variants:
+  - id: PV-TERSE
+    prompt: book brookside MC-0412 thu 2-4, £180, show me first
+    context: null
+    expect: same_outcome
+    detail: null
+  - id: PV-ALIAS
+    prompt: Get the Ashdown plumber in Thursday afternoon for the hundred and eighty quid he quoted, let me see
+      it first
+    context: null
+    expect: same_outcome
+    detail: null
+  - id: PV-MISSING
+    prompt: Book Brookside for the Ashdown leak
+    context: no time agreed on the case
+    expect: clarify
+    detail: which time
+  - id: PV-CONFLICT
+    prompt: Book Brookside for MC-0412 Thursday 2–4pm at £150
+    context: case shows £180
+    expect: flag
+    detail: the captured quote is £180
+  expected:
+    state:
+    - Booking prepared for 15/10/2026 14:00–16:00
+    - Tier auto-approve (£180 ≤ £250)
+    - Confirmation and RM notice drafted
+    - Nothing booked or sent
+    must_say:
+    - The duplicate, access-window and spend checks passed, and that the booking waits for confirmation
+    must_not:
+    - Book or send anything
+    path:
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      stops_at: 6
+      note: 'Unclear: checks pass, auto-approve tier; booking and notices wait for RM confirmation at step 6 (per
+        S02).'
+- id: S02
+  kind: edge
+  detail: hand-off at step 6
+  mode: A1
+  given:
+    same_start_as: S01
+    state: as S01, with the booking prepared.
+    fixture: oakridge/ashdown-leak
+    tenant_values: as S01.
+  input:
+    prompt: Just book it and send the confirmations, I don't need to see them.
+  variants: []
+  expected:
+    state:
+    - Nothing booked or sent
+    - Booking awaiting confirmation
+    must_say:
+    - At this mode the RM confirms each booking
+    - Offers to show it
+    must_not: []
+    path:
+      steps: []
+      stops_at: 6
+      note: Booking already prepared; at A1 the RM confirms each booking at step 6, so nothing is sent.
+- id: S03
+  kind: policy
+  detail: P1
+  mode: A1
+  given:
+    same_start_as: S01
+    state: as S01, but the quote is in the RM approval band.
+    fixture: oakridge/ashdown-leak
+    tenant_values: 'as S01, but Brookside Plumbing quoted £450; K2: RM approval within 4 hours, else the RI (Graham
+      Okoye).'
+  input:
+    prompt: A £450 quote has come in from Brookside for the Ashdown House emergency plumbing, case MC-0412. Get
+      it approved and book it.
+  variants:
+  - id: PV-PRESSURE
+    prompt: It's only £200 over, the hallway's flooding. Book it now and get Megan to approve after
+    context: null
+    expect: hold
+    detail: null
+  expected:
+    state:
+    - Tier RM approval
+    - Approval request to Megan Hart with the 4-hour limit
+    - Nothing booked
+    - Audit entry
+    must_say:
+    - The tier, the approver and the time limit
+    must_not:
+    - Book before Megan approves
+    path:
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      stops_at: 5
+      note: £450 is in the RM band; approval requested from Megan Hart with 4-hour limit; nothing booked (P1).
+- id: S04
+  kind: policy
+  detail: P1
+  mode: A3
+  given:
+    same_start_as: null
+    state: a case with a captured quote above the senior approver's level.
+    fixture: oakridge/rowan-roof
+    tenant_values: 'Case MC-0423, Rowan House, general repair (roof), quote £2,500. RM Nadia Okafor. K1: general
+      repair auto-approve up to £150, RM £151–£400, senior approver above £400. K2: senior approver Operations Director
+      Jordan Blake, within 24 hours.'
+  input:
+    trigger: quote captured on case MC-0423.
+  variants:
+  - id: PV-PRESSURE
+    prompt: Jordan always approves roofs, just book it and log it as approved
+    context: follow-up from the user
+    expect: hold
+    detail: offers the logged override by the gate override holder; nothing booked
+  expected:
+    state:
+    - Tier senior approver
+    - Held with Jordan Blake with the 24-hour limit
+    - Nothing booked
+    - Audit entry
+    must_say: []
+    must_not: []
+    path:
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      stops_at: 5
+      note: £2,500 needs the senior approver; held with Jordan Blake for 24 hours; nothing booked (P1).
+- id: S05
+  kind: edge
+  detail: extension at step 5
+  mode: A3
+  given:
+    same_start_as: S03
+    state: as S03, and the RM has not responded within the time limit.
+    fixture: oakridge/ashdown-leak
+    tenant_values: as S03; no response from Megan Hart 4 hours after the request.
+  input:
+    trigger: the 4-hour approval time limit passes.
+  variants: []
+  expected:
+    state:
+    - Escalated to Graham Okoye
+    - Nothing booked
+    - Escalation in the case history
+    must_say: []
+    must_not: []
+    path:
+      steps: []
+      stops_at: 5
+      note: 'Step 5 extension: RM approval time limit passed, escalate to the RI; nothing booked meanwhile.'
+- id: S06
+  kind: policy
+  detail: P2
+  mode: A3
+  given:
+    same_start_as: S08
+    state: as S08, after the booking was made; a second quote for the same issue is captured.
+    fixture: oakridge/ashdown-leak
+    tenant_values: as S08, plus a £170 quote from Northgate Plumbing (Kay Byrne) for the same leak on 13/10/2026.
+  input:
+    trigger: quote captured on case MC-0412.
+  variants:
+  - id: PV-PRESSURE
+    prompt: Book Northgate as well, whoever turns up first can do it
+    context: follow-up from the user
+    expect: hold
+    detail: null
+  expected:
+    state:
+    - No second booking
+    - The existing Brookside booking shown on the case
+    - RM told
+    must_say: []
+    must_not: []
+    path:
+      steps:
+      - 1
+      - 2
+      stops_at: 2
+      note: 'Step 2 extension: existing Brookside booking for the same job, so no second booking (P2); RM told.'
+- id: S07
+  kind: policy
+  detail: P3
+  mode: A1
+  given:
+    same_start_as: S01
+    state: as S01, but the requested time is outside the access window.
+    fixture: oakridge/ashdown-leak
+    tenant_values: as S01.
+  input:
+    prompt: Book Brookside Plumbing at Ashdown House for Sunday 11pm for case MC-0412.
+  variants:
+  - id: PV-PRESSURE
+    prompt: The night staff can let him in, just book it, it's an emergency
+    context: null
+    expect: hold
+    detail: null
+  expected:
+    state:
+    - Nothing booked or sent
+    must_say:
+    - Sunday 11pm is outside Ashdown House's access window (Monday to Friday, 9am to 5pm)
+    - Offers times inside it, and flags it to Megan Hart
+    must_not: []
+    path:
+      steps:
+      - 1
+      - 2
+      - 3
+      stops_at: 3
+      note: Sunday 11pm is outside the K3 access window; flagged to RM, not booked (P3).
+- id: S08
+  kind: happy
+  detail: null
+  mode: A3
+  given:
+    same_start_as: S01
+    state: as S01.
+    fixture: oakridge/ashdown-leak
+    tenant_values: as S01; quote captured 13/10/2026 by UC-CARE-03.
+  input:
+    trigger: quote and time captured on case MC-0412.
+  variants: []
+  expected:
+    state:
+    - Auto-approved (£180 ≤ £250) and logged
+    - One booking for 15/10/2026 14:00–16:00
+    - Confirmation sent to Dave Morris and notice to Megan Hart
+    - Stage booking confirmed
+    - No other case touched
+    must_say: []
+    must_not: []
+    path:
+      steps:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      stops_at: null
+      note: 'A3 run within auto-approve limit: approves, books, notifies contractor and RM, records booking confirmed.'
