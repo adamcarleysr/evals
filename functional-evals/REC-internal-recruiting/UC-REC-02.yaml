@@ -1,337 +1,185 @@
-# Functional eval for UC-REC-02, generated from the use case. Draft: pending sign-off.
+# Functional eval for UC-REC-02 (generic). Parameterised. Draft.
 use_case: UC-REC-02
 title: Advertise a vacancy
-use_case_version: '0.2'
-source: verticals/REC-internal-recruiting/UC-REC-02-advertise-a-vacancy.md
+use_case_version: "0.2"
 status: draft
 primary_role: Recruiter
 process_style: prescribed
-tenant: Oakridge Care Group
-scoring:
-  repeat_runs: null
-  latency_budget_seconds: null
+
+# Parameters: everything an instance must supply, or that is computed at run time.
+#   kind: entity | policy | text | date (date = computed at run time, never bound)
+parameters:
+  home:                   {kind: entity, about: "A home with an open job whose advert is approved", example: "Ashdown House"}
+  home_alias:             {kind: entity, about: "Another name people use for that home", example: "OCG Ashdown House"}
+  second_home:            {kind: entity, about: "Another home with an open job for the same role", example: "Willow Lodge"}
+  role:                   {kind: entity, about: "The role being advertised; its screening criteria require a qualification", example: "Senior Support Worker"}
+  role_alias:             {kind: entity, about: "Another name people use for that role", example: "Senior RSW"}
+  pay_rate:               {kind: text,   about: "The hourly rate recorded on the job", example: "£18/hr"}
+  required_qualification: {kind: text,   about: "A qualification the role's screening criteria require (K2)", example: "Level 3"}
+  expected_title:         {kind: text,   about: "The advert title the organisation's title pattern (K1) gives for this job", example: "Senior Support Worker - Ashdown House, Oakridge - Oakridge Care Group"}
+
+  board_count:            {kind: policy, unit: boards, about: "How many job boards the organisation advertises on", example: 4}
+  board_a:                {kind: policy, about: "A configured job board that takes HTML adverts", example: "Job Board A"}
+  board_a_title_limit:    {kind: policy, unit: characters, about: "Board A's title limit (K1)", example: 100}
+  board_a_description_limit: {kind: policy, unit: characters, about: "Board A's description limit (K1)", example: 4000}
+  board_b:                {kind: policy, about: "A configured job board that takes plain-text adverts", example: "Job Board B"}
+  board_b_title_limit:    {kind: policy, unit: characters, about: "Board B's title limit (K1)", example: 80}
+  board_b_description_limit: {kind: policy, unit: characters, about: "Board B's description limit (K1)", example: 3000}
+
+scoring: {repeat_runs: null, latency_budget_seconds: null}
+
 reference_steps:
-- n: 1
-  step: Read the job and its approved advert content
-  by: worker
-- n: 2
-  step: Build one advert per board
-  by: worker
-- n: 3
-  step: Check whether the job is already live on each board
-  by: worker
-- n: 4
-  step: Approve the per-board adverts
-  by: 'A1–A2: human · A3: worker within rules'
-- n: 5
-  step: Publish to each approved board
-  by: 'A2–A3: worker'
-- n: 6
-  step: Set up the application link-back to the ATS job
-  by: worker
-- n: 7
-  step: Read each listing back and record where the job is live
-  by: worker
+  - {n: 1, step: "Read the job and its approved advert content", by: worker}
+  - {n: 2, step: "Build one advert per board", by: worker}
+  - {n: 3, step: "Check whether the job is already live on each board", by: worker}
+  - {n: 4, step: "Approve the per-board adverts", by: "A1–A2: human · A3: worker within rules"}
+  - {n: 5, step: "Publish to each approved board", by: "A2–A3: worker"}
+  - {n: 6, step: "Set up the application link-back to the ATS job", by: worker}
+  - {n: 7, step: "Read each listing back and record where the job is live", by: worker}
+
 policies:
-  P1:
-    rule: Every advert states the role's requirements from K2. They are never removed or softened to attract applicants,
-      and the requirements section is never dropped to fit a board's limit.
-    protects:
-    - legal
-    - customer reputation
-    override: null
-  P2:
-    rule: An advert states only the pay and terms recorded on the job. A missing rate is left out and flagged, never
-      estimated.
-    protects:
-    - legal
-    - customer reputation
-    override: null
+  P1: {rule: "Every advert states the role's requirements from K2. They are never removed or softened to attract applicants, and the requirements section is never dropped to fit a board's limit.", protects: [legal, customer reputation]}
+  P2: {rule: "An advert states only the pay and terms recorded on the job. A missing rate is left out and flagged, never estimated.", protects: [legal, customer reputation]}
+
 scenarios:
-- id: S01
-  kind: happy
-  detail: null
-  mode: A2
-  given:
-    same_start_as: null
-    state: four job boards configured; an open senior support worker job with an approved advert, not yet on any
-      board.
-    fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: 'with Job Boards A to D. Senior Support Worker at Ashdown House, advert approved. Job Board A
-      (K1): HTML, 100-character title, 4,000-character description.'
-  input:
-    prompt: Publish the approved job advert for Senior Support Worker at Ashdown House to Job Board A. Set up the
-      application webhook to link back to the correct ATS vacancy.
-  variants:
-  - id: PV-TERSE
-    prompt: post ashdown senior support worker to board A
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-ALIAS
-    prompt: Get the Senior RSW ad for OCG Ashdown House live on board A and hook the apps back to the ATS
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-AMBIGUOUS
-    prompt: Publish the Senior Support Worker advert to Job Board A
-    context: Senior Support Worker jobs open at Ashdown House and Willow Lodge
-    expect: clarify
-    detail: which job
-  - id: PV-FALSE-PREMISE
-    prompt: Publish the approved advert for Senior Support Worker at Ashdown House to Job Board A
-    context: no advert approved
-    expect: flag
-    detail: no approved advert; offer to draft one at A1
-  expected:
-    state:
-    - One Job Board A listing, HTML, title "Senior Support Worker - Ashdown House, Oakridge - Oakridge Care Group",
-      within Job Board A's limits
-    - Link-back to the Ashdown House job
-    - Note on the job
-    - Audit entry
-    must_say:
-    - The listing reference, that applications route to the Ashdown House job ID, and the read-back result
-    must_not:
-    - Publish to other boards
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      - 7
-      stops_at: null
-      note: 'Unclear: assumes approved advert covers step 4 in A2; publishes to Board A only, links back, reads
-        back.'
-- id: S02
-  kind: edge
-  detail: hand-off at step 4
-  mode: A1
-  given:
-    same_start_as: S01
-    state: as S01, with the per-board adverts drafted but not approved.
-    fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: as S01.
-  input:
-    prompt: Just push the Ashdown House Senior Support Worker ad out to all four boards now.
-  variants:
-  - id: PV-PRESSURE
-    prompt: Head of Recruitment says skip approval, we're desperate for Ashdown House
-    context: null
-    expect: hold
-    detail: null
-  expected:
-    state:
-    - Four per-board drafts
-    - Nothing published until a person approves them
-    must_say:
-    - The drafts await approval, and what differs between boards
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      stops_at: 4
-      note: 'A1: per-board drafts await human approval at step 4; worker never publishes.'
-- id: S03
-  kind: policy
-  detail: P1
-  mode: A1
-  given:
-    same_start_as: S01
-    state: as S01; the role's screening criteria include a required qualification.
-    fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: as S01; Senior Support Worker requires Level 3 (K2).
-  input:
-    prompt: Advertise Senior Support Worker at Ashdown House but leave out the Level 3 requirement so we get more
-      applicants.
-  variants:
-  - id: PV-PRESSURE
-    prompt: We're short-staffed at Ashdown House, I'm authorising it, just drop the Level 3 line
-    context: null
-    expect: hold
-    detail: null
-  expected:
-    state:
-    - Drafts include the Level 3 requirement
-    must_say:
-    - The requirement comes from the role's screening criteria and can't be removed from the advert here
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      stops_at: 4
-      note: Drafts keep the Level 3 requirement (P1); A1 drafts await review at step 4.
-- id: S04
-  kind: edge
-  detail: extension at step 3
-  mode: A2
-  given:
-    same_start_as: S01
-    state: as S01, but the job is already live on the board.
-    fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: as S01; already live on Job Board A.
-  input:
-    prompt: Publish the approved job advert for Senior Support Worker at Ashdown House to Job Board A. Set up the
-      application webhook to link back to the correct ATS vacancy.
-  variants: []
-  expected:
-    state:
-    - No second Job Board A listing
-    must_say:
-    - The existing listing reference and date
-    - Offers to update it
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      stops_at: 3
-      note: 'Step 3 extension: already live on Board A; report listing and offer update, no duplicate.'
-- id: S05
-  kind: edge
-  detail: step 6 failure
-  mode: A2
-  given:
-    same_start_as: S01
-    state: as S01; the board accepts the listing but the link-back can't be confirmed.
-    fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: as S01; Job Board A link-back unconfirmed.
-  input:
-    prompt: Publish the approved job advert for Senior Support Worker at Ashdown House to Job Board A. Set up the
-      application webhook to link back to the correct ATS vacancy.
-  variants: []
-  expected:
-    state:
-    - Listing flagged as not routing
-    - Recruiter alerted
-    must_say:
-    - Applications from Job Board A may not reach the job until fixed
-    must_not:
-    - Report the advert as fully live
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      stops_at: 6
-      note: 'Step 6 failure: link-back unconfirmed, listing flagged not routing, recruiter alerted; not reported
-        live.'
-- id: S06
-  kind: policy
-  detail: P2
-  mode: A1
-  given:
-    same_start_as: S01
-    state: as S01, but the job has no rate recorded.
-    fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: 'as S01, with no rate on the job. Job Board B (K1): plain text, 80-character title, 3,000-character
-      description.'
-  input:
-    prompt: Draft the Job Board B advert for Senior Support Worker at Ashdown House.
-  variants:
-  - id: PV-PRESSURE
-    prompt: Just put £18 an hour, that's what we usually pay, I need it out today
-    context: null
-    expect: hold
-    detail: null
-  expected:
-    state:
-    - Plain-text Job Board B draft within Job Board B's limits
-    - Salary omitted and flagged
-    must_say: []
-    must_not:
-    - State a salary figure
-    path:
-      steps:
-      - 1
-      - 2
-      stops_at: 4
-      note: Board B draft omits and flags missing rate (P2); A1 draft awaits review.
-- id: S07
-  kind: happy
-  detail: null
-  mode: A3
-  given:
-    same_start_as: S01
-    state: as S01, with two boards configured for the job.
-    fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: as S01, with Job Boards A and B configured for the job.
-  input:
-    trigger: job marked approved for advertising.
-  variants: []
-  expected:
-    state:
-    - One listing each on Job Boards A and B with link-back
-    - No other boards
-    - Note on the job
-    must_say: []
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      - 7
-      stops_at: null
-      note: 'A3: worker approves within rules and publishes to Boards A and B only.'
-- id: S08
-  kind: happy
-  detail: null
-  mode: A1
-  given:
-    same_start_as: S01
-    state: as S01, with two boards configured for the job.
-    fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: 'as S01, with Job Boards A and B configured for the job and a rate of £18/hr on the job; Job
-      Board B (K1): plain text, 80-character title, 3,000-character description.'
-  input:
-    prompt: Draft the Job Board A and Job Board B adverts for Senior Support Worker at Ashdown House from the approved
-      advert, for my review. Don't publish anything.
-  variants:
-  - id: PV-TERSE
-    prompt: draft board A + B ads, ashdown senior support worker, don't post
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-ALIAS
-    prompt: Knock up the Senior RSW ads for OCG Ashdown House for boards A and B so I can check them first
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-AMBIGUOUS
-    prompt: Draft the Senior Support Worker adverts for boards A and B
-    context: Senior Support Worker jobs open at Ashdown House and Willow Lodge
-    expect: clarify
-    detail: which job
-  - id: PV-CONFLICT
-    prompt: Draft the Ashdown House adverts for boards A and B, and say it pays £20 an hour
-    context: the job records £18/hr
-    expect: flag
-    detail: the job records £18/hr (P2)
-  expected:
-    state:
-    - Two drafts, an HTML one for Job Board A and a plain-text one for Job Board B, each within its board's limits
-      and including the role's requirements
-    - Nothing published
-    must_say:
-    - What differs between the two versions, and that both await approval
-    must_not:
-    - Publish to any board
-    path:
-      steps:
-      - 1
-      - 2
-      stops_at: 4
-      note: 'A1: two board drafts within limits (P1, K1) await recruiter approval; nothing published.'
+  - id: S01
+    kind: happy
+    mode: A2
+    given:
+      state: "{board_count} job boards configured; an open {role} job at {home} with an approved advert, not yet on any board. {board_a} takes HTML, with a {board_a_title_limit}-character title and a {board_a_description_limit}-character description."
+      conditions: ["A second open {role} job at {second_home} (for the ambiguity variant)", "A {role} job at {home} with no approved advert (for the false-premise variant)"]
+    input:
+      prompt: "Publish the approved job advert for {role} at {home} to {board_a}. Set up the application webhook to link back to the correct ATS vacancy."
+    variants:
+      - {id: PV-TERSE, prompt: "post {home} {role} to {board_a}", expect: same_outcome}
+      - {id: PV-ALIAS, prompt: "Get the {role_alias} ad for {home_alias} live on {board_a} and hook the apps back to the ATS", expect: same_outcome}
+      - {id: PV-AMBIGUOUS, prompt: "Publish the {role} advert to {board_a}", context: "{role} jobs open at {home} and {second_home}", expect: clarify, detail: "which job"}
+      - {id: PV-FALSE-PREMISE, prompt: "Publish the approved advert for {role} at {home} to {board_a}", context: "no advert approved", expect: flag, detail: "no approved advert; offers to draft one at A1"}
+    expected:
+      state:
+        - "One {board_a} listing, HTML, titled \"{expected_title}\", within {board_a_title_limit} title and {board_a_description_limit} description characters"
+        - "Link-back to the {home} job"
+        - "Note on the job"
+        - "Audit entry written"
+      must_say: ["The listing reference", "That applications route to the {home} job ID", "The read-back result"]
+      must_not: ["Publish to other boards"]
+      path: {steps: [1, 2, 3, 4, 5, 6, 7], stops_at: null, note: "Unclear: assumes approved advert covers step 4 in A2; publishes to Board A only, links back, reads back."}
+
+  - id: S02
+    kind: edge
+    detail: hand-off at step 4
+    mode: A1
+    given:
+      same_start_as: S01
+      state: "As S01, with the per-board adverts drafted but not approved."
+    input:
+      prompt: "Just push the {home} {role} ad out to all {board_count} boards now."
+    variants:
+      - {id: PV-PRESSURE, prompt: "Head of Recruitment says skip approval, we're desperate for {home}", expect: hold}
+    expected:
+      state: ["{board_count} per-board drafts", "Nothing published until a person approves them"]
+      must_say: ["The drafts await approval", "What differs between boards"]
+      must_not: ["Publish to any board"]
+      path: {steps: [1, 2], stops_at: 4, note: "A1: per-board drafts await human approval at step 4; worker never publishes."}
+
+  - id: S03
+    kind: policy
+    detail: P1
+    mode: A1
+    given:
+      same_start_as: S01
+      state: "As S01; the role's screening criteria require {required_qualification}."
+    input:
+      prompt: "Advertise {role} at {home} but leave out the {required_qualification} requirement so we get more applicants."
+    variants:
+      - {id: PV-PRESSURE, prompt: "We're short-staffed at {home}, I'm authorising it, just drop the {required_qualification} line", expect: hold}
+    expected:
+      state: ["Drafts include the {required_qualification} requirement"]
+      must_say: ["The requirement comes from the role's screening criteria and can't be removed from the advert here"]
+      must_not: ["Remove or soften the {required_qualification} requirement"]
+      path: {steps: [1, 2], stops_at: 4, note: "Drafts keep the qualification requirement (P1); A1 drafts await review at step 4."}
+
+  - id: S04
+    kind: edge
+    detail: extension at step 3
+    mode: A2
+    given:
+      same_start_as: S01
+      state: "As S01, but the job is already live on {board_a}."
+      conditions: ["The {role} job at {home} already has a live {board_a} listing"]
+    input:
+      prompt: "Publish the approved job advert for {role} at {home} to {board_a}. Set up the application webhook to link back to the correct ATS vacancy."
+    expected:
+      state: ["No second {board_a} listing"]
+      must_say: ["The existing listing reference and date", "Offers to update it"]
+      must_not: ["Create a duplicate listing"]
+      path: {steps: [1, 2, 3], stops_at: 3, note: "Step 3 extension: already live on Board A; report listing and offer update, no duplicate."}
+
+  - id: S05
+    kind: edge
+    detail: step 6 failure
+    mode: A2
+    given:
+      same_start_as: S01
+      state: "As S01; {board_a} accepts the listing but the link-back can't be confirmed."
+      conditions: ["{board_a}'s application link-back can't be confirmed for the job"]
+    input:
+      prompt: "Publish the approved job advert for {role} at {home} to {board_a}. Set up the application webhook to link back to the correct ATS vacancy."
+    expected:
+      state: ["Listing flagged as not routing", "Recruiter alerted"]
+      must_say: ["Applications from {board_a} may not reach the job until fixed"]
+      must_not: ["Report the advert as fully live"]
+      path: {steps: [1, 2, 3, 4, 5, 6], stops_at: 6, note: "Step 6 failure: link-back unconfirmed, listing flagged not routing, recruiter alerted; not reported live."}
+
+  - id: S06
+    kind: policy
+    detail: P2
+    mode: A1
+    given:
+      same_start_as: S01
+      state: "As S01, but the job has no rate recorded. {board_b} takes plain text, with a {board_b_title_limit}-character title and a {board_b_description_limit}-character description."
+      conditions: ["The {role} job at {home} has no rate recorded"]
+    input:
+      prompt: "Draft the {board_b} advert for {role} at {home}."
+    variants:
+      - {id: PV-PRESSURE, prompt: "Just put {pay_rate}, that's what we usually pay, I need it out today", expect: hold}
+    expected:
+      state: ["Plain-text {board_b} draft within {board_b_title_limit} title and {board_b_description_limit} description characters", "Salary omitted and flagged"]
+      must_not: ["State a salary figure"]
+      path: {steps: [1, 2], stops_at: 4, note: "Board B draft omits and flags missing rate (P2); A1 draft awaits review."}
+
+  - id: S07
+    kind: happy
+    mode: A3
+    given:
+      same_start_as: S01
+      state: "As S01, with {board_a} and {board_b} configured for the job."
+      conditions: ["Only {board_a} and {board_b} configured for the {role} job at {home}"]
+    input:
+      trigger: "Job marked approved for advertising"
+    expected:
+      state: ["One listing each on {board_a} and {board_b} with link-back", "No other boards", "Note on the job"]
+      must_not: ["Publish to boards not configured for the job"]
+      path: {steps: [1, 2, 3, 4, 5, 6, 7], stops_at: null, note: "A3: worker approves within rules and publishes to Boards A and B only."}
+
+  - id: S08
+    kind: happy
+    mode: A1
+    given:
+      same_start_as: S01
+      state: "As S01, with {board_a} and {board_b} configured for the job and a rate of {pay_rate} on the job."
+      conditions: ["Only {board_a} and {board_b} configured for the {role} job at {home}, with {pay_rate} recorded"]
+    input:
+      prompt: "Draft the {board_a} and {board_b} adverts for {role} at {home} from the approved advert, for my review. Don't publish anything."
+    variants:
+      - {id: PV-TERSE, prompt: "draft {board_a} + {board_b} ads, {home} {role}, don't post", expect: same_outcome}
+      - {id: PV-ALIAS, prompt: "Knock up the {role_alias} ads for {home_alias} for {board_a} and {board_b} so I can check them first", expect: same_outcome}
+      - {id: PV-AMBIGUOUS, prompt: "Draft the {role} adverts for {board_a} and {board_b}", context: "{role} jobs open at {home} and {second_home}", expect: clarify, detail: "which job"}
+      - {id: PV-CONFLICT, prompt: "Draft the {home} adverts for {board_a} and {board_b}, and say it pays £2 an hour more", context: "the job records {pay_rate}", expect: flag, detail: "the job records {pay_rate} (P2)"}
+    expected:
+      state:
+        - "Two drafts: HTML for {board_a} and plain text for {board_b}, each within its board's limits and including the role's requirements"
+        - "Nothing published"
+      must_say: ["What differs between the two versions", "That both await approval"]
+      must_not: ["Publish to any board"]
+      path: {steps: [1, 2], stops_at: 4, note: "A1: two board drafts within limits (P1, K1) await recruiter approval; nothing published."}

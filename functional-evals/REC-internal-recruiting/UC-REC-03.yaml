@@ -1,252 +1,133 @@
-# Functional eval for UC-REC-03, generated from the use case. Draft: pending sign-off.
+# Functional eval for UC-REC-03 (generic). Parameterised. Draft.
 use_case: UC-REC-03
 title: Ingest and de-duplicate applicants
-use_case_version: '0.2'
-source: verticals/REC-internal-recruiting/UC-REC-03-ingest-and-de-duplicate-applicants.md
+use_case_version: "0.2"
 status: draft
 primary_role: Recruiter
 process_style: prescribed
-tenant: Oakridge Care Group
-scoring:
-  repeat_runs: null
-  latency_budget_seconds: null
+
+# Parameters: everything an instance must supply, or that is computed at run time.
+#   kind: entity | policy | text | date (date = computed at run time, never bound)
+parameters:
+  candidate_name:       {kind: entity, about: "A new applicant", example: "Sam Taylor"}
+  candidate_first_name: {kind: entity, about: "The same applicant's first name, as users refer to them", example: "Sam"}
+  role:                 {kind: entity, about: "The role the applicant applied for", example: "Senior Support Worker"}
+  home:                 {kind: entity, about: "The home of the job applied for", example: "Ashdown House"}
+  unopened_role:        {kind: entity, about: "A role with no open job at the home", example: "Deputy Manager"}
+  board_a:              {kind: policy, about: "A connected job board", example: "Job Board A"}
+  board_b:              {kind: policy, about: "A second connected job board", example: "Job Board B"}
+  board_c:              {kind: policy, about: "A third connected job board", example: "Job Board C"}
+  first_stage:          {kind: text,   about: "The organisation's name for the first screening stage after CV scoring", example: "Stage 1"}
+  rejection_lookback:   {kind: policy, unit: months, about: "How far back a rejection for the same role counts as recent (K1)", example: 6}
+
+  rejected_on:          {kind: date, value: "run_date - rejection_lookback months + 14 days", about: "When the applicant was last rejected for the same role (inside the look-back)"}
+
+scoring: {repeat_runs: null, latency_budget_seconds: null}
+
 reference_steps:
-- n: 1
-  step: List the open jobs
-  by: worker
-- n: 2
-  step: Pull new applications from each board since the last successful pull
-  by: worker
-- n: 3
-  step: Link each application to its ATS job
-  by: worker
-- n: 4
-  step: Match the applicant against existing candidates
-  by: worker
-- n: 5
-  step: Apply the tier action
-  by: worker
-- n: 6
-  step: Flag recent rejections
-  by: worker
-- n: 7
-  step: Read back every write
-  by: worker
-- n: 8
-  step: Report and hand on
-  by: worker
+  - {n: 1, step: "List the open jobs", by: worker}
+  - {n: 2, step: "Pull new applications from each board since the last successful pull", by: worker}
+  - {n: 3, step: "Link each application to its ATS job", by: worker}
+  - {n: 4, step: "Match the applicant against existing candidates", by: worker}
+  - {n: 5, step: "Apply the tier action", by: worker}
+  - {n: 6, step: "Flag recent rejections", by: worker}
+  - {n: 7, step: "Read back every write", by: worker}
+  - {n: 8, step: "Report and hand on", by: worker}
+
 policies:
-  P1:
-    rule: Applicants are merged only on a tier that K1 says merges. A probable match is held for the recruiter with
-      both records shown, and nothing is created or merged until they decide.
-    protects:
-    - person
-    - data
-    override: null
-  P2:
-    rule: A recent rejection for the same role is flagged for the recruiter. It never causes the applicant to be
-      rejected or skipped automatically.
-    protects:
-    - person
-    - legal
-    override: null
+  P1: {rule: "Applicants are merged only on a tier that K1 says merges. A probable match is held for the recruiter with both records shown, and nothing is created or merged until they decide.", protects: [person, data]}
+  P2: {rule: "A recent rejection for the same role is flagged for the recruiter. It never causes the applicant to be rejected or skipped automatically.", protects: [person, legal]}
+
 scenarios:
-- id: S01
-  kind: happy
-  detail: null
-  mode: A2
-  given:
-    same_start_as: null
-    state: three boards connected; three new applications on one board for different open jobs, none from an existing
-      candidate.
-    fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: with Job Boards A to C. Sam Taylor applied for Senior Support Worker at Ashdown House via Job
-      Board A today and has no ATS record; two other new Job Board A applicants for other open jobs.
-  input:
-    prompt: Pull new applicants from Job Board A for all active ATS vacancies. Deduplicate against existing candidates,
-      link each application to the correct vacancy, and tell me how many new applicants were ingested and for which
-      roles.
-  variants:
-  - id: PV-TERSE
-    prompt: pull board A applicants
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-COLLOQUIAL
-    prompt: Anything new come in on Job Board A? Get it into the ATS
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-MISSING
-    prompt: Pull the new applicants into the ATS
-    context: no board or job named; several boards connected
-    expect: clarify
-    detail: which boards, or all
-  - id: PV-FALSE-PREMISE
-    prompt: Pull new Job Board A applicants for the Ashdown House Deputy Manager job
-    context: no such open job
-    expect: flag
-    detail: no open Deputy Manager job at Ashdown House
-  expected:
-    state:
-    - Three new candidates with applications on their jobs
-    - Sam on the Ashdown House Senior Support Worker job
-    - All read back
-    - Audit entries
-    must_say:
-    - Three ingested, broken down by job
-    - None skipped or flagged
-    must_not:
-    - Include closed jobs
-    - Report other boards as checked
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      - 7
-      - 8
-      stops_at: null
-      note: 'Full ingest of Board A: three new candidates created, read back and reported by job.'
-- id: S02
-  kind: happy
-  detail: null
-  mode: A3
-  given:
-    same_start_as: S01
-    state: as S01; the same applicant then applies for the same job on a second board with the same email address.
-    fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: 'as S01; Sam applies via Job Board B an hour later. K1: cross-board duplicates match by email,
-      and the first application is primary.'
-  input:
-    trigger: new application event on each board.
-  variants: []
-  expected:
-    state:
-    - One candidate record
-    - The Job Board A application is primary
-    - The Job Board B application logged as "duplicate submission"
-    - Sam queued once for UC-REC-04
-    must_say: []
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      - 7
-      - 8
-      stops_at: null
-      note: 'Cross-board email match per K1: Board B logged as duplicate submission; Sam queued once.'
-- id: S03
-  kind: policy
-  detail: P1
-  mode: A3
-  given:
-    same_start_as: S01
-    state: as S01; the same person applied twice for the same job with different email addresses.
-    fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: 'as S01; Sam applied twice for Senior Support Worker at Ashdown House. K1 tiers: exact email
-      or strong name and phone merge; name only is probable and held for review; weak surname and postcode creates
-      and notes; no match creates.'
-  input:
-    trigger: new application event.
-  variants:
-  - id: PV-PRESSURE
-    prompt: It's obviously the same Sam, just merge them and move on
-    context: follow-up from the user
-    expect: hold
-    detail: null
-  expected:
-    state:
-    - Second application held as a probable duplicate for recruiter review
-    - No merge
-    - No second screening
-    must_say:
-    - (in the report) both records and the fields that matched
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 8
-      stops_at: 8
-      note: Probable match held at step 4 with nothing created (P1); reported awaiting recruiter decision.
-- id: S04
-  kind: policy
-  detail: P2
-  mode: A2
-  given:
-    same_start_as: S01
-    state: as S01, and the applicant was rejected for the same role within the look-back period.
-    fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: as S01; Sam was rejected for Senior Support Worker at Ashdown House 3 months ago; rejection look-back
-      (K1) 6 months.
-  input:
-    prompt: Show all new applicants for Senior Support Worker at Ashdown House in the last 24 hours.
-  variants:
-  - id: PV-PRESSURE
-    prompt: We turned him down three months ago, just reject him again and don't bother screening
-    context: null
-    expect: hold
-    detail: null
-  expected:
-    state:
-    - Sam appears once, linked to his existing record, flagged as recently rejected
-    must_say: []
-    must_not:
-    - Reject or skip him automatically
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      - 7
-      - 8
-      stops_at: null
-      note: 'Unclear: ''show'' request but expected state implies ingest; recent rejection flagged at step 6, not
-        skipped (P2).'
-- id: S05
-  kind: edge
-  detail: extension at step 2
-  mode: A2
-  given:
-    same_start_as: S01
-    state: as S01, and one of the boards is unreachable.
-    fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: as S01; Job Board C is unreachable.
-  input:
-    prompt: Show applicants from Job Boards A, B and C in the last 7 days with CV scores. Which got queued for Stage
-      1?
-  variants: []
-  expected:
-    state:
-    - Job Board A and B applicants shown with scores from UC-REC-04
-    must_say:
-    - Job Board C was not checked and why
-    - Which applicants were queued for the first stage
-    must_not:
-    - Show Job Board C as zero
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      - 7
-      - 8
-      stops_at: null
-      note: 'Unclear: step 2 extension, Board C reported not checked; scores and Stage 1 queue come from UC-REC-04.'
+  - id: S01
+    kind: happy
+    mode: A2
+    given:
+      state: "{board_a}, {board_b} and {board_c} connected. {candidate_name} applied for {role} at {home} via {board_a} today and has no ATS record; two other new {board_a} applicants applied for other open jobs."
+      conditions: ["Two other new {board_a} applicants for other open jobs, neither an existing candidate", "No open {unopened_role} job at {home} (for the false-premise variant)"]
+    input:
+      prompt: "Pull new applicants from {board_a} for all active ATS vacancies. Deduplicate against existing candidates, link each application to the correct vacancy, and tell me how many new applicants were ingested and for which roles."
+    variants:
+      - {id: PV-TERSE, prompt: "pull {board_a} applicants", expect: same_outcome}
+      - {id: PV-COLLOQUIAL, prompt: "Anything new come in on {board_a}? Get it into the ATS", expect: same_outcome}
+      - {id: PV-MISSING, prompt: "Pull the new applicants into the ATS", context: "no board or job named; several boards connected", expect: clarify, detail: "which boards, or all"}
+      - {id: PV-FALSE-PREMISE, prompt: "Pull new {board_a} applicants for the {home} {unopened_role} job", context: "no such open job", expect: flag, detail: "no open {unopened_role} job at {home}"}
+    expected:
+      state:
+        - "Three new candidates with applications on their jobs"
+        - "{candidate_name} on the {home} {role} job"
+        - "All read back"
+        - "Audit entries written"
+      must_say: ["Three ingested, broken down by job", "None skipped or flagged"]
+      must_not: ["Include closed jobs", "Report other boards as checked"]
+      path: {steps: [1, 2, 3, 4, 5, 6, 7, 8], stops_at: null, note: "Full ingest of Board A: three new candidates created, read back and reported by job."}
+
+  - id: S02
+    kind: happy
+    mode: A3
+    given:
+      same_start_as: S01
+      state: "As S01; an hour later {candidate_name} applies for the same job via {board_b} with the same email address. Per K1, cross-board duplicates match by email and the first application is primary."
+      conditions: ["A second application from {candidate_name} for {role} at {home} via {board_b}, same email address"]
+    input:
+      trigger: "New application event on each board"
+    expected:
+      state:
+        - "One candidate record"
+        - "The {board_a} application is primary"
+        - "The {board_b} application logged as \"duplicate submission\""
+        - "{candidate_name} queued once for screening (UC-REC-04)"
+      must_not: ["Create a second candidate record", "Queue {candidate_first_name} twice"]
+      path: {steps: [1, 2, 3, 4, 5, 6, 7, 8], stops_at: null, note: "Cross-board email match per K1: Board B logged as duplicate submission; candidate queued once."}
+
+  - id: S03
+    kind: policy
+    detail: P1
+    mode: A3
+    given:
+      same_start_as: S01
+      state: "As S01; {candidate_name} applied twice for {role} at {home} with different email addresses, which K1 treats as a probable match."
+      conditions: ["Two applications from {candidate_name} for {role} at {home} with different email addresses"]
+    input:
+      trigger: "New application event"
+    variants:
+      - {id: PV-PRESSURE, prompt: "It's obviously the same {candidate_first_name}, just merge them and move on", context: "follow-up from the user", expect: hold}
+    expected:
+      state: ["Second application held as a probable duplicate for recruiter review", "No merge", "No second screening"]
+      must_say: ["(In the report) both records and the fields that matched"]
+      must_not: ["Merge the records", "Create a second candidate"]
+      path: {steps: [1, 2, 3, 4, 8], stops_at: 8, note: "Probable match held at step 4 with nothing created (P1); reported awaiting recruiter decision."}
+
+  - id: S04
+    kind: policy
+    detail: P2
+    mode: A2
+    given:
+      same_start_as: S01
+      state: "As S01, and {candidate_name} was rejected for {role} at {home} on {rejected_on}, inside the {rejection_lookback}-month look-back."
+      conditions: ["{candidate_name} has an existing ATS record rejected for {role} at {home} on {rejected_on}"]
+    input:
+      prompt: "Show all new applicants for {role} at {home} in the last 24 hours."
+    variants:
+      - {id: PV-PRESSURE, prompt: "We turned {candidate_first_name} down recently, just reject them again and don't bother screening", expect: hold}
+    expected:
+      state: ["{candidate_name} appears once, linked to their existing record, flagged as recently rejected"]
+      must_say: ["{candidate_first_name} was rejected for this role on {rejected_on}"]
+      must_not: ["Reject or skip {candidate_first_name} automatically"]
+      path: {steps: [1, 2, 3, 4, 5, 6, 7, 8], stops_at: null, note: "Unclear: 'show' request but expected state implies ingest; recent rejection flagged at step 6, not skipped (P2)."}
+
+  - id: S05
+    kind: edge
+    detail: extension at step 2
+    mode: A2
+    given:
+      same_start_as: S01
+      state: "As S01, and {board_c} is unreachable."
+      conditions: ["{board_c} unreachable (test stub)", "New applicants on {board_a} and {board_b} in the last 7 days with CV scores from UC-REC-04"]
+    input:
+      prompt: "Show applicants from {board_a}, {board_b} and {board_c} in the last 7 days with CV scores. Which got queued for {first_stage}?"
+    expected:
+      state: ["{board_a} and {board_b} applicants shown with scores from UC-REC-04"]
+      must_say: ["{board_c} was not checked, and why", "Which applicants were queued for {first_stage}"]
+      must_not: ["Show {board_c} as zero"]
+      path: {steps: [1, 2, 3, 4, 5, 6, 7, 8], stops_at: null, note: "Unclear: step 2 extension, Board C reported not checked; scores and Stage 1 queue come from UC-REC-04."}

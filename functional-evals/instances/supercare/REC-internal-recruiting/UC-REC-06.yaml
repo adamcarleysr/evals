@@ -1,0 +1,36 @@
+# SuperCare binding for UC-REC-06 (eval v0.2). Draft. Values from ClickUp.
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-REC-06
+eval_version: "0.2"
+
+values:
+  candidate_name: Joshua Woodman
+  candidate_first_name: Joshua
+  role: Senior Coach
+  role_alias: Senior Residential Support Worker
+  home: Norwood
+  home_alias: SC Norwood
+  first_stage: Stage 1
+  second_stage: Stage 2
+  required_qualification: Level 3 Diploma in Residential Childcare
+
+  script_version: v3.0
+  disclosure_reviewer: Registered Manager
+  retry_cadence: once within 2 hours, then once the next business day
+  max_call_attempts: 3
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: Joshua Woodman in the Stage 1 queue for Senior Coach at Norwood, with a phone number on record; Coach & Senior Coach Stage 1 script v3.0 current"
+  - "S01: a second candidate called Joshua in the Stage 1 queue (for the ambiguity variant)"
+  - "S04: Joshua Woodman meeting the Senior Coach screening threshold (2 years residential children's care and Level 3 Diploma)"
+  - "S06: a version of Joshua Woodman's record without the Level 3 Diploma"
+  - "S07: the call answered by someone who can't confirm they are Joshua Woodman (test stub)"
+  - "S08: Joshua Woodman's safer-recruitment answers failing the Senior Coach requirements (test stub)"
+  - "S09: Joshua Woodman not answering any call (test stub)"

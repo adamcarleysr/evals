@@ -1,0 +1,38 @@
+# SuperCare binding for UC-REC-07 (eval v0.2). Draft. Values from ClickUp.
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-REC-07
+eval_version: "0.2"
+
+values:
+  candidate_name: Joshua Woodman
+  candidate_first_name: Joshua
+  role: Senior Coach
+  home: Norwood
+  first_stage: Stage 1
+  second_stage: Stage 2
+  advance_stage: Stage 2 Scheduling
+  call_recording_tool: Fathom
+
+  script_version: v3.0
+  rubric_scale: "1–5"
+  pass_mark: 3.0
+  auto_advance_mark: 4.0
+  review_window: 24 hours
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: a completed Aria Stage 1 transcript for Joshua Woodman, Senior Coach at Norwood, on the Coach & Senior Coach script v3.0"
+  - "S01: a second candidate's prescreen call finishing at the same time (for the ambiguity variant)"
+  - "S02: a second candidate's prescreen call for Senior Coach (for the ambiguity variant)"
+  - "S04: Joshua Woodman's recruiter-run Stage 1 call recorded in Fathom, the latest recording"
+  - "S05: a partial Stage 1 transcript for Joshua Woodman ending before the safer-recruitment section"
+  - "S06: a Stage 1 transcript for Joshua Woodman averaging below 3.0"
+  - "S07: a Stage 1 transcript for Joshua Woodman averaging 4.0 or above with no right-to-work answer"
+  - "S08: a Stage 1 transcript for Joshua Woodman averaging between 3.0 and 4.0, all hard requirements met"
+  - "S09: a Stage 1 transcript for Joshua Woodman averaging 4.0 or above, all hard requirements met"

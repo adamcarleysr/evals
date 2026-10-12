@@ -1,0 +1,32 @@
+# SuperCare binding for UC-REC-03 (eval v0.2). Draft. Values from ClickUp.
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-REC-03
+eval_version: "0.2"
+
+values:
+  candidate_name: Joshua Woodman
+  candidate_first_name: Joshua
+  role: Senior Coach
+  home: Norwood
+  unopened_role: Deputy Manager
+  board_a: Indeed
+  board_b: Reed
+  board_c: CV-Library
+  first_stage: Stage 1
+  rejection_lookback: 6
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: Joshua Woodman with no Bullhorn record and a new Indeed application for Senior Coach at Norwood today"
+  - "S01: two other new Indeed applicants for other open JobOrders, neither an existing candidate"
+  - "S01: no open Deputy Manager JobOrder at Norwood (for the false-premise variant)"
+  - "S02: a second application from Joshua Woodman for Senior Coach at Norwood via Reed, same email address"
+  - "S03: two applications from Joshua Woodman for Senior Coach at Norwood with different email addresses"
+  - "S04: Joshua Woodman's existing Bullhorn record rejected for Senior Coach at Norwood inside the 6-month look-back"
+  - "S05: CV-Library unreachable (test stub); new Indeed and Reed applicants in the last 7 days with CV scores"

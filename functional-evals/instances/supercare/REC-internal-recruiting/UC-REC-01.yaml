@@ -1,0 +1,33 @@
+# SuperCare binding for UC-REC-01 (eval v0.2). Draft. Values from ClickUp.
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-REC-01
+eval_version: "0.2"
+
+values:
+  home: Norwood
+  home_alias: SC Norwood
+  role: Senior Coach
+  role_alias: Senior Residential Support Worker
+  hiring_manager: Beth Rose
+  hiring_manager_first_name: Beth
+  requester_first_name: Sam
+  pay_rate: "£18/hr"
+  updated_pay_rate: "£18.50/hr"
+  weekly_hours: 36hrs
+  employment_type: Permanent
+  alternative_employment_type: Bank
+  vacancy_reason: replacement
+  date_format: DD/MM/YYYY
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: no open Senior Coach JobOrder at Norwood in Bullhorn"
+  - "S02: two vacancy requests for Norwood received this morning (for the ambiguity variant)"
+  - "S03: an earlier Senior Coach JobOrder at Norwood with a recorded rate (for the pressure variant)"
+  - "S06: an open Senior Coach JobOrder at Norwood with headcount 1 and £18/hr"

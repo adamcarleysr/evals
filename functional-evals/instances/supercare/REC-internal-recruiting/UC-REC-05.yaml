@@ -1,0 +1,33 @@
+# SuperCare binding for UC-REC-05 (eval v0.2). Draft. Values from ClickUp.
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-REC-05
+eval_version: "0.2"
+
+values:
+  candidate_name: Joshua Woodman
+  candidate_first_name: Joshua
+  role: Senior Coach
+  home: Norwood
+  pay_rate: "£18/hr"
+  employment_type: Permanent
+  hours_and_rota: average 36 hours on a 1-on-2-off rota
+  required_qualification: Level 3 Diploma in Residential Childcare
+  personal_point: "<to supply>"
+  first_stage: Stage 1 Telephone Qualification
+  first_stage_call_length: 20
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: Joshua Woodman in the Stage 1 queue for Senior Coach at Norwood (JobSubmission on the Norwood JobOrder), profile recording relevant experience and the Level 3 Diploma"
+  - "S01: recruiter availability this week in the calendar"
+  - "S01: several candidates in the Stage 1 queue for Senior Coach at Norwood (for the missing-detail variant)"
+  - "S02: a specific experience recorded on Joshua Woodman's Bullhorn profile (value to supply)"
+  - "S04: an empty recruiter calendar for the current week"
+  - "S05: an existing invitation draft for Joshua Woodman"
+  - "S06: Joshua Woodman routed to the Head of Recruitment by CV screening for no Level 3, not in the Stage 1 queue"
