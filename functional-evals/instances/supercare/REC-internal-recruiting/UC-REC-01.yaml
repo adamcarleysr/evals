@@ -8,10 +8,10 @@ values:
   home: Norwood
   home_alias: SC Norwood
   role: Senior Coach
-  role_alias: Senior Residential Support Worker
-  hiring_manager: Beth Rose
-  hiring_manager_first_name: Beth
-  requester_first_name: Sam
+  role_alias: "<to supply>"
+  hiring_manager: Zinnia Persyn
+  hiring_manager_first_name: Zinnia
+  requester_first_name: "<to supply>"
   pay_rate: "£18/hr"
   updated_pay_rate: "£18.50/hr"
   weekly_hours: 36hrs
@@ -19,7 +19,7 @@ values:
   alternative_employment_type: Bank
   vacancy_reason: replacement
   ats_name: Bullhorn
-  date_format: DD/MM/YYYY
+  date_format: "<to supply>"
 
 calendar:
   locale: en-GB

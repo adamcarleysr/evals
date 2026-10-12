@@ -1,6 +1,6 @@
-# SuperCare binding for UC-REC-13 (eval v0.2). Values from ClickUp (SR-13370, SR-13377, Offer Auto-Fill Playbook,
-# Offer-to-Placement Mapping, Approval Gate Definitions, Bullhorn Meanings Policy, Stage Progression Rules,
-# P1/P2 Proof: Test Prompts). Draft.
+# SuperCare binding for UC-REC-13 (eval v0.2). Values from ClickUp (SR-13370, SR-13377,
+# Offer-to-Placement Mapping, Approval Gate Definitions, Canonical Organisation Dimensions, Stage Progression Rules,
+# P1/P2 Proof: Test Prompts for test records incl. Role Type and Satellite). Draft.
 # Dates are not bound: the runner computes them at run time.
 instance: SuperCare
 eval: UC-REC-13
@@ -24,7 +24,7 @@ values:
   offer_stage: Offer Preparation
   offer_status: Onboarding
   region_term: Satellite
-  autofill_marker: Auto-filled, verify
+  autofill_marker: "<to supply>"
   document_store_name: OneDrive
 
   offer_approvers: "the recruiter and Damian Williams (Operations Director)"

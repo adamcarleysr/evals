@@ -18,7 +18,7 @@ values:
   day_requirement: "<to supply>"
   night_requirement: "<to supply>"
   rota_refresh_interval: 2
-  stale_after: 8
+  stale_after: 4
 
 calendar:
   locale: en-GB
@@ -31,5 +31,5 @@ test_data_needed:
   - "S01: a user who manages no single home (for the missing-home variant)"
   - "S02: no staffing requirement configured for Norwood"
   - "S03: the overlapping worker recorded as sick leave on Monday and Tuesday"
-  - "S04: the last successful ADP rota refresh more than 8 hours ago"
+  - "S04: the last successful ADP rota refresh more than 4 hours ago"
   - "S06: ADP returning rota entries per employee only, with the count of active employees mapped to Norwood (OU-103)"

@@ -18,8 +18,6 @@ values:
   first_stage_call_length: 20
   ats_name: Bullhorn
   calendar_name: "<to supply>"
-  ats_name: Bullhorn
-  calendar_name: "<to supply>"
 
 calendar:
   locale: en-GB

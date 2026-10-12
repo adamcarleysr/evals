@@ -20,7 +20,7 @@ values:
   role_qualification: Level 3
   dbs_max_age: 3
   address_proof_max_age: 3
-  reference_verified_rule: "only after verbal verification by the compliance team and a signed Reference Verification Form"
+  reference_verified_rule: "only after a verbal verification call and a completed Reference Verification Form"
 
 calendar:
   locale: en-GB

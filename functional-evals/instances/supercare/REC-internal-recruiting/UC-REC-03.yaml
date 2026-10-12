@@ -28,6 +28,6 @@ test_data_needed:
   - "S01: two other new Indeed applicants for other open JobOrders, neither an existing candidate"
   - "S01: no open Deputy Manager JobOrder at Norwood (for the false-premise variant)"
   - "S02: a second application from Joshua Woodman for Senior Coach at Norwood via Reed, same email address"
-  - "S03: two applications from Joshua Woodman for Senior Coach at Norwood with different email addresses"
+  - "S03: two applications from Joshua Woodman for Senior Coach at Norwood with different email addresses and different phone numbers (probable tier, not strong)"
   - "S04: Joshua Woodman's existing Bullhorn record rejected for Senior Coach at Norwood inside the 6-month look-back"
   - "S05: CV-Library unreachable (test stub); new Indeed and Reed applicants in the last 7 days with CV scores"

@@ -1,5 +1,5 @@
 # SuperCare binding for UC-REC-16 (eval v0.2). Values from ClickUp (SR-13393, SR-13371, SR-13425,
-# Recruitment KPI Metric Definitions, Bullhorn Meanings Policy, Canonical Organisation Dimensions,
+# Recruitment KPI Metric Definitions, Canonical Organisation Dimensions,
 # P1/P2 Proof: Test Prompts). Draft.
 # Dates are not bound: the runner computes them at run time.
 instance: SuperCare
@@ -18,7 +18,7 @@ values:
   visit_kpi: home visits
   interview_kpi: virtual interviews
   talk_time_kpi: talk time
-  week_boundaries: "Monday 00:00 to Sunday 23:59 Europe/London"
+  week_boundaries: "Monday to Sunday (UK calendar week), Europe/London"
 
 calendar:
   locale: en-GB

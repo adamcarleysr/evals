@@ -1,5 +1,5 @@
 # SuperCare binding for UC-REC-14 (eval v0.2). Values from ClickUp (SR-13447, SR-13429, Offer Response Rules,
-# Chase Email Templates & Cadence Rules, Offer-to-Placement Mapping, Offer Auto-Fill Playbook, Recruiter Workbench Config,
+# Chase Email Templates & Cadence Rules, Offer-to-Placement Mapping, Canonical Organisation Dimensions, Recruiter Workbench Config,
 # P1/P2 Proof: Test Prompts). Draft.
 # Dates are not bound: the runner computes them at run time.
 instance: SuperCare
@@ -12,7 +12,7 @@ values:
   candidate_role: Senior Coach
   candidate_role_short: "<to supply>"
   candidate_home: Norwood
-  other_home: "<to supply>"
+  other_home: Frimley
   vacancy_rate: £18/hr
   vacancy_contract_type: Permanent
   vacancy_hours: avg 36hrs

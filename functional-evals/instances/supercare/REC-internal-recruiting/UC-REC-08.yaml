@@ -9,8 +9,8 @@ values:
   candidate_first_name: Joshua
   role: Senior Coach
   home: Norwood
-  interviewer: Chelsea Hennesey
-  interviewer_first_name: Chelsea
+  interviewer: Zinnia Persyn
+  interviewer_first_name: Zinnia
   first_stage: Stage 1
   second_stage: Stage 2
   second_stage_type: Teams Virtual Interview
@@ -35,7 +35,7 @@ calendar:
   bank_holidays: England and Wales
 
 test_data_needed:
-  - "S01: Joshua Woodman at Stage 2 Scheduling for Senior Coach at Norwood; Chelsea Hennesey's calendar with three free windows this week within Monday to Friday 10am–4pm, with other events nearby"
-  - "S04: Chelsea Hennesey free at the requested slot (run date + 3 business days, 2pm)"
-  - "S07: Chelsea Hennesey free at the rescheduled slot (one business day later, 10am)"
+  - "S01: Joshua Woodman at Stage 2 Scheduling for Senior Coach at Norwood; Zinnia Persyn's calendar with three free windows this week within Monday to Friday 10am–4pm, with other events nearby"
+  - "S04: Zinnia Persyn free at the requested slot (run date + 3 business days, 2pm)"
+  - "S07: Zinnia Persyn free at the rescheduled slot (one business day later, 10am)"
   - "S08: Joshua Woodman's interview already rescheduled twice"

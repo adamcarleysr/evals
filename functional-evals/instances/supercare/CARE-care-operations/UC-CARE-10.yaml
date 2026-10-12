@@ -5,7 +5,7 @@ eval: UC-CARE-10
 eval_version: "0.1"
 
 values:
-  home: Oaklands
+  home: Norwood
   deputy_name: "<to supply>"
   other_home: Frimley
   incident_reference: "<to supply>"
@@ -24,12 +24,12 @@ calendar:
   bank_holidays: England and Wales
 
 test_data_needed:
-  - "S01: two open maintenance cases at Oaklands, one awaiting a contractor quote and one awaiting sign-off"
-  - "S01: an open Oaklands incident with its Ofsted notification held for the RI and a follow-on incident report review due today"
-  - "S01: one unfilled shift on the Oaklands rota in the coming week"
-  - "S01: the £450 emergency plumbing booking and a shift swap both awaiting the Oaklands RM's approval"
-  - "S01: a failed Oaklands rota write read-back from yesterday in the event log"
-  - "S01: an RI user covering three homes including Oaklands (missing-scope variant)"
-  - "S03: a Deputy Manager user scoped to Oaklands only; Frimley has at least one open item"
-  - "S04: the Oaklands rota feed's last successful refresh set to more than 4 hours before the run"
+  - "S01: two open maintenance cases at Norwood, one awaiting a contractor quote and one awaiting sign-off"
+  - "S01: an open Norwood incident with its Ofsted notification held for the RI and a follow-on incident report review due today"
+  - "S01: one unfilled shift on the Norwood rota in the coming week"
+  - "S01: the £450 emergency plumbing booking and a shift swap both awaiting the Norwood RM's approval"
+  - "S01: a failed Norwood rota write read-back from yesterday in the event log"
+  - "S01: an RI user covering three homes including Norwood (missing-scope variant)"
+  - "S03: a Deputy Manager user scoped to Norwood only; Frimley has at least one open item"
+  - "S04: the Norwood rota feed's last successful refresh set to more than 4 hours before the run"
   - "S06: the incident system (Sue Solutions) connection unavailable for the run"
