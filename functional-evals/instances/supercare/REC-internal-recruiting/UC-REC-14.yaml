@@ -1,0 +1,45 @@
+# SuperCare binding for UC-REC-14 (eval v0.2). Values from ClickUp (SR-13447, SR-13429, Offer Response Rules,
+# Chase Email Templates & Cadence Rules, Offer-to-Placement Mapping, Offer Auto-Fill Playbook, Recruiter Workbench Config,
+# P1/P2 Proof: Test Prompts). Draft.
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-REC-14
+eval_version: "0.2"
+
+values:
+  candidate_name: Joshua Woodman
+  candidate_first_name: Joshua
+  candidate_role: Senior Coach
+  candidate_role_short: "<to supply>"
+  candidate_home: Norwood
+  other_home: "<to supply>"
+  vacancy_rate: £18/hr
+  vacancy_contract_type: Permanent
+  vacancy_hours: avg 36hrs
+  counter_rate: £19/hr
+  counter_increase: £1/hr
+
+  offer_status: Onboarding
+  negotiating_status: Negotiating
+  region_term: Satellite
+
+  first_chase_day: 3
+  second_chase_day: 5
+  final_chase_day: 7
+  offer_max_chases: 3
+  reserve_stage: "Interview Completed or Decision Pending"
+  negotiation_route: "the recruiter and Damian Williams"
+  role_type: Care
+  region: London
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: Joshua Woodman's Senior Coach at Norwood offer (Placement in Onboarding) issued 5 days before the run, Day 3 chase sent, no reply"
+  - "S01: a second open offer (Placement in Onboarding) for Norwood"
+  - "S05: two other candidates for the Norwood Senior Coach JobOrder at Interview Completed or Decision Pending"
+  - "S08: a variant of Joshua Woodman's offer issued 8 days before the run with the Day 3, 5 and 7 chases sent and no reply"

@@ -1,0 +1,39 @@
+# SuperCare binding for UC-REC-11 (eval v0.2). Values from ClickUp (SR-13441, Stage Progression Rules,
+# Approval Gate Definitions, Interview Scoring Rubric, Hiring-Manager Decision Queue Config, P1/P2 Proof: Test Prompts). Draft.
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-REC-11
+eval_version: "0.2"
+
+values:
+  candidate_name: Joshua Woodman
+  candidate_first_name: Joshua
+  candidate_role: Senior Coach
+  candidate_home: Norwood
+  hiring_manager_name: Zinnia Persyn
+  hiring_manager_first_name: Zinnia
+  other_home_manager_name: Jasmine Hendricks
+  other_home: South Park Drive
+
+  interview_stage: Stage 2
+  interview_stage_status: Stage 2 Scheduled
+  next_stage: Stage 3 (Home Visit)
+  next_stage_informal: Home Visit
+  prescreen_next_stage: Stage 2 Scheduling
+  failed_minimum_question: Q6
+
+  safeguarding_minimum: 3
+  question_max_score: 5
+  prescreen_auto_advance_score: 4.0
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: Joshua Woodman at Stage 2 Scheduled for Senior Coach at Norwood, interview scores passing with Q3, Q4 and Q6 all at 3/5 or above, and Progress recorded by Zinnia Persyn"
+  - "S01: a second candidate for Senior Coach at Norwood also awaiting progression after a decision by Zinnia Persyn"
+  - "S05: a variant of Joshua Woodman's interview scores with Q6 below 3/5"
+  - "S06: a prescreen result for Joshua Woodman scored at or above 4.0"

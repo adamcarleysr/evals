@@ -1,0 +1,34 @@
+# SuperCare binding for UC-REC-16 (eval v0.2). Values from ClickUp (SR-13393, SR-13371, SR-13425,
+# Recruitment KPI Metric Definitions, Bullhorn Meanings Policy, Canonical Organisation Dimensions,
+# P1/P2 Proof: Test Prompts). Draft.
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-REC-16
+eval_version: "0.2"
+
+values:
+  month_crossing_week: 28 Sep to 4 Oct
+  unmapped_activity_type: "<to supply>"
+
+  kpi_abbreviations: "<to supply>"
+
+  kpi_list: "deals, home visits, virtual interviews, prescreens, calls and talk time"
+  kpi_count: 6
+  visit_kpi: home visits
+  interview_kpi: virtual interviews
+  talk_time_kpi: talk time
+  week_boundaries: "Monday 00:00 to Sunday 23:59 Europe/London"
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: Bullhorn activity, placement and job records for every recruiter in the current week, recruiter targets, a frozen snapshot of last week, and a reference calculation of the six KPIs"
+  - "S02: records and a reference calculation for the week 28 Sep to 4 Oct 2026"
+  - "S03: a recruiter on leave this week with no targets and no talk time records"
+  - "S04: activities this week carrying an activity type that is not in the Canonical Organisation Dimensions activity mapping"
+  - "S05: some recruiters with no talk time records this week"
+  - "S07: no frozen snapshot for last week"

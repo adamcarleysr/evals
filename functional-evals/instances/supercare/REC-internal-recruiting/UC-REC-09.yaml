@@ -1,0 +1,40 @@
+# SuperCare binding for UC-REC-09 (eval v0.2). Values from ClickUp (SR-13406, SR-13385, Interview Scoring Rubric,
+# Hiring-Manager Decision Queue Config, P1/P2 Proof: Test Prompts). Draft.
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-REC-09
+eval_version: "0.2"
+
+values:
+  candidate_name: Joshua Woodman
+  candidate_first_name: Joshua
+  candidate_role: Senior Coach
+  candidate_home: Norwood
+  hiring_manager_name: Zinnia Persyn
+  safeguarding_contact: "<to supply>"
+
+  interview_stage: Stage 2
+  later_stage: Stage 3 Home Visit
+  unanswered_question: Q6
+  failed_minimum_question: Q4
+
+  rubric_question_count: 7
+  rubric_max_total: 35
+  rubric_pass_mark: 24
+  safeguarding_critical_questions: "Q3, Q4 and Q6"
+  safeguarding_minimum: 3
+  question_max_score: 5
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: Joshua Woodman's Stage 2 Teams interview for Senior Coach at Norwood ended yesterday, with one Fathom transcript linked to the Bullhorn Appointment and every rubric question answered"
+  - "S01: a second candidate for Senior Coach at Norwood with a Stage 2 interview yesterday (for the ambiguity variants)"
+  - "S06: a variant of the transcript that cuts off before Q6 is answered"
+  - "S07: a variant of the transcript totalling at least 24/35 with Q4 scoring below 3/5"
+  - "S08: a variant of the transcript in which the candidate describes an unreported past harm to a child during a question that is not safeguarding-critical"
+  - "S09: an unlinked Fathom or Devyce recording from the same hour as the interview, with none linked to the Appointment"

@@ -1,0 +1,36 @@
+# SuperCare binding for UC-REC-12 (eval v0.2). Values from ClickUp (SR-13379, Hiring-Manager Decision Queue Config,
+# Stage Progression Rules, P1/P2 Proof: Test Prompts). Draft.
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-REC-12
+eval_version: "0.2"
+
+values:
+  candidate_name: Joshua Woodman
+  candidate_first_name: Joshua
+  candidate_role: Senior Coach
+  candidate_home: Norwood
+  hiring_manager_name: Zinnia Persyn
+  hiring_manager_first_name: Zinnia
+
+  interview_stage: Stage 2
+  next_stage: Stage 3 (Home Visit)
+  next_stage_informal: Home Visit
+  rejection_feedback: limited night-shift experience
+  rejection_feedback_informal: "<to supply>"
+
+  rejection_content_rule: "<to supply>"
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: Joshua Woodman passed Stage 2 for Senior Coach at Norwood, Progress recorded by Zinnia Persyn, stage advanced to Stage 3 (Home Visit)"
+  - "S01: a second Norwood candidate who has also progressed after Stage 2"
+  - "S02: a variant with Reject recorded by Zinnia Persyn after Stage 2 and the feedback 'limited night-shift experience'"
+  - "S05: a variant of the S02 Reject with no feedback recorded"
+  - "S06: a variant with Joshua's Stage 2 item still waiting in Zinnia Persyn's decision queue"
+  - "S07: a variant of the S02 Reject linked to a safeguarding concern raised at the Stage 2 interview"

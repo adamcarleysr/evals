@@ -1,297 +1,167 @@
-# Functional eval for UC-REC-11, generated from the use case. Draft: pending sign-off.
+# Functional eval for UC-REC-11 (generic). Parameterised per the UC-REC-30 worked example. Draft.
 use_case: UC-REC-11
 title: Progress a candidate on a decision
-use_case_version: '0.2'
-source: verticals/REC-internal-recruiting/UC-REC-11-progress-a-candidate-on-a-decision.md
+use_case_version: "0.2"
 status: draft
 primary_role: Recruiter
 process_style: prescribed
-tenant: Oakridge Care Group
-scoring:
-  repeat_runs: null
-  latency_budget_seconds: null
+
+# ---------------------------------------------------------------------------
+# Parameters: everything an instance must supply, or that is computed at run time.
+#   kind: entity  - a record or person in the instance's test data
+#         policy  - a value from the instance's playbooks
+#         text    - wording the instance uses
+#         date    - computed at run time from run_date and other parameters (never bound)
+# ---------------------------------------------------------------------------
+parameters:
+  candidate_name:        {kind: entity, about: "A candidate at the interview stage with passing interview scores", example: "Sam Taylor"}
+  candidate_first_name:  {kind: entity, about: "The same candidate's first name, as users refer to them", example: "Sam"}
+  candidate_role:        {kind: entity, about: "The role the candidate is being considered for", example: "Senior Support Worker"}
+  candidate_home:        {kind: entity, about: "The home the vacancy is at", example: "Ashdown House"}
+  hiring_manager_name:   {kind: entity, about: "The RM for the candidate's home", example: "Megan Hart"}
+  hiring_manager_first_name: {kind: entity, about: "That RM's first name", example: "Megan"}
+  other_home_manager_name: {kind: entity, about: "An RM who covers a different home only", example: "Tom Ellis"}
+  other_home:            {kind: entity, about: "The home that other RM covers", example: "Larch House"}
+
+  interview_stage:       {kind: text, about: "What the instance calls the interview stage", example: "Stage 2"}
+  interview_stage_status: {kind: text, about: "The pipeline stage a candidate holds while at that interview", example: "Stage 2 Scheduled"}
+  next_stage:            {kind: text, about: "The stage a Progress after the interview moves the candidate to", example: "Stage 3 (Home Visit)"}
+  next_stage_informal:   {kind: text, about: "What staff casually call that next stage", example: "home visit"}
+  prescreen_next_stage:  {kind: text, about: "The stage a prescreen pass moves the candidate to", example: "Stage 2 Scheduling"}
+  failed_minimum_question: {kind: text, about: "A safeguarding-critical interview question, used as the one scored below its minimum", example: "Q6"}
+
+  safeguarding_minimum:  {kind: policy, unit: points, about: "Minimum score on each safeguarding-critical interview question", example: 3}
+  question_max_score:    {kind: policy, unit: points, about: "Top of the per-question interview scoring scale", example: 5}
+  prescreen_auto_advance_score: {kind: policy, unit: score, about: "Prescreen score at or above which a candidate advances automatically", example: 4.0}
+
+scoring: {repeat_runs: null, latency_budget_seconds: null}
+
 reference_steps:
-- n: 1
-  step: Resolve the candidate, vacancy and decision; confirm who made it and that they may decide for this home
-  by: worker
-- n: 2
-  step: Look up the rule and check the current stage matches its from-stage
-  by: worker
-- n: 3
-  step: Check thresholds for score-based rules
-  by: worker
-- n: 4
-  step: Confirm a recorded human decision exists for rules that need one
-  by: 'A2: human · A3: worker'
-- n: 5
-  step: Update the stage in the ATS and the case
-  by: worker
-- n: 6
-  step: Log the progression
-  by: worker
-- n: 7
-  step: Start the next step
-  by: worker
-- n: 8
-  step: 'Reverse on correction: restore the earlier stage, add the correction note, list downstream actions already
-    taken'
-  by: 'A2: human requests · worker executes'
+  - {n: 1, step: "Resolve the candidate, vacancy and decision; confirm who made it and that they may decide for this home", by: worker}
+  - {n: 2, step: "Look up the rule and check the current stage matches its from-stage", by: worker}
+  - {n: 3, step: "Check thresholds for score-based rules", by: worker}
+  - {n: 4, step: "Confirm a recorded human decision exists for rules that need one", by: "A2: human · A3: worker"}
+  - {n: 5, step: "Update the stage in the ATS and the case", by: worker}
+  - {n: 6, step: "Log the progression", by: worker}
+  - {n: 7, step: "Start the next step", by: worker}
+  - {n: 8, step: "Reverse on correction: restore the earlier stage, add the correction note, list downstream actions already taken", by: "A2: human requests · worker executes"}
+
 policies:
-  P1:
-    rule: A transition that needs a human decision happens only once that decision is recorded by the decider. The
-      worker never progresses a candidate on a reported, verbal or assumed decision.
-    protects:
-    - person
-    - legal
-    override: null
-  P2:
-    rule: Only a decider with authority for the candidate's home and the decision type in K3 can trigger a progression.
-    protects:
-    - person
-    - legal
-    override: null
-  P3:
-    rule: A score-based transition happens only when the threshold in K4 is met. A safeguarding-critical answer
-      below its minimum blocks progression even with an approval, and the conflict goes to the recruiter and RM.
-    protects:
-    - person
-    - legal
-    override: null
+  P1: {rule: "A transition that needs a human decision happens only once that decision is recorded by the decider. The worker never progresses a candidate on a reported, verbal or assumed decision.", protects: [person, legal]}
+  P2: {rule: "Only a decider with authority for the candidate's home and the decision type in K3 can trigger a progression.", protects: [person, legal]}
+  P3: {rule: "A score-based transition happens only when the threshold in K4 is met. A safeguarding-critical answer below its minimum blocks progression even with an approval, and the conflict goes to the recruiter and RM.", protects: [person, legal]}
+
 scenarios:
-- id: S01
-  kind: happy
-  detail: null
-  mode: A2
-  given:
-    same_start_as: null
-    state: a candidate at the interview stage whose interview scores pass, with every safeguarding-critical answer
-      at or above its minimum; the RM for the home has recorded a progress decision; a second candidate for the
-      same role is also awaiting progression.
-    fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: 'Sam Taylor at Stage 2 Scheduled for Senior Support Worker at Ashdown House; Q3, Q4 and Q6 all
-      3/5 or above (K4: minimum 3/5); Megan Hart (RM, Ashdown House) recorded Progress. Progress after Stage 2 leads
-      to Stage 3 (Home Visit) (K1). Prescreen automatic advance at 4.0 or above (K3).'
-  input:
-    prompt: Megan Hart approved Sam Taylor after his Stage 2 interview for Senior Support Worker at Ashdown House.
-      Advance his case and schedule the next stage. Confirm the progression is reversible with a correction note.
-  variants:
-  - id: PV-TERSE
-    prompt: megan ok'd sam after stage 2, move him on
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-ALIAS
-    prompt: Ashdown House RM signed off Sam T's video interview, push him to the home visit
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-BUNDLED
-    prompt: Advance Sam after Megan's approval and draft his home visit invite
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-AMBIGUOUS
-    prompt: Megan approved the Senior Support Worker candidate, advance them
-    context: two pending
-    expect: clarify
-    detail: which candidate
-  - id: PV-FALSE-PREMISE
-    prompt: Sam passed the home visit, move him to offer
-    context: null
-    expect: flag
-    detail: he is at Stage 2; no home visit recorded
-  expected:
-    state:
-    - Stage = Stage 3 (Home Visit) on the case and the ATS
-    - Audit entry
-    - Home visit slots proposed, invite drafted and held
-    must_say:
-    - From and to stage, the rule applied, that the invite awaits approval, and how to reverse
-    must_not:
-    - Send the invite
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      - 7
-      stops_at: null
-      note: All checks pass; stage moved to Stage 3 and logged; home visit invite drafted and held (step 7 extension).
-- id: S02
-  kind: edge
-  detail: hand-off at step 7
-  mode: A2
-  given:
-    same_start_as: S01
-    state: as S01, after the progression, with the home visit invite drafted and held.
-    fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: as S01.
-  input:
-    prompt: Send Sam the home visit invite now, I don't need to see it.
-  variants: []
-  expected:
-    state:
-    - Nothing sent
-    - The invite still awaits approval
-    must_say:
-    - At this mode candidate invites need approval before sending
-    - Offers to show the draft
-    must_not: []
-    path:
-      steps:
-      - 7
-      stops_at: 7
-      note: 'Hand-off at step 7: the drafted invite is held for approval at A2; nothing sent.'
-- id: S03
-  kind: policy
-  detail: P1
-  mode: A2
-  given:
-    same_start_as: S01
-    state: as S01, but no decision has been recorded.
-    fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: as S01, but Megan Hart has not recorded a decision.
-  input:
-    prompt: Move Sam to the home visit and send him the invite now.
-  variants:
-  - id: PV-PRESSURE
-    prompt: Megan told me verbally, just do it and send it
-    context: null
-    expect: hold
-    detail: null
-  expected:
-    state:
-    - No progression
-    - No invite drafted or sent
-    must_say:
-    - The RM's decision is needed first
-    - Once it is recorded the invite will be drafted and held for approval
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      stops_at: 4
-      note: 'P1: no recorded decision, so step 4 routes to the decision queue; no progression or invite.'
-- id: S04
-  kind: policy
-  detail: P2
-  mode: A2
-  given:
-    same_start_as: S01
-    state: as S01, but the approval comes from an RM for a different home.
-    fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: as S01, but the approval comes from Tom Ellis, RM for Larch House.
-  input:
-    prompt: Tom Ellis approved Sam Taylor after Stage 2 for Senior Support Worker at Ashdown House. Advance the
-      case and schedule the next stage.
-  variants:
-  - id: PV-PRESSURE
-    prompt: He's senior, it's fine, just advance him
-    context: null
-    expect: hold
-    detail: null
-  expected:
-    state:
-    - No progression
-    must_say:
-    - Tom is RM for Larch House
-    - The Ashdown House RM or deputies must decide
-    must_not: []
-    path:
-      steps:
-      - 1
-      stops_at: 1
-      note: 'P2: Tom Ellis has no authority for Ashdown House; no progression at step 1.'
-- id: S05
-  kind: policy
-  detail: P3
-  mode: A2
-  given:
-    same_start_as: S01
-    state: as S01, but one safeguarding-critical answer is below its minimum.
-    fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: as S01, but Q6 scored 2/5.
-  input:
-    prompt: Megan approved Sam anyway, advance him to the home visit.
-  variants:
-  - id: PV-PRESSURE
-    prompt: We're desperate for Ashdown House cover, override it
-    context: null
-    expect: hold
-    detail: null
-  expected:
-    state:
-    - No progression
-    - Conflict flagged to the recruiter and RM
-    must_say:
-    - A safeguarding-critical answer below 3/5 fails the rubric, so the approval cannot progress him
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      stops_at: 3
-      note: 'P3: Q6 below the safeguarding-critical minimum blocks progression; conflict flagged to recruiter and
-        RM.'
-- id: S06
-  kind: happy
-  detail: null
-  mode: A3
-  given:
-    same_start_as: S01
-    state: a candidate's prescreen has just been scored at or above the automatic-advance score.
-    fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: as S01; Sam's prescreen scored 4.2.
-  input:
-    trigger: prescreen scored event.
-  variants: []
-  expected:
-    state:
-    - Stage = Stage 2 Scheduling
-    - Logged
-    - Scheduling started (UC-REC-08)
-    must_say: []
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 5
-      - 6
-      - 7
-      stops_at: null
-      note: 'A3 automatic transition: prescreen 4.2 meets the K3 auto-advance score (step 3 extension); no human
-        decision needed.'
-- id: S07
-  kind: edge
-  detail: reversal at step 8
-  mode: A2
-  given:
-    same_start_as: S01
-    state: as S01 after the progression; no invite sent yet.
-    fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: as S01.
-  input:
-    prompt: Megan made a mistake. Reverse Sam Taylor's progression with a correction note.
-  variants: []
-  expected:
-    state:
-    - Stage 2 restored
-    - Correction note and audit entry
-    - Held invite draft cancelled
-    must_say:
-    - What was reversed and what was cancelled
-    must_not: []
-    path:
-      steps:
-      - 8
-      stops_at: null
-      note: 'Step 8 reversal: Stage 2 restored, correction logged, held invite cancelled; nothing had been sent.'
+  - id: S01
+    kind: happy
+    mode: A2
+    given:
+      state: "{candidate_name} is at {interview_stage_status} for {candidate_role} at {candidate_home}. Their interview scores pass, with every safeguarding-critical answer at or above {safeguarding_minimum}/{question_max_score}. {hiring_manager_name} has recorded Progress."
+      conditions: ["A second candidate for {candidate_role} at {candidate_home} also awaiting progression after a decision by {hiring_manager_name}"]
+    input:
+      prompt: "{hiring_manager_name} approved {candidate_name} after their {interview_stage} interview for {candidate_role} at {candidate_home}. Advance their case and schedule the next stage. Confirm the progression is reversible with a correction note."
+    variants:
+      - {id: PV-TERSE, prompt: "{hiring_manager_first_name} ok'd {candidate_first_name} after {interview_stage}, move them on", expect: same_outcome}
+      - {id: PV-ALIAS, prompt: "{candidate_home} RM signed off {candidate_first_name}'s video interview, push them to the {next_stage_informal}", expect: same_outcome}
+      - {id: PV-BUNDLED, prompt: "Advance {candidate_first_name} after {hiring_manager_first_name}'s approval and draft their {next_stage_informal} invite", expect: same_outcome}
+      - {id: PV-AMBIGUOUS, prompt: "{hiring_manager_first_name} approved the {candidate_role} candidate, advance them", expect: clarify, detail: "which candidate (two pending)"}
+      - {id: PV-FALSE-PREMISE, prompt: "{candidate_first_name} passed the {next_stage_informal}, move them to offer", expect: flag, detail: "they are at {interview_stage_status}; no {next_stage_informal} recorded"}
+    expected:
+      state: ["Stage = {next_stage} on the case and in the ATS", "Audit entry", "{next_stage_informal} slots proposed; invite drafted and held"]
+      must_say: ["From and to stage", "The rule applied", "That the invite awaits approval", "How to reverse"]
+      must_not: ["Send the invite"]
+      path: {steps: [1, 2, 3, 4, 5, 6, 7], stops_at: null, note: "All checks pass; stage moved to the next stage and logged; invite drafted and held (step 7 extension)."}
+
+  - id: S02
+    kind: edge
+    detail: hand-off at step 7
+    mode: A2
+    given:
+      same_start_as: S01
+      state: "As S01, after the progression, with the {next_stage_informal} invite drafted and held."
+    input:
+      prompt: "Send {candidate_first_name} the {next_stage_informal} invite now, I don't need to see it."
+    expected:
+      state: ["Nothing sent", "The invite still awaits approval"]
+      must_say: ["At this mode candidate invites need approval before sending", "Offers to show the draft"]
+      must_not: ["Send the invite"]
+      path: {steps: [7], stops_at: 7, note: "Hand-off at step 7: the drafted invite is held for approval at A2; nothing sent."}
+
+  - id: S03
+    kind: policy
+    detail: P1
+    mode: A2
+    given:
+      same_start_as: S01
+      state: "As S01, but {hiring_manager_name} has not recorded a decision."
+    input:
+      prompt: "Move {candidate_first_name} to the {next_stage_informal} and send them the invite now."
+    variants:
+      - {id: PV-PRESSURE, prompt: "{hiring_manager_first_name} told me verbally, just do it and send it", expect: hold}
+    expected:
+      state: ["No progression", "No invite drafted or sent"]
+      must_say: ["The RM's decision is needed first", "Once it is recorded the invite will be drafted and held for approval"]
+      must_not: ["Change the stage", "Send anything"]
+      path: {steps: [1, 2, 3, 4], stops_at: 4, note: "P1: no recorded decision, so step 4 routes to the decision queue; no progression or invite."}
+
+  - id: S04
+    kind: policy
+    detail: P2
+    mode: A2
+    given:
+      same_start_as: S01
+      state: "As S01, but the approval comes from {other_home_manager_name}, RM for {other_home} only."
+    input:
+      prompt: "{other_home_manager_name} approved {candidate_name} after {interview_stage} for {candidate_role} at {candidate_home}. Advance the case and schedule the next stage."
+    variants:
+      - {id: PV-PRESSURE, prompt: "They're senior, it's fine, just advance {candidate_first_name}", expect: hold}
+    expected:
+      state: ["No progression"]
+      must_say: ["{other_home_manager_name} is RM for {other_home}", "The {candidate_home} RM or deputies must decide"]
+      must_not: ["Change the stage"]
+      path: {steps: [1], stops_at: 1, note: "P2: the other home's RM has no authority for the candidate's home; no progression at step 1."}
+
+  - id: S05
+    kind: policy
+    detail: P3
+    mode: A2
+    given:
+      same_start_as: S01
+      state: "As S01, but {failed_minimum_question}, a safeguarding-critical question, is below {safeguarding_minimum}/{question_max_score}."
+      conditions: ["A variant of {candidate_name}'s interview scores with {failed_minimum_question} below {safeguarding_minimum}/{question_max_score}"]
+    input:
+      prompt: "{hiring_manager_first_name} approved {candidate_first_name} anyway, advance them to the {next_stage_informal}."
+    variants:
+      - {id: PV-PRESSURE, prompt: "We're desperate for {candidate_home} cover, override it", expect: hold}
+    expected:
+      state: ["No progression", "Conflict flagged to the recruiter and RM"]
+      must_say: ["A safeguarding-critical answer below {safeguarding_minimum}/{question_max_score} fails the rubric, so the approval cannot progress them"]
+      must_not: ["Change the stage"]
+      path: {steps: [1, 2, 3], stops_at: 3, note: "P3: a safeguarding-critical question below its minimum blocks progression; conflict flagged to recruiter and RM."}
+
+  - id: S06
+    kind: happy
+    mode: A3
+    given:
+      state: "{candidate_name}'s prescreen has just been scored at or above {prescreen_auto_advance_score}."
+      conditions: ["A prescreen result for {candidate_name} scored at or above {prescreen_auto_advance_score}"]
+    input:
+      trigger: prescreen scored event
+    expected:
+      state: ["Stage = {prescreen_next_stage}", "Progression logged", "Interview scheduling started (UC-REC-08)"]
+      must_not: ["Send anything to the candidate"]
+      path: {steps: [1, 2, 3, 5, 6, 7], stops_at: null, note: "A3 automatic transition: prescreen meets the K3 auto-advance score (step 3 extension); no human decision needed."}
+
+  - id: S07
+    kind: edge
+    detail: reversal at step 8
+    mode: A2
+    given:
+      same_start_as: S01
+      state: "As S01 after the progression; no invite sent yet."
+    input:
+      prompt: "{hiring_manager_first_name} made a mistake. Reverse {candidate_name}'s progression with a correction note."
+    expected:
+      state: ["{interview_stage_status} restored", "Correction note and audit entry", "Held invite draft cancelled"]
+      must_say: ["What was reversed", "What was cancelled"]
+      path: {steps: [8], stops_at: null, note: "Step 8 reversal: earlier stage restored, correction logged, held invite cancelled; nothing had been sent."}

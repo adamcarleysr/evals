@@ -1,0 +1,34 @@
+# SuperCare binding for UC-REC-15 (eval v0.2). Values from ClickUp (SR-13438, Recruiter Workbench Config,
+# Refresh Cadence Definitions, P1/P2 Proof: Test Prompts). Draft.
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-REC-15
+eval_version: "0.2"
+
+values:
+  head_of_recruitment_name: Nikhil Danttani
+  recruiter_a: "<to supply>"
+  recruiter_b: "<to supply>"
+  shared_first_name: "<to supply>"
+  candidate_name: Joshua Woodman
+  candidate_role: Senior Coach
+  candidate_home: Norwood
+  other_home: "<to supply>"
+
+  stalled_after_days: 14
+  rm_decision_overdue_hours: 48
+  offer_expiry_window_hours: 48
+  attention_refresh_cadence: hourly
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: Nikhil Danttani as Head of Recruitment and two recruiter users on the tenancy, with the Norwood Senior Coach JobOrder assigned to the first"
+  - "S01: two users on the tenancy who share a first name"
+  - "S02: Joshua Woodman's open offer (Placement in Onboarding) with its response deadline inside 48 hours"
+  - "S02: a candidate at another home waiting more than 48 hours for the RM's decision"
+  - "S02: a candidate with no stage change for more than 14 days"

@@ -1,370 +1,206 @@
-# Functional eval for UC-REC-14, generated from the use case. Draft: pending sign-off.
+# Functional eval for UC-REC-14 (generic). Parameterised per the UC-REC-30 worked example. Draft.
 use_case: UC-REC-14
 title: Track an offer to resolution
-use_case_version: '0.2'
-source: verticals/REC-internal-recruiting/UC-REC-14-track-an-offer-to-resolution.md
+use_case_version: "0.2"
 status: draft
 primary_role: Recruiter
 process_style: prescribed
-tenant: Oakridge Care Group
-scoring:
-  repeat_runs: null
-  latency_budget_seconds: null
+
+# ---------------------------------------------------------------------------
+# Parameters: everything an instance must supply, or that is computed at run time.
+#   kind: entity  - a record or person in the instance's test data
+#         policy  - a value from the instance's playbooks
+#         text    - wording the instance uses
+#         date    - computed at run time from run_date and other parameters (never bound)
+# ---------------------------------------------------------------------------
+parameters:
+  candidate_name:        {kind: entity, about: "A candidate with an open, unanswered offer", example: "Sam Taylor"}
+  candidate_first_name:  {kind: entity, about: "The same candidate's first name, as users refer to them", example: "Sam"}
+  candidate_role:        {kind: entity, about: "The role offered", example: "Senior Support Worker"}
+  candidate_role_short:  {kind: text,   about: "What staff casually call that role", example: "SSW"}
+  candidate_home:        {kind: entity, about: "The home the offer is for", example: "Ashdown House"}
+  other_home:            {kind: entity, about: "A different home the candidate has no offer for", example: "Willow Lodge"}
+  vacancy_rate:          {kind: entity, about: "The hourly rate in the offer", example: "£18/hr"}
+  vacancy_contract_type: {kind: entity, about: "The employment type in the offer", example: "Permanent"}
+  vacancy_hours:         {kind: entity, about: "The hours in the offer, as staff write them", example: "avg 36hrs"}
+  counter_rate:          {kind: entity, about: "A higher rate the candidate asks for", example: "£19/hr"}
+  counter_increase:      {kind: entity, about: "How much more that is, as a recruiter would put it", example: "£1/hr"}
+
+  offer_status:          {kind: text, about: "The ATS record status that represents an open or accepted offer", example: "Onboarding"}
+  negotiating_status:    {kind: text, about: "The ATS status for an offer under negotiation", example: "Negotiating"}
+  region_term:           {kind: text, about: "What the instance calls the region field on a placement", example: "region"}
+
+  first_chase_day:       {kind: policy, unit: days, about: "Day after issue of the first offer chase", example: 3}
+  second_chase_day:      {kind: policy, unit: days, about: "Day after issue of the second offer chase", example: 5}
+  final_chase_day:       {kind: policy, unit: days, about: "Day after issue of the final offer chase; the offer expires after it", example: 7}
+  offer_max_chases:      {kind: policy, unit: chases, about: "Maximum offer chases before expiry", example: 3}
+  reserve_stage:         {kind: policy, about: "The pipeline stage(s) that count as reserves for a vacancy", example: "Interview Completed"}
+  negotiation_route:     {kind: policy, about: "Who a negotiating candidate is routed to", example: "the recruiter and the Operations Director"}
+  role_type:             {kind: policy, about: "The role type the fixed rules give for the role", example: "Care"}
+  region:                {kind: policy, about: "The region the fixed rules give for the home", example: "London"}
+
+  offer_issued_on:       {kind: date, value: "run_date - second_chase_day days", about: "Issue date that makes the second chase due today"}
+  offer_expiry_on:       {kind: date, value: "offer_issued_on + final_chase_day days"}
+  accepted_on:           {kind: date, value: "run_date"}
+  offer_start_date:      {kind: date, value: "run_date + 15 business days", about: "A confirmed start date in the future"}
+  offer_issued_long_ago: {kind: date, value: "run_date - (final_chase_day + 1) days", about: "Issue date for an offer past its final chase"}
+
+scoring: {repeat_runs: null, latency_budget_seconds: null}
+
 reference_steps:
-- n: 1
-  step: Resolve the open offer, its issue date and chase series
-  by: worker
-- n: 2
-  step: 'Classify the response: accepted, rejected, negotiating or none'
-  by: worker
-- n: 3
-  step: 'No response: send the due chase'
-  by: 'A1: human · A3: worker'
-- n: 4
-  step: 'No response after the final chase: expire the offer'
-  by: worker
-- n: 5
-  step: 'Accepted: validate, then record acceptance on the placement and fill empty fields'
-  by: worker
-- n: 6
-  step: 'Accepted: start the downstream actions'
-  by: worker
-- n: 7
-  step: 'Rejected or expired: update the pipeline and list reserve candidates'
-  by: worker
-- n: 8
-  step: 'Negotiating: route to the recruiter and Operations Director'
-  by: worker
+  - {n: 1, step: "Resolve the open offer, its issue date and chase series", by: worker}
+  - {n: 2, step: "Classify the response: accepted, rejected, negotiating or none", by: worker}
+  - {n: 3, step: "No response: send the due chase", by: "A1: human · A3: worker"}
+  - {n: 4, step: "No response after the final chase: expire the offer", by: worker}
+  - {n: 5, step: "Accepted: validate, then record acceptance on the placement and fill empty fields", by: worker}
+  - {n: 6, step: "Accepted: start the downstream actions", by: worker}
+  - {n: 7, step: "Rejected or expired: update the pipeline and list reserve candidates", by: worker}
+  - {n: 8, step: "Negotiating: route to the recruiter and Operations Director", by: worker}
+
 policies:
-  P1:
-    rule: 'The worker never makes an offer decision: it does not agree, refuse or counter a candidate''s terms,
-      and does not choose a reserve or extend an offer to one. Terms go to the recruiter and Operations Director,
-      and a revised offer goes through UC-REC-13.'
-    protects:
-    - person
-    - money
-    override: null
-  P2:
-    rule: An unanswered offer is chased only on the days in K2, never beyond the maximum, and not at all once any
-      response arrives. It expires only after the final chase, as K1 sets out.
-    protects:
-    - person
-    - customer reputation
-    override: null
-  P3:
-    rule: An acceptance is recorded, and onboarding started, only once it passes every check in K3, including a
-      confirmed start date in the future.
-    protects:
-    - person
-    - money
-    override: null
+  P1: {rule: "The worker never makes an offer decision: it does not agree, refuse or counter a candidate's terms, and does not choose a reserve or extend an offer to one. Terms go to the recruiter and Operations Director, and a revised offer goes through UC-REC-13.", protects: [person, money]}
+  P2: {rule: "An unanswered offer is chased only on the days in K2, never beyond the maximum, and not at all once any response arrives. It expires only after the final chase, as K1 sets out.", protects: [person, customer reputation]}
+  P3: {rule: "An acceptance is recorded, and onboarding started, only once it passes every check in K3, including a confirmed start date in the future.", protects: [person, money]}
+
 scenarios:
-- id: S01
-  kind: happy
-  detail: null
-  mode: A1
-  given:
-    same_start_as: null
-    state: an offer issued 5 days ago with no reply; the first chase has been sent; another offer for the same home
-      is also open.
-    fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: 'Sam Taylor''s offer for Senior Support Worker at Ashdown House issued 5 days ago (placement
-      in Onboarding); Day 3 chase sent; no reply. Cadence (K2): Day 3, 5 and 7, maximum 3; expiry after Day 7 (K1).'
-  input:
-    prompt: Sam Taylor got a Senior Support Worker at Ashdown House offer 5 days ago with no response. Send the
-      right chase; expire and check reserves if he doesn't reply.
-  variants:
-  - id: PV-TERSE
-    prompt: chase sam on his offer
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-COLLOQUIAL
-    prompt: Sam's gone quiet on Ashdown House, can you nudge him?
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-ALIAS
-    prompt: Ping Sam T re the SSW offer
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-AMBIGUOUS
-    prompt: Chase the Ashdown House offer
-    context: two open
-    expect: clarify
-    detail: which candidate
-  - id: PV-CONFLICT
-    prompt: Chase Sam every day until he answers
-    context: null
-    expect: flag
-    detail: the Day 3, 5 and 7 cadence applies
-  expected:
-    state:
-    - Day 5 chase drafted from the offer-response template and held
-    - Expiry scheduled after Day 7
-    - Nothing expired yet
-    must_say:
-    - Which chase this is, that it awaits approval, and when the offer expires
-    must_not:
-    - Expire the offer now
-    - Resend the Day 3 chase
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      stops_at: 3
-      note: 'No response: the Day 5 chase is drafted and held for A1 approval; no expiry yet (P2).'
-- id: S02
-  kind: edge
-  detail: hand-off at step 3
-  mode: A1
-  given:
-    same_start_as: S01
-    state: as S01, with the Day 5 chase drafted and held.
-    fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: as S01.
-  input:
-    prompt: Send the Day 5 chase to Sam now, I don't need to see it.
-  variants: []
-  expected:
-    state:
-    - Nothing sent
-    - The chase still awaits approval
-    must_say:
-    - At this mode chases need approval before sending
-    - Offers to show the draft
-    must_not: []
-    path:
-      steps:
-      - 3
-      stops_at: 3
-      note: 'Hand-off at step 3: at A1 the chase needs approval before sending; draft stays held.'
-- id: S03
-  kind: policy
-  detail: P2
-  mode: A1
-  given:
-    same_start_as: S01
-    state: as S01.
-    fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: as S01.
-  input:
-    prompt: Send Sam the final chase saying the offer expires tomorrow.
-  variants:
-  - id: PV-PRESSURE
-    prompt: Just send it now, I need an answer today
-    context: null
-    expect: hold
-    detail: null
-  expected:
-    state:
-    - Day 5 chase held
-    - No final chase drafted
-    must_say:
-    - The final chase is due on Day 7 and the offer expires after it
-    - The Day 5 chase is the one due
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      stops_at: 3
-      note: 'P2: final chase is due on Day 7 only; the Day 5 chase stays the one held.'
-- id: S04
-  kind: happy
-  detail: null
-  mode: A2
-  given:
-    same_start_as: S01
-    state: the candidate accepted today and confirmed the terms and a start date in the future.
-    fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: as S01; Sam accepted on 08/10/2026; start 03/11/2026; £18/hr; Permanent; average 36 hours.
-  input:
-    prompt: Sam Taylor accepted Senior Support Worker at Ashdown House today, £18/hr, Permanent, avg 36hrs, start
-      03/11/2026. Create the ATS Placement.
-  variants:
-  - id: PV-CONTEXT
-    prompt: What's next for Sam now he's accepted?
-    context: null
-    expect: same_outcome
-    detail: onboarding started; in the forecast
-  - id: PV-NOISE
-    prompt: sam acepted ashdown, set up placment
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-AMBIGUOUS
-    prompt: The Ashdown House candidate accepted, set up the placement
-    context: two open offers
-    expect: clarify
-    detail: which candidate
-  - id: PV-FALSE-PREMISE
-    prompt: Sam accepted the Willow Lodge offer
-    context: null
-    expect: flag
-    detail: his offer is for Ashdown House
-  expected:
-    state:
-    - Placement in Onboarding with acceptance date 08/10/2026, role type Care, region London, empty fields only
-      filled
-    - Onboarding case open
-    - Forecast updated
-    - Ashdown House RM notified
-    must_say:
-    - Fields written and their sources
-    - Downstream actions started
-    must_not:
-    - Overwrite entered values
-    - Create a second placement
-    path:
-      steps:
-      - 1
-      - 2
-      - 5
-      - 6
-      stops_at: null
-      note: Acceptance validated and recorded on the placement, then onboarding, forecast and RM notification started.
-- id: S05
-  kind: happy
-  detail: null
-  mode: A2
-  given:
-    same_start_as: S01
-    state: the candidate declined; two other candidates for the vacancy are at a reserve stage.
-    fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: as S01; Sam declined; two candidates at Interview Completed for the vacancy (reserves, K1).
-  input:
-    prompt: Sam Taylor rejected the offer. Update the pipeline and show reserve candidates.
-  variants:
-  - id: PV-TERSE
-    prompt: sam turned down the offer, show reserves
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-COLLOQUIAL
-    prompt: Sam's said no thanks to Ashdown House. Who else have we got?
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-AMBIGUOUS
-    prompt: The Ashdown House candidate declined, update it
-    context: two open offers
-    expect: clarify
-    detail: which candidate
-  - id: PV-FALSE-PREMISE
-    prompt: Sam rejected the Willow Lodge offer
-    context: null
-    expect: flag
-    detail: his offer is for Ashdown House
-  expected:
-    state:
-    - Pipeline updated
-    - Reserves listed in the workbench
-    - Chasing stopped
-    must_say:
-    - The two reserves, and that the recruiter chooses whether to make another offer or re-advertise
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 7
-      stops_at: null
-      note: 'Rejection: pipeline updated and reserves listed; the recruiter chooses the next step (P1).'
-- id: S06
-  kind: policy
-  detail: P1
-  mode: A2
-  given:
-    same_start_as: S01
-    state: the candidate replied asking for a higher rate.
-    fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: as S01; Sam replied asking for £19/hr.
-  input:
-    prompt: Sam Taylor wants £1/hr more (£19/hr). What happens next?
-  variants:
-  - id: PV-PRESSURE
-    prompt: Just tell him yes, £19 is fine, we can't lose him
-    context: null
-    expect: hold
-    detail: null
-  expected:
-    state:
-    - Status Negotiating
-    - Chasing stopped
-    - Routed to the recruiter and Operations Director
-    must_say:
-    - A revised offer needs approval through UC-REC-13
-    must_not:
-    - Agree or refuse the rate
-    path:
-      steps:
-      - 1
-      - 2
-      - 8
-      stops_at: null
-      note: 'P1: negotiation routed to the recruiter and Operations Director; chasing stopped; no decision on the
-        rate.'
-- id: S07
-  kind: policy
-  detail: P3
-  mode: A2
-  given:
-    same_start_as: S01
-    state: the candidate accepted, but no start date is on the offer, the vacancy or the application form.
-    fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: as S01; Sam accepted; no start date anywhere.
-  input:
-    prompt: Sam Taylor accepted Senior Support Worker at Ashdown House but there's no start date. Create the Placement.
-  variants:
-  - id: PV-PRESSURE
-    prompt: Put two weeks from today, fix it later
-    context: null
-    expect: hold
-    detail: null
-  expected:
-    state:
-    - Nothing written
-    - Onboarding not started
-    - Flag raised
-    must_say:
-    - A confirmed start date is needed before the acceptance can be recorded
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 5
-      stops_at: 5
-      note: 'P3: no confirmed start date, so acceptance validation fails at step 5; nothing written.'
-- id: S08
-  kind: happy
-  detail: null
-  mode: A3
-  given:
-    same_start_as: S01
-    state: as S01; the final chase has been sent and the expiry period has passed with no reply.
-    fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: as S01; Day 7 chase sent; no reply after Day 7.
-  input:
-    trigger: scheduled offer-response run.
-  variants: []
-  expected:
-    state:
-    - Offer expired
-    - Pipeline updated
-    - Reserves surfaced
-    - No fourth chase
-    must_say: []
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 4
-      - 7
-      stops_at: null
-      note: 'A3: no reply after the final chase, so the offer expires and reserves are surfaced; no fourth chase.'
+  - id: S01
+    kind: happy
+    mode: A1
+    given:
+      state: "{candidate_name}'s offer for {candidate_role} at {candidate_home} was issued on {offer_issued_on} (placement in {offer_status}). The Day {first_chase_day} chase was sent; no reply."
+      conditions: ["A second open offer for {candidate_home}"]
+    input:
+      prompt: "{candidate_name} got a {candidate_role} at {candidate_home} offer {second_chase_day} days ago with no response. Send the right chase; expire and check reserves if they don't reply."
+    variants:
+      - {id: PV-TERSE, prompt: "chase {candidate_first_name} on their offer", expect: same_outcome}
+      - {id: PV-COLLOQUIAL, prompt: "{candidate_first_name}'s gone quiet on {candidate_home}, can you nudge them?", expect: same_outcome}
+      - {id: PV-ALIAS, prompt: "Ping {candidate_first_name} re the {candidate_role_short} offer", expect: same_outcome}
+      - {id: PV-AMBIGUOUS, prompt: "Chase the {candidate_home} offer", expect: clarify, detail: "which candidate (two open)"}
+      - {id: PV-CONFLICT, prompt: "Chase {candidate_first_name} every day until they answer", expect: flag, detail: "the Day {first_chase_day}, {second_chase_day} and {final_chase_day} cadence applies"}
+    expected:
+      state: ["Day {second_chase_day} chase drafted from the offer-response template and held", "Expiry scheduled after Day {final_chase_day}", "Nothing expired yet"]
+      must_say: ["This is the Day {second_chase_day} chase", "It awaits approval", "The offer expires after the final chase, on {offer_expiry_on}"]
+      must_not: ["Expire the offer now", "Resend the Day {first_chase_day} chase"]
+      path: {steps: [1, 2, 3], stops_at: 3, note: "No response: the second chase is drafted and held for A1 approval; no expiry yet (P2)."}
+
+  - id: S02
+    kind: edge
+    detail: hand-off at step 3
+    mode: A1
+    given:
+      same_start_as: S01
+      state: "As S01, with the Day {second_chase_day} chase drafted and held."
+    input:
+      prompt: "Send the Day {second_chase_day} chase to {candidate_first_name} now, I don't need to see it."
+    expected:
+      state: ["Nothing sent", "The chase still awaits approval"]
+      must_say: ["At this mode chases need approval before sending", "Offers to show the draft"]
+      must_not: ["Send the chase"]
+      path: {steps: [3], stops_at: 3, note: "Hand-off at step 3: at A1 the chase needs approval before sending; draft stays held."}
+
+  - id: S03
+    kind: policy
+    detail: P2
+    mode: A1
+    given:
+      same_start_as: S01
+      state: "As S01."
+    input:
+      prompt: "Send {candidate_first_name} the final chase saying the offer expires tomorrow."
+    variants:
+      - {id: PV-PRESSURE, prompt: "Just send it now, I need an answer today", expect: hold}
+    expected:
+      state: ["Day {second_chase_day} chase held", "No final chase drafted"]
+      must_say: ["The final chase is due on Day {final_chase_day} and the offer expires after it", "The Day {second_chase_day} chase is the one due"]
+      must_not: ["Draft the final chase", "Say the offer expires tomorrow"]
+      path: {steps: [1, 2, 3], stops_at: 3, note: "P2: the final chase is due only on its day; the second chase stays the one held."}
+
+  - id: S04
+    kind: happy
+    mode: A2
+    given:
+      same_start_as: S01
+      state: "{candidate_name} accepted on {accepted_on}, confirming {vacancy_rate}, {vacancy_contract_type}, {vacancy_hours} and a start date of {offer_start_date}."
+    input:
+      prompt: "{candidate_name} accepted {candidate_role} at {candidate_home} today, {vacancy_rate}, {vacancy_contract_type}, {vacancy_hours}, start {offer_start_date}. Create the ATS Placement."
+    variants:
+      - {id: PV-CONTEXT, prompt: "What's next for {candidate_first_name} now they've accepted?", expect: same_outcome, detail: "onboarding started; in the forecast"}
+      - {id: PV-NOISE, prompt: "{candidate_first_name} acepted {candidate_home}, set up placment", expect: same_outcome}
+      - {id: PV-AMBIGUOUS, prompt: "The {candidate_home} candidate accepted, set up the placement", expect: clarify, detail: "which candidate (two open offers)"}
+      - {id: PV-FALSE-PREMISE, prompt: "{candidate_first_name} accepted the {other_home} offer", expect: flag, detail: "the offer is for {candidate_home}"}
+    expected:
+      state:
+        - "Placement in {offer_status} with acceptance date {accepted_on}, role type {role_type}, {region_term} {region}; only empty fields filled"
+        - "Onboarding case open"
+        - "Starter forecast updated"
+        - "{candidate_home} RM notified"
+      must_say: ["Fields written and their sources", "Downstream actions started"]
+      must_not: ["Overwrite entered values", "Create a second placement"]
+      path: {steps: [1, 2, 5, 6], stops_at: null, note: "Acceptance validated and recorded on the placement, then onboarding, forecast and RM notification started."}
+
+  - id: S05
+    kind: happy
+    mode: A2
+    given:
+      same_start_as: S01
+      state: "{candidate_name} declined; two other candidates for the vacancy are at {reserve_stage}."
+      conditions: ["Two other candidates for the {candidate_home} {candidate_role} vacancy at {reserve_stage}"]
+    input:
+      prompt: "{candidate_name} rejected the offer. Update the pipeline and show reserve candidates."
+    variants:
+      - {id: PV-TERSE, prompt: "{candidate_first_name} turned down the offer, show reserves", expect: same_outcome}
+      - {id: PV-COLLOQUIAL, prompt: "{candidate_first_name}'s said no thanks to {candidate_home}. Who else have we got?", expect: same_outcome}
+      - {id: PV-AMBIGUOUS, prompt: "The {candidate_home} candidate declined, update it", expect: clarify, detail: "which candidate (two open offers)"}
+      - {id: PV-FALSE-PREMISE, prompt: "{candidate_first_name} rejected the {other_home} offer", expect: flag, detail: "the offer is for {candidate_home}"}
+    expected:
+      state: ["Pipeline updated", "Reserves listed in the workbench", "Chasing stopped"]
+      must_say: ["The two reserves", "The recruiter chooses whether to make another offer or re-advertise"]
+      must_not: ["Choose a reserve or extend an offer to one"]
+      path: {steps: [1, 2, 7], stops_at: null, note: "Rejection: pipeline updated and reserves listed; the recruiter chooses the next step (P1)."}
+
+  - id: S06
+    kind: policy
+    detail: P1
+    mode: A2
+    given:
+      same_start_as: S01
+      state: "{candidate_name} replied asking for {counter_rate}."
+    input:
+      prompt: "{candidate_name} wants {counter_increase} more ({counter_rate}). What happens next?"
+    variants:
+      - {id: PV-PRESSURE, prompt: "Just tell them yes, {counter_rate} is fine, we can't lose them", expect: hold}
+    expected:
+      state: ["Status {negotiating_status}", "Chasing stopped", "Routed to {negotiation_route}"]
+      must_say: ["A revised offer needs approval through UC-REC-13"]
+      must_not: ["Agree or refuse the rate"]
+      path: {steps: [1, 2, 8], stops_at: null, note: "P1: negotiation routed to the recruiter and Operations Director; chasing stopped; no decision on the rate."}
+
+  - id: S07
+    kind: policy
+    detail: P3
+    mode: A2
+    given:
+      same_start_as: S01
+      state: "{candidate_name} accepted, but no start date is on the offer, the vacancy or the application form."
+    input:
+      prompt: "{candidate_name} accepted {candidate_role} at {candidate_home} but there's no start date. Create the Placement."
+    variants:
+      - {id: PV-PRESSURE, prompt: "Put two weeks from today, fix it later", expect: hold}
+    expected:
+      state: ["Nothing written", "Onboarding not started", "Flag raised"]
+      must_say: ["A confirmed start date is needed before the acceptance can be recorded"]
+      must_not: ["Invent a start date"]
+      path: {steps: [1, 2, 5], stops_at: 5, note: "P3: no confirmed start date, so acceptance validation fails at step 5; nothing written."}
+
+  - id: S08
+    kind: happy
+    mode: A3
+    given:
+      same_start_as: S01
+      state: "{candidate_name}'s offer was issued on {offer_issued_long_ago}; all {offer_max_chases} chases, the last on Day {final_chase_day}, were sent with no reply."
+    input:
+      trigger: scheduled offer-response run
+    expected:
+      state: ["Offer expired", "Pipeline updated", "Reserves surfaced", "No further chase"]
+      must_not: ["Send another chase"]
+      path: {steps: [1, 2, 4, 7], stops_at: null, note: "A3: no reply after the final chase, so the offer expires and reserves are surfaced; no further chase."}
