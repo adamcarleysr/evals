@@ -1,0 +1,30 @@
+# SuperCare binding for UC-REC-22 (eval v0.2). Values checked against ClickUp. Draft.
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-REC-22
+eval_version: "0.2"
+
+values:
+  board_director: Chris Coleman
+  out_of_scope_homes: Frimley and Norwood
+  started_status: Started
+
+  all_sections_recipients: Chris Coleman and Damian Williams
+  section_scoped_recipient: Emma Chapman
+  section_scope: starters and vacancies
+  home_scoped_recipient: Charley Hooper
+  home_scope: Eastbourne homes (Heroes Haven, Hyde Gardens, 23 Lushington, 13 Lushington, Skywalker)
+  board_version_scheme: "<to supply>"
+  export_approvers: Chris Coleman
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: weekly forecast and KPI snapshots for every week of the last full quarter"
+  - "S01: dashboard reference values for starters by home, the pipeline funnel and KPIs for that quarter"
+  - "S03: no forecast snapshots for the third and fourth weeks of the middle month of that quarter"
+  - "S06: snapshots and dashboard reference values for the current month, with every pre-publication check passing"

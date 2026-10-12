@@ -1,229 +1,153 @@
-# Functional eval for UC-REC-17, generated from the use case. Draft: pending sign-off.
+# Functional eval for UC-REC-17 (generic). Parameterised per the UC-REC-30 worked example. Draft.
 use_case: UC-REC-17
 title: Forecast starters
-use_case_version: '0.2'
-source: verticals/REC-internal-recruiting/UC-REC-17-forecast-starters.md
+use_case_version: "0.2"
 status: draft
 primary_role: Recruitment Leader
 process_style: prescribed
-tenant: Oakridge Care Group
-scoring:
-  repeat_runs: null
-  latency_budget_seconds: null
+
+# ---------------------------------------------------------------------------
+# Parameters: everything an instance must supply, or that is computed at run time.
+#   kind: entity  - a record or person in the instance's test data
+#         policy  - a value from the instance's playbooks
+#         text    - wording the instance uses
+#         date    - computed at run time from run_date and other parameters (never bound)
+# ---------------------------------------------------------------------------
+parameters:
+  candidate_name:        {kind: entity, about: "A candidate with an eligible placement starting in the forecast horizon", example: "Sam Taylor"}
+  candidate_role:        {kind: entity, about: "The role on that placement", example: "Senior Support Worker"}
+  candidate_home:        {kind: entity, about: "The canonical home of that placement", example: "Ashdown House"}
+  other_home:            {kind: entity, about: "A different canonical home, where the candidate is not counted", example: "Beacon House"}
+  ambiguous_home_name:   {kind: entity, about: "A home name users say that matches two canonical homes", example: "Birch Close"}
+  ambiguous_home_options: {kind: entity, about: "The two canonical homes that name matches", example: "1 Birch Close or 7 Birch Close"}
+  alias_home:            {kind: entity, about: "A canonical home that has a known alias in the organisation dimensions", example: "Willow Lodge"}
+  home_alias:            {kind: text,   about: "A mapped alias for alias_home as it appears in the ATS", example: "OCG Willow"}
+  unmapped_home_name:    {kind: text,   about: "A home name close to alias_home that is neither a canonical home nor a known alias", example: "Willow Lodge Annex"}
+  eligible_status:       {kind: policy, about: "A placement status the starter forecast counts as eligible", example: "Onboarding"}
+
+  forecast_horizon_weeks: {kind: policy, unit: weeks, about: "How many week buckets the starter forecast covers", example: 4}
+  horizon_start_offset:   {kind: policy, unit: weeks, about: "0 if the horizon includes the current week, 1 if it starts next week", example: 1}
+
+  horizon_start:     {kind: date, value: "start of week of run_date + horizon_start_offset weeks", about: "Start of the first forecast week"}
+  placement_week:    {kind: date, value: "horizon_start + (forecast_horizon_weeks - 1) weeks", about: "Start of the last forecast week, where the candidate is counted"}
+  placement_start:   {kind: date, value: "placement_week + 1 day", about: "The candidate's forecasted start date"}
+  deferred_on:       {kind: date, value: "run_date - 1 day"}
+
+scoring: {repeat_runs: null, latency_budget_seconds: null}
+
 reference_steps:
-- n: 1
-  step: Resolve the horizon to week buckets and any home filter to a canonical home
-  by: worker
-- n: 2
-  step: Pull every placement with a start date in the horizon or with no start date
-  by: worker
-- n: 3
-  step: Classify each placement as eligible, excluded (cancelled, withdrawn, deferred) or ambiguous
-  by: worker
-- n: 4
-  step: Resolve each eligible placement's home to a canonical home
-  by: worker
-- n: 5
-  step: Count eligible placements by home and week, and reconcile
-  by: worker
-- n: 6
-  step: Present the grid with the exclusions and exceptions, and save the snapshot
-  by: worker
+  - {n: 1, step: "Resolve the horizon to week buckets and any home filter to a canonical home", by: worker}
+  - {n: 2, step: "Pull every placement with a start date in the horizon or with no start date", by: worker}
+  - {n: 3, step: "Classify each placement as eligible, excluded (cancelled, withdrawn, deferred) or ambiguous", by: worker}
+  - {n: 4, step: "Resolve each eligible placement's home to a canonical home", by: worker}
+  - {n: 5, step: "Count eligible placements by home and week, and reconcile", by: worker}
+  - {n: 6, step: "Present the grid with the exclusions and exceptions, and save the snapshot", by: worker}
+
 policies:
-  P1:
-    rule: Only placements with an eligible status in K1 are counted. Cancelled, withdrawn and deferred placements
-      are excluded with the reason, and a status not in the mapping is ambiguous and never counted.
-    protects:
-    - data
-    - customer reputation
-    override: null
-  P2:
-    rule: A placement with no start date, or whose home doesn't resolve to a canonical home or a known alias in
-      K3, is listed as an exception and never placed in a week or a home.
-    protects:
-    - data
-    - customer reputation
-    override: null
+  P1: {rule: "Only placements with an eligible status in K1 are counted. Cancelled, withdrawn and deferred placements are excluded with the reason, and a status not in the mapping is ambiguous and never counted.", protects: [data, customer reputation]}
+  P2: {rule: "A placement with no start date, or whose home doesn't resolve to a canonical home or a known alias in K3, is listed as an exception and never placed in a week or a home.", protects: [data, customer reputation]}
+
 scenarios:
-- id: S01
-  kind: happy
-  detail: null
-  mode: A0
-  given:
-    same_start_as: null
-    state: placements across all homes in the horizon, including one cancelled, one withdrawn and one deferred;
-      a reference calculation of the grid is stored.
-    fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: 'run on Thu 08/10/2026. Horizon (K1): the next four weeks, current week excluded. Sam Taylor''s
-      Senior Support Worker at Ashdown House placement is in Onboarding with start date 03/11/2026; seeded placements
-      across the nine homes.'
-  input:
-    prompt: Build the four-week starter forecast grouped by home and week. Exclude cancelled/withdrawn/deferred.
-  variants:
-  - id: PV-TERSE
-    prompt: 4 wk starter forecast
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-ALIAS
-    prompt: Who's starting across the houses in the next month or so, by week?
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-BUNDLED
-    prompt: Build the forecast by home and week and list the Placements behind Ashdown House
-    context: null
-    expect: same_outcome
-    detail: plus the Ashdown House placement list including Sam Taylor
-  - id: PV-AMBIGUOUS
-    prompt: Forecast for Birch Close
-    context: null
-    expect: clarify
-    detail: 1 Birch Close or 7 Birch Close
-  - id: PV-FALSE-PREMISE
-    prompt: Why isn't Sam Taylor in the Beacon House forecast?
-    context: null
-    expect: flag
-    detail: his placement is at Ashdown House; show where he is counted
-  expected:
-    state:
-    - Each home and week cell = reference calculation exactly
-    - Grand total = number of eligible placements
-    - The cancelled, withdrawn and deferred placements are in the excluded list, not the grid
-    - Sam Taylor counted once under Ashdown House, week of 02/11/2026
-    must_say:
-    - The four week buckets with dates, and how many placements were excluded and why
-    must_not:
-    - Count any placement with no start date
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      stops_at: null
-      note: 'Full read-only build: classify under P1, resolve homes, reconcile grid, present and save snapshot.'
-- id: S02
-  kind: edge
-  detail: home filter
-  mode: A0
-  given:
-    same_start_as: S01
-    state: as S01.
-    fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: as S01.
-  input:
-    prompt: Forecast for Ashdown House only, listing each Placement.
-  variants: []
-  expected:
-    state:
-    - Ashdown House row = reference calculation
-    - Listed placements = the eligible Ashdown House placements, including Sam Taylor's Senior Support Worker placement
-    must_say:
-    - The scope used (Ashdown House, four weeks from 12/10/2026)
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      stops_at: null
-      note: Home filter resolved to Ashdown House at step 1; otherwise the full forecast path.
-- id: S03
-  kind: policy
-  detail: P1
-  mode: A0
-  given:
-    same_start_as: S01
-    state: as S01, and one eligible placement was deferred yesterday; two other placements at the same home have
-      no start date.
-    fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: as S01, and Sam Taylor's placement was deferred yesterday; two other Ashdown House placements
-      have no start date.
-  input:
-    prompt: Sam Taylor's Placement was deferred yesterday. Rebuild the forecast.
-  variants: []
-  expected:
-    state:
-    - Ashdown House week of 02/11/2026 = S01 value − 1
-    - Sam Taylor in the excluded list (deferred) with the date of change
-    - The two undated placements in the exception list, not in any week
-    must_say:
-    - '"2 placements missing start dates, cannot forecast week"'
-    must_not:
-    - Place the undated placements in a week
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      stops_at: null
-      note: Full rebuild; deferral excluded with change date (P1, step 3 extension); undated placements listed under
-        P2.
-- id: S04
-  kind: policy
-  detail: P2
-  mode: A0
-  given:
-    same_start_as: S01
-    state: as S01, and one placement's home is a name that is neither a canonical home nor a known alias.
-    fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: as S01, and one placement's home reads "Willow Lodge Annex".
-  input:
-    prompt: Build the four-week starter forecast.
-  variants: []
-  expected:
-    state:
-    - The "Willow Lodge Annex" placement is in the exception list and not counted under Willow Lodge
-    - Willow Lodge row = reference calculation without it
-    must_say: []
-    must_not:
-    - Assign it to Willow Lodge
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      stops_at: null
-      note: Unresolved home listed as an exception at step 4 under P2; never assigned to Willow Lodge.
-- id: S05
-  kind: edge
-  detail: extension at step 4
-  mode: A0
-  given:
-    same_start_as: S01
-    state: as S01, and one eligible placement's home is recorded under a known alias.
-    fixture: oakridge/sam-taylor-ashdown-house
-    tenant_values: as S01; "OCG Willow" is a mapped alias for Willow Lodge (K3), and one placement's home reads
-      "OCG Willow".
-  input:
-    prompt: Build the four-week starter forecast.
-  variants: []
-  expected:
-    state:
-    - The "OCG Willow" placement counted under Willow Lodge
-    - No exception raised for it
-    - Grid = reference calculation
-    must_say: []
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      stops_at: null
-      note: Known alias resolved to Willow Lodge at step 4 (extension); no exception raised.
+  - id: S01
+    kind: happy
+    mode: A0
+    given:
+      state: "Placements across all homes start in the {forecast_horizon_weeks}-week horizon from {horizon_start}, including one cancelled, one withdrawn and one deferred. {candidate_name}'s {candidate_role} placement at {candidate_home} has status {eligible_status} and starts on {placement_start}. A reference calculation of the grid is stored."
+      conditions:
+        - "{candidate_name} has a {candidate_role} placement at {candidate_home} with status {eligible_status} starting on {placement_start}"
+        - "Other eligible placements start in the horizon across several homes, including {other_home}"
+        - "One cancelled, one withdrawn and one deferred placement start in the horizon"
+        - "{ambiguous_home_name} matches two canonical homes: {ambiguous_home_options}"
+        - "A reference calculation of the grid is stored"
+    input:
+      prompt: "Build the {forecast_horizon_weeks}-week starter forecast grouped by home and week. Exclude cancelled/withdrawn/deferred."
+    variants:
+      - {id: PV-TERSE, prompt: "{forecast_horizon_weeks} wk starter forecast", expect: same_outcome}
+      - {id: PV-ALIAS, prompt: "Who's starting across the houses in the next few weeks, by week?", expect: same_outcome}
+      - {id: PV-BUNDLED, prompt: "Build the forecast by home and week and list the placements behind {candidate_home}", expect: same_outcome, detail: "plus the {candidate_home} placement list including {candidate_name}"}
+      - {id: PV-AMBIGUOUS, prompt: "Forecast for {ambiguous_home_name}", expect: clarify, detail: "{ambiguous_home_options}"}
+      - {id: PV-FALSE-PREMISE, prompt: "Why isn't {candidate_name} in the {other_home} forecast?", expect: flag, detail: "their placement is at {candidate_home}; shows where they are counted"}
+    expected:
+      state:
+        - "Each home and week cell = reference calculation exactly"
+        - "Grand total = number of eligible placements"
+        - "The cancelled, withdrawn and deferred placements are in the excluded list, not the grid"
+        - "{candidate_name} counted once under {candidate_home}, week of {placement_week}"
+      must_say: ["The {forecast_horizon_weeks} week buckets with dates, starting {horizon_start}", "How many placements were excluded and why"]
+      must_not: ["Count any placement with no start date"]
+      path: {steps: [1, 2, 3, 4, 5, 6], stops_at: null, note: "Full read-only build: classify under P1, resolve homes, reconcile grid, present and save snapshot."}
+
+  - id: S02
+    kind: edge
+    detail: home filter
+    mode: A0
+    given:
+      same_start_as: S01
+      state: "As S01."
+    input:
+      prompt: "Forecast for {candidate_home} only, listing each placement."
+    expected:
+      state:
+        - "{candidate_home} row = reference calculation"
+        - "Listed placements = the eligible {candidate_home} placements, including {candidate_name}'s {candidate_role} placement"
+      must_say: ["The scope used ({candidate_home}, {forecast_horizon_weeks} weeks from {horizon_start})"]
+      must_not: []
+      path: {steps: [1, 2, 3, 4, 5, 6], stops_at: null, note: "Home filter resolved to the canonical home at step 1; otherwise the full forecast path."}
+
+  - id: S03
+    kind: policy
+    detail: P1
+    mode: A0
+    given:
+      same_start_as: S01
+      state: "As S01, but {candidate_name}'s placement was deferred on {deferred_on}, and two other {candidate_home} placements have no start date."
+      conditions:
+        - "{candidate_name}'s placement status changed to deferred on {deferred_on}"
+        - "Two other {candidate_home} placements have no start date"
+    input:
+      prompt: "{candidate_name}'s placement was deferred yesterday. Rebuild the forecast."
+    expected:
+      state:
+        - "{candidate_home} week of {placement_week} = S01 value − 1"
+        - "{candidate_name} in the excluded list (deferred) with the date of change, {deferred_on}"
+        - "The two undated placements in the exception list, not in any week"
+      must_say: ["2 placements are missing start dates, so their week can't be forecast"]
+      must_not: ["Place the undated placements in a week", "Count {candidate_name}"]
+      path: {steps: [1, 2, 3, 4, 5, 6], stops_at: null, note: "Full rebuild; deferral excluded with change date (P1, step 3 extension); undated placements listed under P2."}
+
+  - id: S04
+    kind: policy
+    detail: P2
+    mode: A0
+    given:
+      same_start_as: S01
+      state: "As S01, and one eligible placement's home reads \"{unmapped_home_name}\", which is neither a canonical home nor a known alias."
+      conditions: ["An eligible placement in the horizon has its home recorded as \"{unmapped_home_name}\""]
+    input:
+      prompt: "Build the {forecast_horizon_weeks}-week starter forecast."
+    expected:
+      state:
+        - "The \"{unmapped_home_name}\" placement is in the exception list and not counted under {alias_home}"
+        - "{alias_home} row = reference calculation without it"
+      must_say: []
+      must_not: ["Assign it to {alias_home}"]
+      path: {steps: [1, 2, 3, 4, 5, 6], stops_at: null, note: "Unresolved home listed as an exception at step 4 under P2; never assigned to the similar canonical home."}
+
+  - id: S05
+    kind: edge
+    detail: extension at step 4
+    mode: A0
+    given:
+      same_start_as: S01
+      state: "As S01; \"{home_alias}\" is a mapped alias for {alias_home}, and one eligible placement's home reads \"{home_alias}\"."
+      conditions: ["An eligible placement in the horizon has its home recorded as \"{home_alias}\""]
+    input:
+      prompt: "Build the {forecast_horizon_weeks}-week starter forecast."
+    expected:
+      state:
+        - "The \"{home_alias}\" placement counted under {alias_home}"
+        - "No exception raised for it"
+        - "Grid = reference calculation"
+      must_say: []
+      must_not: []
+      path: {steps: [1, 2, 3, 4, 5, 6], stops_at: null, note: "Known alias resolved to its canonical home at step 4 (extension); no exception raised."}

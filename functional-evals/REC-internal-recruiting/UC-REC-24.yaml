@@ -1,228 +1,151 @@
-# Functional eval for UC-REC-24, generated from the use case. Draft: pending sign-off.
+# Functional eval for UC-REC-24 (generic). Parameterised per the UC-REC-30 worked example. Draft.
 use_case: UC-REC-24
 title: Recruitment Leader dashboard
-use_case_version: '0.2'
-source: verticals/REC-internal-recruiting/UC-REC-24-recruitment-leader-dashboard.md
+use_case_version: "0.2"
 status: draft
 primary_role: Recruitment Leader
 process_style: prescribed
-tenant: Oakridge Care Group
-scoring:
-  repeat_runs: null
-  latency_budget_seconds: null
+
+# ---------------------------------------------------------------------------
+# Parameters: everything an instance must supply, or that is computed at run time.
+#   kind: entity  - a record or person in the instance's test data
+#         policy  - a value from the instance's playbooks
+#         text    - wording the instance uses
+#         date    - computed at run time from run_date and other parameters (never bound)
+# ---------------------------------------------------------------------------
+parameters:
+  validated_run:      {kind: entity, about: "The latest validated calculation run, by its run ID", example: "W41-r1"}
+  candidate_name:     {kind: entity, about: "A candidate with a placement in the forecast horizon", example: "Sam Taylor"}
+  candidate_home:     {kind: entity, about: "The home of that placement", example: "Willow Lodge"}
+  filter_home:        {kind: entity, about: "A home the viewer filters the dashboard to", example: "Ashdown House"}
+  other_pinned_view:  {kind: text,   about: "Another pinned view the Recruitment Leader has", example: "recruiter workbench"}
+  drill_kpi:          {kind: text,   about: "A recruiter activity KPI shown per recruiter", example: "Prescreens"}
+  total_kpi:          {kind: text,   about: "A KPI shown as a team total", example: "Deals"}
+
+  refresh_cadence:        {kind: policy, about: "When ATS-fed tiles refresh", example: "on change plus hourly"}
+  stale_threshold_hours:  {kind: policy, unit: hours, about: "Age after which a tile is stale", example: 2}
+  alert_after_failures:   {kind: policy, unit: failures, about: "Consecutive refresh failures that trigger an alert", example: 3}
+  refresh_alert_target:   {kind: policy, about: "Who is alerted when refresh failures reach the threshold", example: "the recruitment team"}
+
+  last_refresh:   {kind: date, value: "run_date - 20 minutes", about: "When the validated run was last refreshed in S01"}
+  last_success:   {kind: date, value: "run_date - stale_threshold_hours hours - 40 minutes", about: "Last successful refresh in S05"}
+
+scoring: {repeat_runs: null, latency_budget_seconds: null}
+
 reference_steps:
-- n: 1
-  step: Open the pinned view with the viewer's saved layout and filters
-  by: worker
-- n: 2
-  step: Apply the viewer's permission scope
-  by: worker
-- n: 3
-  step: 'Load the tiles from the governed calculation layer: recruiter KPI table, team totals, forecast by home,
-    trends'
-  by: worker
-- n: 4
-  step: Load open data-quality items and mark qualified tiles
-  by: worker
-- n: 5
-  step: Refresh on change and on schedule; label stale tiles
-  by: worker
-- n: 6
-  step: Drill from any total to its contributing rows and records
-  by: worker
+  - {n: 1, step: "Open the pinned view with the viewer's saved layout and filters", by: worker}
+  - {n: 2, step: "Apply the viewer's permission scope", by: worker}
+  - {n: 3, step: "Load the tiles from the governed calculation layer: recruiter KPI table, team totals, forecast by home, trends", by: worker}
+  - {n: 4, step: "Load open data-quality items and mark qualified tiles", by: worker}
+  - {n: 5, step: "Refresh on change and on schedule; label stale tiles", by: worker}
+  - {n: 6, step: "Drill from any total to its contributing rows and records", by: worker}
+
 policies:
-  P1:
-    rule: Every tile, drill-down and chat answer uses the governed definitions in K1, so the same question gives
-      the same number for the same period. No tile computes its own version of a metric.
-    protects:
-    - data
-    - customer reputation
-    override: null
-  P2:
-    rule: A tile older than the stale threshold, or whose last refresh failed, is labelled with its last refresh
-      time and is never presented as current.
-    protects:
-    - data
-    - customer reputation
-    override: null
+  P1: {rule: "Every tile, drill-down and chat answer uses the governed definitions in K1, so the same question gives the same number for the same period. No tile computes its own version of a metric.", protects: [data, customer reputation]}
+  P2: {rule: "A tile older than the stale threshold, or whose last refresh failed, is labelled with its last refresh time and is never presented as current.", protects: [data, customer reputation]}
+
 scenarios:
-- id: S01
-  kind: happy
-  detail: null
-  mode: A0
-  given:
-    same_start_as: null
-    state: a validated calculation run refreshed recently; several open data-quality items; recruiter, forecast
-      and trend values stored.
-    fixture: oakridge/recruitment-team-w41
-    tenant_values: Validated run W41-r1 refreshed 20 minutes ago; 7 open data-quality items from UC-REC-19.
-  input:
-    prompt: 'Show the Recruitment Leader dashboard: KPI tables, team totals, forecast by home, trends.'
-  variants:
-  - id: PV-TERSE
-    prompt: my dashboard
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-ALIAS
-    prompt: Pull up the recruitment cockpit
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-COLLOQUIAL
-    prompt: Where are we at across the team and homes today?
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-AMBIGUOUS
-    prompt: Show me the dashboard
-    context: the viewer has both this and a recruiter workbench pinned
-    expect: clarify
-    detail: which dashboard
-  - id: PV-FALSE-PREMISE
-    prompt: Why has the dashboard stopped showing data-quality issues?
-    context: 7 are shown
-    expect: flag
-    detail: 7 are open and shown
-  expected:
-    state:
-    - Each recruiter KPI cell equals the W41-r1 value exactly
-    - Team total equals the sum of recruiter rows
-    - Forecast-by-home cells equal the UC-REC-17 grid
-    - Trends equal the snapshot values
-    - 7 items in the exceptions panel
-    - Qualified tiles marked
-    must_say:
-    - The last refresh time
-    must_not:
-    - Show a missing value as 0
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      stops_at: null
-      note: Opens the view, applies scope, loads governed tiles and data-quality markers; read-only.
-- id: S02
-  kind: policy
-  detail: P1
-  mode: A0
-  given:
-    same_start_as: S01
-    state: as S01.
-    fixture: oakridge/recruitment-team-w41
-    tenant_values: as S01.
-  input:
-    prompt: Drill down from team totals to one recruiter's prescreens this week.
-  variants: []
-  expected:
-    state:
-    - The number of listed prescreen records equals that recruiter's Prescreens tile value exactly
-    - Each record has its ATS ID
-    must_say: []
-    must_not: []
-    path:
-      steps:
-      - 6
-      stops_at: null
-      note: Drill-down count must equal the tile value (P1, step 6).
-- id: S03
-  kind: policy
-  detail: P1
-  mode: A0
-  given:
-    same_start_as: S01
-    state: as S01.
-    fixture: oakridge/recruitment-team-w41
-    tenant_values: as S01.
-  input:
-    prompt: How many deals did we do this week?
-    context: asked in chat
-  variants: []
-  expected:
-    state:
-    - The chat answer equals the dashboard Deals team total exactly, for the same period
-    must_say: []
-    must_not: []
-    path:
-      steps:
-      - 6
-      stops_at: null
-      note: Chat question answered via UC-REC-23 matching the tile (P1, step 6 extension).
-- id: S04
-  kind: edge
-  detail: extension at step 1
-  mode: A0
-  given:
-    same_start_as: S01
-    state: as S01, and the viewer has filtered to one home and changed the layout.
-    fixture: oakridge/recruitment-team-w41
-    tenant_values: as S01; filtered to Ashdown House.
-  input:
-    prompt: Close and reopen the dashboard.
-  variants: []
-  expected:
-    state:
-    - Still pinned
-    - The Ashdown House filter and the layout preserved
-    must_say: []
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      stops_at: null
-      note: Reopened view keeps pin, filter and layout (step 1 extension).
-- id: S05
-  kind: policy
-  detail: P2
-  mode: A3
-  given:
-    same_start_as: S01
-    state: as S01, and the last few ATS refreshes failed, so the data is older than the stale threshold and the
-      alert threshold is reached.
-    fixture: oakridge/recruitment-team-w41
-    tenant_values: 'as S01; the last 3 refreshes failed and the last success was 2 hours 40 minutes ago. Refresh
-      cadence (K2): on change plus hourly; stale after 2 hours; alert the recruitment team after 3 failures.'
-  input:
-    trigger: hourly refresh.
-  variants: []
-  expected:
-    state:
-    - Tiles keep their last values with a "Last refreshed [time]" banner
-    - Alert raised to the recruitment team
-    must_say: []
-    must_not:
-    - Present the tiles as current
-    path:
-      steps:
-      - 5
-      stops_at: 5
-      note: 'Refresh failures hit alert threshold: tiles labelled stale (P2), recruitment team alerted per K2.'
-- id: S06
-  kind: happy
-  detail: null
-  mode: A3
-  given:
-    same_start_as: S01
-    state: as S01, and a placement's start date changes in the ATS.
-    fixture: oakridge/recruitment-team-w41
-    tenant_values: as S01; a Placement at Willow Lodge moves its start date.
-  input:
-    trigger: ATS change event.
-  variants: []
-  expected:
-    state:
-    - The forecast-by-home tile for Willow Lodge recalculated to equal the new UC-REC-17 grid value
-    - Refresh time updated
-    - No source record edited
-    must_say: []
-    must_not: []
-    path:
-      steps:
-      - 5
-      stops_at: null
-      note: ATS change event recalculates the Willow Lodge forecast tile from the governed layer; no source edits.
+  - id: S01
+    kind: happy
+    mode: A0
+    given:
+      state: "Validated run {validated_run} was refreshed at {last_refresh}; 7 data-quality items are open; recruiter, forecast and trend values are stored. The viewer also has the {other_pinned_view} pinned."
+      conditions:
+        - "Validated run {validated_run} refreshed at {last_refresh}, with recruiter KPI, forecast and trend reference values stored"
+        - "7 data-quality items are open (from UC-REC-19)"
+        - "The Recruitment Leader has both this dashboard and the {other_pinned_view} pinned"
+    input:
+      prompt: "Show the Recruitment Leader dashboard: KPI tables, team totals, forecast by home, trends."
+    variants:
+      - {id: PV-TERSE, prompt: "my dashboard", expect: same_outcome}
+      - {id: PV-ALIAS, prompt: "Pull up the recruitment overview", expect: same_outcome}
+      - {id: PV-COLLOQUIAL, prompt: "Where are we at across the team and homes today?", expect: same_outcome}
+      - {id: PV-AMBIGUOUS, prompt: "Show me the dashboard", context: "the viewer has both this and the {other_pinned_view} pinned", expect: clarify, detail: "which dashboard"}
+      - {id: PV-FALSE-PREMISE, prompt: "Why has the dashboard stopped showing data-quality issues?", context: "7 are shown", expect: flag, detail: "7 are open and shown"}
+    expected:
+      state:
+        - "Each recruiter KPI cell equals the {validated_run} value exactly"
+        - "Team total equals the sum of recruiter rows"
+        - "Forecast-by-home cells equal the UC-REC-17 grid"
+        - "Trends equal the snapshot values"
+        - "7 items in the exceptions panel; qualified tiles marked"
+      must_say: ["The last refresh time ({last_refresh})"]
+      must_not: ["Show a missing value as 0"]
+      path: {steps: [1, 2, 3, 4], stops_at: null, note: "Opens the view, applies scope, loads governed tiles and data-quality markers; read-only."}
+
+  - id: S02
+    kind: policy
+    detail: P1
+    mode: A0
+    given:
+      same_start_as: S01
+      state: "As S01."
+    input:
+      prompt: "Drill down from team totals to one recruiter's {drill_kpi} this week."
+    expected:
+      state: ["The number of listed {drill_kpi} records equals that recruiter's {drill_kpi} tile value exactly", "Each record has its ATS ID"]
+      must_say: []
+      must_not: []
+      path: {steps: [6], stops_at: null, note: "Drill-down count must equal the tile value (P1, step 6)."}
+
+  - id: S03
+    kind: policy
+    detail: P1
+    mode: A0
+    given:
+      same_start_as: S01
+      state: "As S01."
+    input:
+      prompt: "How many {total_kpi} did we do this week?"
+    variants: []
+    expected:
+      state: ["The chat answer equals the dashboard {total_kpi} team total exactly, for the same period"]
+      must_say: []
+      must_not: []
+      path: {steps: [6], stops_at: null, note: "Chat question answered via UC-REC-23 matching the tile (P1, step 6 extension)."}
+
+  - id: S04
+    kind: edge
+    detail: extension at step 1
+    mode: A0
+    given:
+      same_start_as: S01
+      state: "As S01, and the viewer has filtered to {filter_home} and changed the layout."
+    input:
+      prompt: "Close and reopen the dashboard."
+    expected:
+      state: ["Still pinned", "The {filter_home} filter and the layout preserved"]
+      must_say: []
+      must_not: []
+      path: {steps: [1, 2, 3, 4], stops_at: null, note: "Reopened view keeps pin, filter and layout (step 1 extension)."}
+
+  - id: S05
+    kind: policy
+    detail: P2
+    mode: A3
+    given:
+      same_start_as: S01
+      state: "As S01, but the last {alert_after_failures} ATS refreshes failed and the last success was at {last_success}. Refresh cadence (K2): {refresh_cadence}; stale after {stale_threshold_hours} hours; alert {refresh_alert_target} after {alert_after_failures} failures."
+      conditions: ["The last {alert_after_failures} ATS refreshes fail, the last success being at {last_success}"]
+    input:
+      trigger: "Scheduled refresh"
+    expected:
+      state: ["Tiles keep their last values with a \"Last refreshed [time]\" banner showing {last_success}", "Alert raised to {refresh_alert_target}"]
+      must_say: []
+      must_not: ["Present the tiles as current"]
+      path: {steps: [5], stops_at: 5, note: "Refresh failures hit alert threshold: tiles labelled stale (P2), alert raised per K2."}
+
+  - id: S06
+    kind: happy
+    mode: A3
+    given:
+      same_start_as: S01
+      state: "As S01, and {candidate_name}'s placement at {candidate_home} moves its start date in the ATS."
+      conditions: ["{candidate_name}'s placement at {candidate_home} is in the forecast and its start date is changed in the ATS during the test"]
+    input:
+      trigger: "ATS change event"
+    expected:
+      state: ["The forecast-by-home tile for {candidate_home} recalculated to equal the new UC-REC-17 grid value", "Refresh time updated", "No source record edited"]
+      must_say: []
+      must_not: ["Edit any ATS record"]
+      path: {steps: [5], stops_at: null, note: "ATS change event recalculates the home's forecast tile from the governed layer; no source edits."}

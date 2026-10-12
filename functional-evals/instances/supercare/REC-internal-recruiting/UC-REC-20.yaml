@@ -1,0 +1,34 @@
+# SuperCare binding for UC-REC-20 (eval v0.2). Values checked against ClickUp. Draft.
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-REC-20
+eval_version: "0.2"
+
+values:
+  validated_run: "<to supply>"
+  under_target_recruiter: "<to supply>"
+  weak_home: Phoenix
+  weak_home_2: Heroes Haven
+  under_target_kpi: Prescreens
+  rising_kpi: Virtual Interviews
+  flat_kpi: Deals
+  qualified_kpi: Talk Time
+  blocked_kpi: Calls
+
+  delta_flag_threshold: "20%"
+  forecast_horizon_weeks: 4
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: this week's validated reporting run, each figure carrying its run ID (version format YYYY-WNN-vX per Friday 4pm Distribution Rules)"
+  - "S01: two recruiters (one named as under_target_recruiter) under their Prescreens target in the run"
+  - "S01: Virtual Interviews up by more than 20% on last week; Deals unchanged"
+  - "S01: Phoenix and Heroes Haven with fewer forecast starters than open vacancies over the next 4 weeks"
+  - "S01: Talk Time qualified by a data-quality issue in the run"
+  - "S01: a second validated run for the same week (for the PV-MISSING variant)"
+  - "S04: Calls blocked in the run by a query failure"

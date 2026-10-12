@@ -1,0 +1,31 @@
+# SuperCare binding for UC-REC-23 (eval v0.2). Values checked against ClickUp. Draft.
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-REC-23
+eval_version: "0.2"
+
+values:
+  alias_home: Frimley
+  home_alias: SC Frimley
+  unmapped_home_name: Frimley Annex
+  ambiguous_home_name: Lushington
+  ambiguous_home_options: 13 Lushington or 23 Lushington
+  missing_recruiter: "<to supply>"
+  target_kpi: deals
+  trend_kpi: virtual interviews
+  home_kpi: prescreens
+  partial_kpi: talk time
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: last month's deals actual and target stored, with the actual higher than the month before"
+  - "S01: weekly virtual-interview snapshots for the six weeks up to the current week"
+  - "S01: \"Lushington\" matches both 13 Lushington and 23 Lushington (per Canonical Organisation Dimensions)"
+  - "S01: dashboard reference values for these figures"
+  - "S02: a current starter forecast run with placements at Frimley in the next two weeks"
+  - "S04: one recruiter with no talk-time records for the current week"

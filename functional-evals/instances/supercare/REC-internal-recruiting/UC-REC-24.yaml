@@ -1,0 +1,32 @@
+# SuperCare binding for UC-REC-24 (eval v0.2). Values checked against ClickUp. Draft.
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-REC-24
+eval_version: "0.2"
+
+values:
+  validated_run: "<to supply>"
+  candidate_name: Joshua Woodman
+  candidate_home: Norwood
+  filter_home: Norwood
+  other_pinned_view: recruiter workbench
+  drill_kpi: prescreens
+  total_kpi: deals
+
+  refresh_cadence: on change plus hourly full sync
+  stale_threshold_hours: 2
+  alert_after_failures: 3
+  refresh_alert_target: the Recruitment team
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: the latest validated calculation run, refreshed 20 minutes before the test, with recruiter KPI, forecast and trend reference values"
+  - "S01: 7 open data-quality items (from UC-REC-19)"
+  - "S01: the Recruitment Leader with both this dashboard and the recruiter workbench pinned"
+  - "S05: the last 3 Bullhorn refreshes forced to fail, last success 2 hours 40 minutes before the test"
+  - "S06: Joshua Woodman's Norwood placement in the forecast, with its start date changed in Bullhorn during the test"

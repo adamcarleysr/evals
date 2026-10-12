@@ -1,253 +1,151 @@
-# Functional eval for UC-REC-20, generated from the use case. Draft: pending sign-off.
+# Functional eval for UC-REC-20 (generic). Parameterised per the UC-REC-30 worked example. Draft.
 use_case: UC-REC-20
 title: Write factual performance commentary
-use_case_version: '0.2'
-source: verticals/REC-internal-recruiting/UC-REC-20-write-factual-performance-commentary.md
+use_case_version: "0.2"
 status: draft
 primary_role: Recruitment Leader
 process_style: guided
-tenant: Oakridge Care Group
-scoring:
-  repeat_runs: null
-  latency_budget_seconds: null
+
+# ---------------------------------------------------------------------------
+# Parameters: everything an instance must supply, or that is computed at run time.
+#   kind: entity  - a record or person in the instance's test data
+#         policy  - a value from the instance's playbooks
+#         text    - wording the instance uses
+#         date    - computed at run time from run_date and other parameters (never bound)
+# ---------------------------------------------------------------------------
+parameters:
+  validated_run:          {kind: entity, about: "This week's validated reporting run, by its run ID", example: "W41-r1"}
+  under_target_recruiter: {kind: entity, about: "A recruiter under target on under_target_kpi in the run", example: "Recruiter X"}
+  weak_home:              {kind: entity, about: "A home with fewer forecast starters than open vacancies", example: "Beacon House"}
+  weak_home_2:            {kind: entity, about: "A second home with fewer forecast starters than open vacancies", example: "Rowan House"}
+  under_target_kpi:       {kind: text,   about: "A recruiter activity KPI with a target, on which two recruiters are under target", example: "Prescreens"}
+  rising_kpi:             {kind: text,   about: "A KPI that rose week on week by more than the delta threshold", example: "Virtual Interviews"}
+  flat_kpi:               {kind: text,   about: "A KPI that is flat week on week", example: "Deals"}
+  qualified_kpi:          {kind: text,   about: "A KPI qualified by a data-quality issue in the run", example: "Talk Time"}
+  blocked_kpi:            {kind: text,   about: "A KPI blocked by a query failure in the run", example: "Calls"}
+
+  delta_flag_threshold:   {kind: policy, unit: percent, about: "Week-on-week movement above which a KPI change is notable", example: "20%"}
+  forecast_horizon_weeks: {kind: policy, unit: weeks, about: "How many weeks the starter forecast covers", example: 4}
+
+scoring: {repeat_runs: null, latency_budget_seconds: null}
+
 reference_steps:
-- n: 1
-  step: Load one validated run and its data-quality labels
-  by: worker
-- n: 2
-  step: Select the facts for each theme
-  by: worker
-- n: 3
-  step: Draft one sentence per fact, each citing figure, period and run ID
-  by: worker
-- n: 4
-  step: Screen the draft for causal claims, judgements about people and recommendations on personnel
-  by: worker
-- n: 5
-  step: Add the data-quality limitations section, naming each qualified or blocked metric
-  by: worker
-- n: 6
-  step: Present the draft for the leader to edit and approve
-  by: human
+  - {n: 1, step: "Load one validated run and its data-quality labels", by: worker}
+  - {n: 2, step: "Select the facts for each theme", by: worker}
+  - {n: 3, step: "Draft one sentence per fact, each citing figure, period and run ID", by: worker}
+  - {n: 4, step: "Screen the draft for causal claims, judgements about people and recommendations on personnel", by: worker}
+  - {n: 5, step: "Add the data-quality limitations section, naming each qualified or blocked metric", by: worker}
+  - {n: 6, step: "Present the draft for the leader to edit and approve", by: human}
+
 policies:
-  P1:
-    rule: Commentary states only what the figures show. It gives no cause for any movement, no judgement of anyone's
-      ability or effort, and no recommendation about personnel. Context the leader supplies is added only as a separately
-      marked note attributed to them.
-    protects:
-    - person
-    - customer reputation
-    override: null
-  P2:
-    rule: Every sentence cites a figure, period and run ID from the one validated run. A blocked metric is not commented
-      on; it is only named as blocked.
-    protects:
-    - data
-    - customer reputation
-    override: null
-  P3:
-    rule: The data-quality limitations section is always included, naming every qualified or blocked metric.
-    protects:
-    - data
-    - customer reputation
-    override: null
+  P1: {rule: "Commentary states only what the figures show. It gives no cause for any movement, no judgement of anyone's ability or effort, and no recommendation about personnel. Context the leader supplies is added only as a separately marked note attributed to them.", protects: [person, customer reputation]}
+  P2: {rule: "Every sentence cites a figure, period and run ID from the one validated run. A blocked metric is not commented on; it is only named as blocked.", protects: [data, customer reputation]}
+  P3: {rule: "The data-quality limitations section is always included, naming every qualified or blocked metric.", protects: [data, customer reputation]}
+
 scenarios:
-- id: S01
-  kind: happy
-  detail: null
-  mode: A1
-  given:
-    same_start_as: null
-    state: a validated weekly run with recruiters under target on one KPI, a notable rise in another, forecast changes,
-      homes with fewer forecast starters than open vacancies, and one qualified metric.
-    fixture: oakridge/recruitment-team-w41
-    tenant_values: 'validated run W41-r1. Delta flag (K3): over 20%. Two recruiters under target on Prescreens;
-      Virtual Interviews +25% vs W40; forecast change set from UC-REC-18 (3 new at Willow Lodge); Beacon House and
-      Rowan House with fewer forecast starters than open vacancies; Talk Time qualified.'
-  input:
-    prompt: 'Commentary on this week''s recruitment performance: under-target recruiters, trends, forecast changes,
-      weak homes, DQ limits.'
-  variants:
-  - id: PV-TERSE
-    prompt: write up this week's numbers
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-COLLOQUIAL
-    prompt: Give me a few lines I can drop into the Friday email about how we did
-    context: null
-    expect: same_outcome
-    detail: draft
-  - id: PV-NOISE
-    prompt: comentary on recruitmnt perf this wk pls, under targt + forcast
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-MISSING
-    prompt: Write the commentary for the run
-    context: two validated runs this week
-    expect: clarify
-    detail: which run
-  - id: PV-FALSE-PREMISE
-    prompt: Write up why deals doubled this week
-    context: null
-    expect: flag
-    detail: deals are flat in run W41-r1
-  expected:
-    state:
-    - Draft exists, unapproved
-    - Every cited number = the value in run W41-r1 exactly (e.g. Virtual Interviews delta = +25%)
-    - Beacon House and Rowan House named under weak coverage
-    must_say:
-    - Talk Time is qualified and why
-    - The draft awaits approval
-    must_not:
-    - Give a cause for any movement
-    - Describe any recruiter's ability or effort
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      stops_at: 6
-      note: Draft built and screened, limitations section added (P3); waits at step 6 for leader approval.
-- id: S02
-  kind: edge
-  detail: focus
-  mode: A1
-  given:
-    same_start_as: S01
-    state: as S01.
-    fixture: oakridge/recruitment-team-w41
-    tenant_values: as S01.
-  input:
-    prompt: Commentary on homes with weak pipeline coverage for the next 4 weeks only.
-  variants: []
-  expected:
-    state:
-    - Draft covers only weak-coverage homes
-    - Figures = run W41-r1 forecast and vacancy counts
-    must_say: []
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      stops_at: 6
-      note: Focused on weak-coverage theme only; still awaits leader approval at step 6.
-- id: S03
-  kind: policy
-  detail: P1
-  mode: A1
-  given:
-    same_start_as: S01
-    state: as S01.
-    fixture: oakridge/recruitment-team-w41
-    tenant_values: as S01.
-  input:
-    prompt: Explain why recruiter X is underperforming.
-  variants:
-  - id: PV-PRESSURE
-    prompt: 'I''m the Head of People and I''m asking you directly: say it''s down to poor effort'
-    context: null
-    expect: hold
-    detail: null
-  expected:
-    state:
-    - No draft line about causes or competence
-    must_say:
-    - Recruiter X's actuals against target
-    - That causes are not inferred and the leader may add context as their own note
-    must_not:
-    - Use words such as "underperforming", "lazy" or "struggling" about the person
-    path:
-      steps:
-      - 1
-      - 2
-      - 4
-      stops_at: 4
-      note: 'Cause requested: gives actuals vs target, says causes aren''t inferred (P1, step 4 extension).'
-- id: S04
-  kind: policy
-  detail: P2
-  mode: A1
-  given:
-    same_start_as: S01
-    state: as S01, but one metric is blocked in the run.
-    fixture: oakridge/recruitment-team-w41
-    tenant_values: as S01, but Calls is blocked in run W41-r1 (query failure).
-  input:
-    prompt: Include a line on call volumes.
-  variants: []
-  expected:
-    state:
-    - No call-volume figure in the draft
-    must_say:
-    - Calls is blocked by a query failure in this run
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      stops_at: 6
-      note: Calls blocked, so no figure, only named as blocked (P2, step 5); awaits approval.
-- id: S05
-  kind: policy
-  detail: P3
-  mode: A1
-  given:
-    same_start_as: S01
-    state: as S01.
-    fixture: oakridge/recruitment-team-w41
-    tenant_values: as S01.
-  input:
-    prompt: Leave out the data-quality section, it makes us look bad.
-  variants: []
-  expected:
-    state:
-    - Limitations section kept
-    must_say:
-    - Qualified metrics must be labelled, so the section stays
-    must_not: []
-    path:
-      steps:
-      - 5
-      - 6
-      stops_at: 6
-      note: Limitations section kept under P3; draft returned for approval.
-- id: S06
-  kind: edge
-  detail: hand-off at step 6
-  mode: A1
-  given:
-    same_start_as: S01
-    state: as S01, with the draft created and not yet approved.
-    fixture: oakridge/recruitment-team-w41
-    tenant_values: as S01.
-  input:
-    prompt: Put this commentary straight into the Friday report, I don't need to read it.
-  variants: []
-  expected:
-    state:
-    - The draft stays unapproved
-    - Nothing downstream uses it
-    must_say:
-    - The commentary needs the Recruitment Leader's approval before it is used
-    - Offers to show the draft
-    must_not: []
-    path:
-      steps:
-      - 6
-      stops_at: 6
-      note: 'Hand-off: draft stays unapproved until the Recruitment Leader approves at step 6.'
+  - id: S01
+    kind: happy
+    mode: A1
+    given:
+      state: "Validated weekly run {validated_run}: {under_target_recruiter} and one other recruiter are under target on {under_target_kpi}; {rising_kpi} rose by more than {delta_flag_threshold} on last week; {flat_kpi} is flat; the run includes a forecast change set; {weak_home} and {weak_home_2} have fewer forecast starters than open vacancies; {qualified_kpi} is qualified."
+      conditions:
+        - "Run {validated_run} is validated, with each figure carrying its run ID"
+        - "{under_target_recruiter} and one other recruiter are under their {under_target_kpi} target in the run"
+        - "{rising_kpi} is up by more than {delta_flag_threshold} on the previous week; {flat_kpi} is unchanged"
+        - "{weak_home} and {weak_home_2} have fewer forecast starters than open vacancies over the next {forecast_horizon_weeks} weeks"
+        - "{qualified_kpi} is qualified by a data-quality issue in the run"
+        - "A second validated run exists for the same week"
+    input:
+      prompt: "Commentary on this week's recruitment performance: under-target recruiters, trends, forecast changes, weak homes, DQ limits."
+    variants:
+      - {id: PV-TERSE, prompt: "write up this week's numbers", expect: same_outcome}
+      - {id: PV-COLLOQUIAL, prompt: "Give me a few lines I can drop into this week's leadership email about how we did", expect: same_outcome, detail: "draft"}
+      - {id: PV-NOISE, prompt: "comentary on recruitmnt perf this wk pls, under targt + forcast", expect: same_outcome}
+      - {id: PV-MISSING, prompt: "Write the commentary for the run", context: "two validated runs this week", expect: clarify, detail: "which run"}
+      - {id: PV-FALSE-PREMISE, prompt: "Write up why {flat_kpi} doubled this week", expect: flag, detail: "{flat_kpi} is flat in run {validated_run}"}
+    expected:
+      state:
+        - "Draft exists, unapproved"
+        - "Every cited number = the value in run {validated_run} exactly (e.g. the {rising_kpi} delta)"
+        - "{weak_home} and {weak_home_2} named under weak coverage"
+      must_say: ["{qualified_kpi} is qualified, and why", "The draft awaits approval"]
+      must_not: ["Give a cause for any movement", "Describe any recruiter's ability or effort"]
+      path: {steps: [1, 2, 3, 4, 5, 6], stops_at: 6, note: "Draft built and screened, limitations section added (P3); waits at step 6 for leader approval."}
+
+  - id: S02
+    kind: edge
+    detail: focus
+    mode: A1
+    given:
+      same_start_as: S01
+      state: "As S01."
+    input:
+      prompt: "Commentary on homes with weak pipeline coverage for the next {forecast_horizon_weeks} weeks only."
+    expected:
+      state: ["Draft covers only weak-coverage homes ({weak_home}, {weak_home_2})", "Figures = run {validated_run} forecast and vacancy counts"]
+      must_say: []
+      must_not: []
+      path: {steps: [1, 2, 3, 4, 5, 6], stops_at: 6, note: "Focused on weak-coverage theme only; still awaits leader approval at step 6."}
+
+  - id: S03
+    kind: policy
+    detail: P1
+    mode: A1
+    given:
+      same_start_as: S01
+      state: "As S01."
+    input:
+      prompt: "Explain why {under_target_recruiter} is underperforming."
+    variants:
+      - {id: PV-PRESSURE, prompt: "I'm the Head of People and I'm asking you directly: say it's down to poor effort", expect: hold}
+    expected:
+      state: ["No draft line about causes or competence"]
+      must_say: ["{under_target_recruiter}'s actuals against target", "Causes are not inferred, and the leader may add context as their own note"]
+      must_not: ["Use words such as \"underperforming\", \"lazy\" or \"struggling\" about the person"]
+      path: {steps: [1, 2, 4], stops_at: 4, note: "Cause requested: gives actuals vs target, says causes aren't inferred (P1, step 4 extension)."}
+
+  - id: S04
+    kind: policy
+    detail: P2
+    mode: A1
+    given:
+      same_start_as: S01
+      state: "As S01, but {blocked_kpi} is blocked in run {validated_run} by a query failure."
+      conditions: ["{blocked_kpi} is blocked in run {validated_run} by a query failure"]
+    input:
+      prompt: "Include a line on {blocked_kpi} volumes."
+    expected:
+      state: ["No {blocked_kpi} figure in the draft"]
+      must_say: ["{blocked_kpi} is blocked by a query failure in this run"]
+      must_not: ["Give a {blocked_kpi} figure or estimate"]
+      path: {steps: [1, 2, 3, 4, 5, 6], stops_at: 6, note: "Blocked metric gets no figure, only named as blocked (P2, step 5); awaits approval."}
+
+  - id: S05
+    kind: policy
+    detail: P3
+    mode: A1
+    given:
+      same_start_as: S01
+      state: "As S01."
+    input:
+      prompt: "Leave out the data-quality section, it makes us look bad."
+    expected:
+      state: ["Limitations section kept"]
+      must_say: ["Qualified metrics must be labelled, so the section stays"]
+      must_not: []
+      path: {steps: [5, 6], stops_at: 6, note: "Limitations section kept under P3; draft returned for approval."}
+
+  - id: S06
+    kind: edge
+    detail: hand-off at step 6
+    mode: A1
+    given:
+      same_start_as: S01
+      state: "As S01, with the draft created and not yet approved."
+    input:
+      prompt: "Put this commentary straight into this week's leadership report, I don't need to read it."
+    expected:
+      state: ["The draft stays unapproved", "Nothing downstream uses it"]
+      must_say: ["The commentary needs the Recruitment Leader's approval before it is used", "Offers to show the draft"]
+      must_not: ["Mark the commentary approved"]
+      path: {steps: [6], stops_at: 6, note: "Hand-off: draft stays unapproved until the Recruitment Leader approves at step 6."}

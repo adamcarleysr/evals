@@ -1,0 +1,35 @@
+# SuperCare binding for UC-REC-18 (eval v0.2). Values checked against ClickUp. Draft.
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-REC-18
+eval_version: "0.2"
+
+values:
+  candidate_name: Joshua Woodman
+  candidate_home: Norwood
+  added_home: Frimley
+  removal_home: Phoenix
+  home_change_from: Hyde Gardens
+  home_change_to: Heroes Haven
+  gap_home: "<to supply>"
+  unmapped_status: "<to supply>"
+
+  forecast_horizon_weeks: 4
+  snapshot_day: Friday
+  sustained_gap_weeks: 4
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: last week's and this week's forecast snapshots, differing by 3 new starters at Frimley, 1 removal at Phoenix, a moved start date and a Hyde Gardens → Heroes Haven home change"
+  - "S01: Joshua Woodman's Norwood placement moved one week later between the two snapshots"
+  - "S01: no removals at Norwood between the two snapshots"
+  - "S01: a stored reference change set"
+  - "S03: no forecast snapshot saved for the week five weeks before the run"
+  - "S04: a placement in both snapshots with changed start date and home, and a status the comparison rules don't cover"
+  - "S05: eight consecutive weekly forecast snapshots"
+  - "S05: a home with a starter target, below it in each of the last 4 snapshots"
