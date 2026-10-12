@@ -1,0 +1,55 @@
+# SuperCare binding for UC-CARE-04 (eval v0.1). Draft. Values checked against ClickUp
+# (SR-13424, SR-13452 test prompts; playbook pages Budget Thresholds, Approval Gate Definitions,
+# ANS Outbound Calling Script (home reference), Incident Notification Routing Rules (RIs)).
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-CARE-04
+eval_version: "0.1"
+
+values:
+  home: Frimley
+  home_rm: Rachel Howard
+  home_rm_first_name: Rachel
+  home_ri: Emma Chapman
+  case_ref: "<to supply>"
+  contractor: ABC Plumbing
+  contractor_contact: "<to supply>"
+  job_category: emergency plumbing
+  issue_short: leak
+  access_window: Mon-Fri 9am-5pm
+  booking_slot: 2-4pm
+  out_of_window_time: Sunday 11pm
+  quote_amount: £180
+  conflicting_quote: "<to supply>"
+  rm_band_quote: £450
+  rm_band_excess: £200
+  second_contractor: "<to supply>"
+  second_quote: "<to supply>"
+
+  senior_home: Phoenix
+  senior_case_ref: "<to supply>"
+  senior_job: general repair (roof)
+  senior_quote: £2,500
+  senior_approver: Damian Williams
+  senior_approver_first_name: Damian
+  gate_override_holder: Chris Coleman
+
+  auto_approve_limit: 250
+  rm_band_upper: 500
+  rm_approval_time: 4
+  senior_auto_limit: 150
+  senior_rm_upper: 400
+  senior_approval_time: 24
+  duplicate_window: 48
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: an emergency plumbing case at Frimley with ABC Plumbing's £180 quote and an agreed 2-4pm slot captured, no existing booking"
+  - "S01: an open contractor booking at another home"
+  - "S04: a roof repair case at Phoenix with a £2,500 quote captured"
+  - "S06: a second contractor's quote for the same Frimley leak, captured after the ABC Plumbing booking"

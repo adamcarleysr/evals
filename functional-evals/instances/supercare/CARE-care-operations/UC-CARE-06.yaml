@@ -1,0 +1,54 @@
+# SuperCare binding for UC-CARE-06 (eval v0.1). Draft. Values checked against ClickUp
+# (SR-13414, SR-13397, SR-13387, SR-13421 test prompts and descriptions; playbook pages Incident
+# Notification Routing Rules, Approval Gate Definitions, Sue Solutions Schema & Field Mapping,
+# Canonical Organisation Dimensions).
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-CARE-06
+eval_version: "0.1"
+
+values:
+  med_home: Frimley
+  med_home_short: SC Frimley
+  med_home_rm: Rachel Howard
+  med_ref: "<to supply>"
+
+  sg_home: Heroes Haven
+  sg_home_short: HH
+  sg_home_rm: Becky Silvester
+  sg_home_ri: Charley Hooper
+  sg_home_ri_first_name: Charley
+  senior_leader: Chris Coleman
+  sg_ref: SS-HH-2026-00203
+
+  dmg_home: Norwood
+  dmg_home_rm: Zinnia Persyn
+  ops_director: Damian Williams
+  dmg_ref: "<to supply>"
+  dmg_amount: "<to supply>"
+
+  missing_home: Phoenix
+  missing_ref: "<to supply>"
+  fall_home: Phoenix
+
+  high_severity: High
+  critical_severity: Critical
+  suggested_category: Near miss
+
+  ri_high_deadline: 4
+  ri_damage_threshold: 500
+  escalation_lead_time: 2
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: a High medication error at Frimley recorded today in Sue Solutions, plus a second open incident at Frimley today"
+  - "S02: a Critical safeguarding concern at Heroes Haven recorded yesterday as SS-HH-2026-00203, plus incidents at two other homes yesterday"
+  - "S03: a Medium property damage incident at Norwood below £500"
+  - "S05: a Critical missing-child incident at Phoenix"
+  - "S09: an incident at Phoenix recorded as resident fall, no injury"
+  - "S10: the Sue Solutions connection made unavailable"

@@ -1,0 +1,49 @@
+# SuperCare binding for UC-CARE-01 (eval v0.1). Draft. Values checked against ClickUp
+# (SR-13450, SR-13388, SR-13424 test prompts; playbook pages Maintenance Closure Workflow,
+# Approval Gate Definitions, Incident Notification Routing Rules, Budget Thresholds).
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-CARE-01
+eval_version: "0.1"
+
+values:
+  home: Frimley
+  home_rm: Rachel Howard
+  home_rm_first_name: Rachel
+  home_ri: Emma Chapman
+  case_ref: "<to supply>"
+  reporter: "<to supply>"
+  second_reporter: "<to supply>"
+  contractor: ABC Plumbing
+  issue_description: water leak from the upstairs bathroom into the downstairs hallway
+  issue_symptom: "<to supply>"
+  issue_short: leak
+  trade: plumbing
+  job_category: emergency plumbing
+  quote_amount: £180
+  higher_invoice_amount: "<to supply>"
+  variance_amount: "<to supply>"
+  other_home: Norwood
+  other_case_ref: "<to supply>"
+  earlier_case_ref: "<to supply>"
+  invoice_processor: Richard Foster (Finance Director)
+  policy_override_holder: Chris Coleman
+
+  sign_off_time_limit: 48
+  recurrence_count: 2
+  recurrence_window: 90
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: a maintenance case at Frimley for the plumbing leak at stage job complete, ABC Plumbing booked at £180, completion reported and an invoice for £180"
+  - "S01: a second open plumbing case (for the ambiguity variant), and an open case at Norwood"
+  - "S03: the same case with an invoice above the £180 quote and no explanation recorded"
+  - "S05: the same case at stage triaged, and a second member of staff at Frimley to report the same leak"
+  - "S06: a sign-off request sent to Rachel Howard more than 48 hours ago and unanswered"
+  - "S07: a closed earlier emergency plumbing case at Frimley within the last 90 days"
+  - "S08: the same case at stage booking confirmed with no completion reported"

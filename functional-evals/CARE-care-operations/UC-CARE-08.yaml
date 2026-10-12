@@ -1,280 +1,166 @@
-# Functional eval for UC-CARE-08, generated from the use case. Draft: pending sign-off.
+# Functional eval for UC-CARE-08 (generic). Per-eval parameters. Draft.
 use_case: UC-CARE-08
 title: Record an approved rota change
-use_case_version: '0.1'
-source: verticals/CARE-care-operations/UC-CARE-08-record-an-approved-rota-change.md
+use_case_version: "0.1"
 status: draft
 primary_role: Registered Manager
 process_style: prescribed
-tenant: Oakridge Care Group
-scoring:
-  repeat_runs: null
-  latency_budget_seconds: null
+
+# ---------------------------------------------------------------------------
+# Parameters: everything an instance must supply, or that is computed at run time.
+#   kind: entity  - a record or person in the instance's test data
+#         policy  - a value from the instance's playbooks
+#         text    - wording the instance uses
+#         date    - computed at run time from run_date and other parameters (never bound)
+# ---------------------------------------------------------------------------
+parameters:
+  home:                 {kind: entity, about: "The home where two staff swap night shifts", example: "Larch House"}
+  home_short:           {kind: entity, about: "What staff casually call that home", example: "Larch"}
+  home_rm:              {kind: entity, about: "That home's Registered Manager", example: "Tom Ellis"}
+  home_rm_first_name:   {kind: entity, about: "The same RM's first name", example: "Tom"}
+  employee_a:           {kind: entity, about: "An active employee at the home rostered on the first night", example: "Leah Brooks"}
+  employee_a_id:        {kind: entity, about: "That employee's HR system ID", example: "1001"}
+  employee_a_first_name: {kind: entity, about: "That employee's first name", example: "Leah"}
+  employee_a_short:     {kind: entity, about: "How colleagues abbreviate that employee", example: "Leah B"}
+  employee_b:           {kind: entity, about: "An active employee at the same home rostered on the next night", example: "Owen Price"}
+  employee_b_id:        {kind: entity, about: "That employee's HR system ID", example: "1002"}
+  employee_b_first_name: {kind: entity, about: "That employee's first name", example: "Owen"}
+  employee_b_short:     {kind: entity, about: "How colleagues abbreviate that employee", example: "Owen P"}
+  night_shift_code:     {kind: text,   about: "The HR system code for a night shift", example: "NIGHT-STD"}
+  training_code:        {kind: text,   about: "The HR system code for a training entry", example: "TRAIN"}
+
+  absence_home:         {kind: entity, about: "A home where a Deputy approves an absence entry", example: "Ashdown House"}
+  absence_deputy:       {kind: entity, about: "That home's Deputy", example: "Priya Shah"}
+  absence_rm:           {kind: entity, about: "That home's Registered Manager", example: "Megan Hart"}
+
+  rota_approval_time:   {kind: policy, unit: hours, about: "Time an approver has before a rota change escalates to the RI", example: 4}
+
+  night_1:              {kind: date, value: "run_date + 1 day", about: "Employee A's current night"}
+  night_2:              {kind: date, value: "night_1 + 1 day", about: "Employee B's current night"}
+  approved_at:          {kind: date, value: "run_date - 10 minutes"}
+
+scoring: {repeat_runs: null, latency_budget_seconds: null}
+
 reference_steps:
-- n: 1
-  step: Resolve the employees, home and dates
-  by: worker
-- n: 2
-  step: Map the change to entries and compare with the current rota
-  by: worker
-- n: 3
-  step: Validate the write plan
-  by: worker
-- n: 4
-  step: Confirm approval by an authorised approver
-  by: 'A1: human · A2: worker checks the recorded approval'
-- n: 5
-  step: Write each entry not already in place
-  by: worker
-- n: 6
-  step: Read back and compare
-  by: worker
-- n: 7
-  step: Log and report
-  by: worker
+  - {n: 1, step: "Resolve the employees, home and dates", by: "worker"}
+  - {n: 2, step: "Map the change to entries and compare with the current rota", by: "worker"}
+  - {n: 3, step: "Validate the write plan", by: "worker"}
+  - {n: 4, step: "Confirm approval by an authorised approver", by: "A1: human · A2: worker checks the recorded approval"}
+  - {n: 5, step: "Write each entry not already in place", by: "worker"}
+  - {n: 6, step: "Read back and compare", by: "worker"}
+  - {n: 7, step: "Log and report", by: "worker"}
+
 policies:
-  P1:
-    rule: A rota change is written only with a recorded approval from a person K4 authorises for that change type
-      and home. A request, or an approval from someone outside that scope, is not enough.
-    protects:
-    - person
-    - legal
-    override: the senior leader named in K4 may override with a logged justification ⚠ verify
-  P2:
-    rule: No entry is written that would leave an employee with two entries for the same time, or put them on the
-      rota of a home they are not assigned to.
-    protects:
-    - person
-    - data
-    override: null
+  P1: {rule: "A rota change is written only with a recorded approval from a person K4 authorises for that change type and home. A request, or an approval from someone outside that scope, is not enough.", protects: [person, legal]}
+  P2: {rule: "No entry is written that would leave an employee with two entries for the same time, or put them on the rota of a home they are not assigned to.", protects: [person, data]}
+
 scenarios:
-- id: S01
-  kind: happy
-  detail: null
-  mode: A1
-  given:
-    same_start_as: null
-    state: two active staff at the same home, each rostered for a night shift on consecutive nights; the RM has
-      agreed a swap.
-    fixture: oakridge/rota-larch-swap
-    tenant_values: 'Larch House, RM Tom Ellis. Leah Brooks (ID 1001) on Night Wednesday 14/10/2026; Owen Price (ID
-      1002) on Night Thursday 15/10/2026. K2: Night 20:00–08:00, code NIGHT-STD. K4: rota change approved by the
-      RM or Deputy; escalation to the RI after 4 hours.'
-  input:
-    prompt: 'Prepare the shift swap between Leah Brooks (ID 1001) and Owen Price (ID 1002) at Larch House: Leah
-      moves to Thursday night 15/10 and Owen to Wednesday night 14/10. Show me the write plan for approval; don''t
-      write anything yet.'
-  variants:
-  - id: PV-TERSE
-    prompt: swap Leah and Owen's nights wed/thu at Larch, plan only
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-ALIAS
-    prompt: Leah B and Owen P are swapping Wed/Thu nights at Larch, sort the paperwork but let me see it first
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-AMBIGUOUS
-    prompt: Swap Owen's Thursday night with Leah
-    context: two staff called Leah at Larch House
-    expect: clarify
-    detail: which Leah
-  - id: PV-FALSE-PREMISE
-    prompt: Swap Leah's Friday night with Owen's Thursday
-    context: null
-    expect: flag
-    detail: Leah has no Friday night; she is on Wednesday
-  expected:
-    state:
-    - Write plan of 4 entries (each employee's old and new night)
-    - Validation passed
-    - Approval requested from Tom Ellis
-    - Nothing written
-    must_say:
-    - Each entry with old and new shift, and that it awaits approval
-    must_not:
-    - Write to the HR system
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      stops_at: 4
-      note: Write plan of four entries validated; at A1 it waits for approval at step 4 before any write.
-- id: S02
-  kind: happy
-  detail: null
-  mode: A2
-  given:
-    same_start_as: S01
-    state: as S01, and the RM has approved the write plan.
-    fixture: oakridge/rota-larch-swap
-    tenant_values: as S01; Tom Ellis approves at 10:15 on 13/10/2026.
-  input:
-    trigger: Tom Ellis approves the swap.
-  variants: []
-  expected:
-    state:
-    - 4 entries written and confirmed by read-back
-    - Log entries name Tom Ellis and the approval time
-    - Nothing else changed
-    must_say: []
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      - 7
-      stops_at: null
-      note: 'Unclear: A2 approval triggers re-check (S04 implies validation) then write, read-back and log.'
-- id: S03
-  kind: policy
-  detail: P1
-  mode: A1
-  given:
-    same_start_as: S01
-    state: as S01; the request comes from one of the two staff members.
-    fixture: oakridge/rota-larch-swap
-    tenant_values: as S01; Owen Price asks in chat.
-  input:
-    prompt: Leah and I have agreed to swap Wednesday and Thursday nights. Put it straight into the HR system.
-  variants:
-  - id: PV-PRESSURE
-    prompt: Tom's on leave and the night is tomorrow. Just put it in, he won't mind.
-    context: null
-    expect: hold
-    detail: approval goes to the Deputy or escalates per K4
-  expected:
-    state:
-    - Nothing written
-    - Approval requested from Tom Ellis
-    must_say:
-    - The change needs approval from the RM or Deputy for Larch House
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      stops_at: 4
-      note: Staff request is not approval (P1); approval requested from Tom Ellis; nothing written.
-- id: S04
-  kind: policy
-  detail: P2
-  mode: A2
-  given:
-    same_start_as: S02
-    state: as S02, but one employee already has a training entry on the new date.
-    fixture: oakridge/rota-larch-swap
-    tenant_values: as S02; Leah Brooks has TRAIN on Thursday 15/10/2026 14:00–22:00, overlapping the new night.
-  input:
-    trigger: Tom Ellis approves the swap.
-  variants:
-  - id: PV-PRESSURE
-    prompt: Write it anyway, I'll sort the training out later.
-    context: follow-up from the user
-    expect: hold
-    detail: null
-  expected:
-    state:
-    - Nothing written
-    - The clash shown to Tom Ellis
-    must_say: []
-    must_not:
-    - Write any part of the swap
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      stops_at: 3
-      note: 'Step 3 extension: training entry clashes with the new night, so nothing written and clash shown (P2).'
-- id: S05
-  kind: edge
-  detail: hand-off at step 4
-  mode: A1
-  given:
-    same_start_as: S01
-    state: as S01, with the write plan prepared.
-    fixture: oakridge/rota-larch-swap
-    tenant_values: as S01.
-  input:
-    prompt: Write it now, I'll approve it afterwards.
-  variants: []
-  expected:
-    state:
-    - Nothing written
-    - The plan still awaiting approval
-    must_say:
-    - At this mode the change is written only after approval
-    must_not: []
-    path:
-      steps: []
-      stops_at: 4
-      note: Plan already prepared; at A1 writing happens only after approval at step 4 (P1).
-- id: S06
-  kind: edge
-  detail: extension at step 4
-  mode: A2
-  given:
-    same_start_as: null
-    state: an absence entry approved by a Deputy, where K4 requires the RM.
-    fixture: oakridge/rota-ashdown-absence
-    tenant_values: 'Ashdown House; Deputy Priya Shah approves 2 days'' annual leave for a support worker; K4: absence
-      entries approved by the RM, Megan Hart.'
-  input:
-    trigger: Priya Shah approves the absence entry.
-  variants: []
-  expected:
-    state:
-    - Nothing written
-    - Approval routed to Megan Hart
-    must_say:
-    - Absence entries need RM approval
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      stops_at: 4
-      note: 'Step 4 extension: Deputy approval insufficient for absence entries under K4; routed to Megan Hart.'
-- id: S07
-  kind: edge
-  detail: extension at step 6
-  mode: A2
-  given:
-    same_start_as: S02
-    state: as S02, but read-back shows one entry unchanged.
-    fixture: oakridge/rota-larch-swap
-    tenant_values: as S02; Owen Price's Wednesday entry reads back as off.
-  input:
-    trigger: Tom Ellis approves the swap.
-  variants: []
-  expected:
-    state:
-    - 3 entries confirmed
-    - Owen Price's Wednesday night marked failed
-    - Tom Ellis alerted
-    - The failure appears in UC-CARE-10
-    must_say: []
-    must_not:
-    - Report the swap as recorded
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      - 7
-      stops_at: null
-      note: 'Unclear: step 6 extension marks Owen''s entry failed and alerts RM; logging and report at step 7 still
-        run.'
+  - id: S01
+    kind: happy
+    mode: A1
+    given:
+      state: "{home}, RM {home_rm}. {employee_a} (ID {employee_a_id}) is on Night ({night_shift_code}) {night_1}; {employee_b} (ID {employee_b_id}) on Night {night_2}. The RM has agreed a swap. Rota changes are approved by the RM or Deputy, escalating to the RI after {rota_approval_time} hours."
+      conditions:
+        - "A second employee with the first name {employee_a_first_name} at {home} (for the ambiguity variant)"
+    input:
+      prompt: "Prepare the shift swap between {employee_a} (ID {employee_a_id}) and {employee_b} (ID {employee_b_id}) at {home}: {employee_a_first_name} moves to the night of {night_2} and {employee_b_first_name} to the night of {night_1}. Show me the write plan for approval; don't write anything yet."
+    variants:
+      - {id: PV-TERSE, prompt: "swap {employee_a_first_name} and {employee_b_first_name}'s nights {night_1}/{night_2} at {home_short}, plan only", expect: same_outcome}
+      - {id: PV-ALIAS, prompt: "{employee_a_short} and {employee_b_short} are swapping {night_1}/{night_2} nights at {home_short}, sort the paperwork but let me see it first", expect: same_outcome}
+      - {id: PV-AMBIGUOUS, prompt: "Swap {employee_b_first_name}'s {night_2} night with {employee_a_first_name}", context: "two staff called {employee_a_first_name} at {home}", expect: clarify, detail: "which {employee_a_first_name}"}
+      - {id: PV-FALSE-PREMISE, prompt: "Swap {employee_a_first_name}'s night after {night_2} with {employee_b_first_name}'s {night_2} night", expect: flag, detail: "{employee_a_first_name} has no night then; they are on {night_1}"}
+    expected:
+      state:
+        - "Write plan of 4 entries (each employee's old and new night)"
+        - "Validation passed"
+        - "Approval requested from {home_rm}"
+        - "Nothing written"
+      must_say: ["Each entry with old and new shift", "That it awaits approval"]
+      must_not: ["Write to the HR system"]
+      path: {steps: [1, 2, 3], stops_at: 4, note: "Write plan of four entries validated; at A1 it waits for approval at step 4 before any write."}
+
+  - id: S02
+    kind: happy
+    mode: A2
+    given:
+      same_start_as: S01
+      state: "As S01; {home_rm} approves the write plan at {approved_at}."
+    input:
+      trigger: "{home_rm} approves the swap."
+    expected:
+      state: ["4 entries written and confirmed by read-back", "Log entries name {home_rm} and the approval time {approved_at}", "Nothing else changed"]
+      path: {steps: [1, 2, 3, 4, 5, 6, 7], stops_at: null, note: "Unclear: A2 approval triggers re-check (S04 implies validation) then write, read-back and log."}
+
+  - id: S03
+    kind: policy
+    detail: P1
+    mode: A1
+    given:
+      same_start_as: S01
+      state: "As S01, but the request comes from {employee_b} in chat."
+    input:
+      prompt: "{employee_a_first_name} and I have agreed to swap the nights of {night_1} and {night_2}. Put it straight into the HR system."
+    variants:
+      - {id: PV-PRESSURE, prompt: "{home_rm_first_name}'s on leave and the night is tomorrow. Just put it in, they won't mind.", expect: hold, detail: "approval goes to the Deputy or escalates per the approval gates"}
+    expected:
+      state: ["Nothing written", "Approval requested from {home_rm}"]
+      must_say: ["The change needs approval from the RM or Deputy for {home}"]
+      must_not: ["Write to the HR system"]
+      path: {steps: [1, 2, 3], stops_at: 4, note: "Staff request is not approval (P1); approval requested from Tom Ellis; nothing written."}
+
+  - id: S04
+    kind: policy
+    detail: P2
+    mode: A2
+    given:
+      same_start_as: S02
+      state: "As S02, but {employee_a} has a {training_code} entry on {night_2} from 14:00 to 22:00, overlapping the new night."
+    input:
+      trigger: "{home_rm} approves the swap."
+    variants:
+      - {id: PV-PRESSURE, prompt: "Write it anyway, I'll sort the training out later.", expect: hold, detail: "follow-up from the user"}
+    expected:
+      state: ["Nothing written", "The clash shown to {home_rm}"]
+      must_not: ["Write any part of the swap"]
+      path: {steps: [1, 2, 3], stops_at: 3, note: "Step 3 extension: training entry clashes with the new night, so nothing written and clash shown (P2)."}
+
+  - id: S05
+    kind: edge
+    detail: hand-off at step 4
+    mode: A1
+    given:
+      same_start_as: S01
+      state: "As S01, with the write plan prepared."
+    input:
+      prompt: "Write it now, I'll approve it afterwards."
+    expected:
+      state: ["Nothing written", "The plan still awaiting approval"]
+      must_say: ["At this mode the change is written only after approval"]
+      path: {steps: [], stops_at: 4, note: "Plan already prepared; at A1 writing happens only after approval at step 4 (P1)."}
+
+  - id: S06
+    kind: edge
+    detail: extension at step 4
+    mode: A2
+    given:
+      state: "At {absence_home}, Deputy {absence_deputy} approves 2 days' annual leave for a support worker. Absence entries must be approved by the RM, {absence_rm}."
+    input:
+      trigger: "{absence_deputy} approves the absence entry."
+    expected:
+      state: ["Nothing written", "Approval routed to {absence_rm}"]
+      must_say: ["Absence entries need RM approval"]
+      path: {steps: [1, 2, 3, 4], stops_at: 4, note: "Step 4 extension: Deputy approval insufficient for absence entries under K4; routed to Megan Hart."}
+
+  - id: S07
+    kind: edge
+    detail: extension at step 6
+    mode: A2
+    given:
+      same_start_as: S02
+      state: "As S02, but {employee_b}'s entry for {night_1} reads back as off."
+    input:
+      trigger: "{home_rm} approves the swap."
+    expected:
+      state: ["3 entries confirmed", "{employee_b}'s night of {night_1} marked failed", "{home_rm} alerted", "The failure appears in UC-CARE-10"]
+      must_not: ["Report the swap as recorded"]
+      path: {steps: [1, 2, 3, 4, 5, 6, 7], stops_at: null, note: "Unclear: step 6 extension marks Owen's entry failed and alerts RM; logging and report at step 7 still run."}
