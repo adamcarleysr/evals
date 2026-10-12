@@ -1,0 +1,45 @@
+# SuperCare binding for UC-CARE-16 (eval v0.1). Draft. Values from ClickUp (SR-13448 and playbook doc 8cnycrm-164035).
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-CARE-16
+eval_version: "0.1"
+
+values:
+  home_a: Heroes Haven
+  rm_a: Becky Silvester
+  home_b: Phoenix
+  rm_b: Abbie Thomas
+  ri_name: Charley Hooper
+  ambiguous_home_name: Lushington
+  home_without_absence: "<to supply>"
+  emp_short: "<to supply>"
+  emp_long: "<to supply>"
+  emp_consecutive: "<to supply>"
+  emp_noncounting: "<to supply>"
+  emp_immediate: "<to supply>"
+
+  short_trigger_count: 3
+  short_trigger_window: "3 months"
+  short_trigger_step: informal conversation
+  long_trigger_count: 5
+  long_trigger_window: "6 months"
+  long_trigger_step: formal meeting
+  consecutive_trigger_days: 10
+  consecutive_trigger_step: return-to-work meeting
+  immediate_absence_type: unauthorised absence
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: a Heroes Haven employee with 3 SICK-SC absences in the last 3 months, the latest this month"
+  - "S01: a Phoenix employee with 5 SICK-SC absences in the last 6 months (fewer than 3 in the last 3), the latest this month"
+  - "S01: a Phoenix employee with one SICK-GP absence of more than 10 consecutive days, ended this month"
+  - "S01: a Heroes Haven employee with two AL absences and one COMP absence only"
+  - "S01: both 23 Lushington and 13 Lushington present as canonical homes (ambiguity variant)"
+  - "S04: a Heroes Haven employee with an UNAUTH absence recorded on the run day"
+  - "S06: one SuperCare home with employees but no absence records since the start of last month"
+  - "S07: alert history showing the three S01 alerts sent yesterday"

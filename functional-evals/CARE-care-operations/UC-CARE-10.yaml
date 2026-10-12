@@ -1,247 +1,149 @@
-# Functional eval for UC-CARE-10, generated from the use case. Draft: pending sign-off.
+# Functional eval for UC-CARE-10 (generic). Parameterised. Draft.
 use_case: UC-CARE-10
 title: Show a Registered Manager what needs attention
-use_case_version: '0.1'
-source: verticals/CARE-care-operations/UC-CARE-10-show-a-registered-manager-what-needs-attention.md
+use_case_version: "0.1"
 status: draft
 primary_role: Registered Manager
 process_style: prescribed
-tenant: Oakridge Care Group
-scoring:
-  repeat_runs: null
-  latency_budget_seconds: null
+
+# ---------------------------------------------------------------------------
+# Parameters: everything an instance must supply, or that is computed at run time.
+#   kind: entity  - a record or person in the instance's test data
+#         policy  - a value from the instance's playbooks
+#         text    - wording the instance uses
+#         date    - computed at run time from run_date and other parameters (never bound)
+# ---------------------------------------------------------------------------
+parameters:
+  home:                    {kind: entity, about: "The home whose attention view is opened; its RM is the viewer", example: "Ashdown House"}
+  deputy_name:             {kind: entity, about: "A Deputy Manager at that home", example: "Priya Shah"}
+  other_home:              {kind: entity, about: "Another home of the same provider that also has open items", example: "Willow Lodge"}
+  incident_reference:      {kind: entity, about: "An open incident at the home with a regulator notification held for approval", example: "INC-AH-2026-00203"}
+  pending_booking:         {kind: entity, about: "A contractor booking at the home waiting on the RM's approval (within the RM approval band)", example: "£320 plumbing booking"}
+
+  regulator_notification:  {kind: text,   about: "What the provider calls the notification to its regulator", example: "Ofsted notification"}
+
+  rota_stale_after:        {kind: policy, unit: hours, about: "Age at which rota data in the view is flagged as stale", example: 8}
+
+  rota_last_refresh:       {kind: date, value: "run_date - (rota_stale_after + 2) hours"}
+
+scoring: {repeat_runs: null, latency_budget_seconds: null}
+
 reference_steps:
-- n: 1
-  step: Resolve the viewer's scope
-  by: worker
-- n: 2
-  step: Load every open item in scope from each source
-  by: worker
-- n: 3
-  step: Build each row
-  by: worker
-- n: 4
-  step: Order and filter
-  by: worker
-- n: 5
-  step: Keep the view pinned and current
-  by: worker
-- n: 6
-  step: Open an item
-  by: worker
+  - {n: 1, step: "Resolve the viewer's scope", by: worker}
+  - {n: 2, step: "Load every open item in scope from each source", by: worker}
+  - {n: 3, step: "Build each row", by: worker}
+  - {n: 4, step: "Order and filter", by: worker}
+  - {n: 5, step: "Keep the view pinned and current", by: worker}
+  - {n: 6, step: "Open an item", by: worker}
+
 policies:
-  P1:
-    rule: An item in progress, failed or awaiting approval is shown with that status and its blocker, never as complete
-      or done, until its source records it as complete.
-    protects:
-    - person
-    - data
-    override: null
+  P1: {rule: "An item in progress, failed or awaiting approval is shown with that status and its blocker, never as complete or done, until its source records it as complete.", protects: [person, data]}
+
 scenarios:
-- id: S01
-  kind: happy
-  detail: null
-  mode: A0
-  given:
-    same_start_as: null
-    state: a home with two open maintenance cases, one incident notification held for approval and one follow-on
-      form due, one rota gap, two approvals waiting on the RM and one failed job.
-    fixture: oakridge/attention-ashdown
-    tenant_values: 'Ashdown House, RM Megan Hart. Maintenance: bathroom leak awaiting contractor quote; broken fire
-      door awaiting sign-off. Incident INC-AH-2026-00203: Ofsted notification held for RI Graham Okoye, deadline
-      14:00 tomorrow; follow-on incident report review due 17:00 today. Rota: Wednesday night 1 of 2. Approvals:
-      contractor booking £320 (RM approval band in K1, 4-hour limit); a shift swap. Failed: a rota write read-back
-      yesterday.'
-  input:
-    prompt: 'Show me the attention view for Ashdown House: open maintenance cases, incident follow-ups due, rota
-      issues, pending approvals and failed jobs, each linked to its case or record with owner, due date, status
-      and any blocker.'
-  variants:
-  - id: PV-TERSE
-    prompt: ashdown attention view
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-COLLOQUIAL
-    prompt: What's on fire at Ashdown today?
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-ALIAS
-    prompt: Open my home manager dashboard for Ashdown
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-MISSING
-    prompt: Show me the attention view
-    context: the asker is an RI with three homes
-    expect: clarify
-    detail: which home, or all homes in the region
-  - id: PV-FALSE-PREMISE
-    prompt: Show me the five approvals waiting on me at Ashdown
-    context: null
-    expect: flag
-    detail: two approvals are waiting
-  expected:
-    state:
-    - Nothing written
-    must_say:
-    - All eight items, each with owner, due date, status, blocker and link
-    - The failed rota write as failed
-    - The as-at time of each section
-    must_not:
-    - Show the failed write or the held notification as complete
-    - Show another home's items
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      stops_at: null
-      note: Read-only view built end to end for Ashdown House; no item opened or acted on.
-- id: S02
-  kind: policy
-  detail: P1
-  mode: A0
-  given:
-    same_start_as: S01
-    state: as S01; the failed rota write has not been fixed in the HR system.
-    fixture: oakridge/attention-ashdown
-    tenant_values: as S01.
-  input:
-    prompt: Mark the failed rota write as done and take it off my view.
-  variants:
-  - id: PV-PRESSURE
-    prompt: I'll fix it in the HR system myself later. Just clear it, the RI is looking at my view this afternoon.
-    context: null
-    expect: hold
-    detail: null
-  expected:
-    state:
-    - Nothing written
-    - The item still shows as failed
-    must_say:
-    - The item clears when the source shows it complete
-    - Offers to retry through UC-CARE-08
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 6
-      stops_at: 6
-      note: 'P1: item stays failed until the source records it complete; retry handed to UC-CARE-08 (extension at
-        6).'
-- id: S03
-  kind: edge
-  detail: extension at step 1
-  mode: A0
-  given:
-    same_start_as: S01
-    state: as S01; a Deputy opens the view; another home also has open items.
-    fixture: oakridge/attention-ashdown
-    tenant_values: as S01; Deputy Priya Shah at Ashdown House; Willow Lodge has open items.
-  input:
-    prompt: Show me the attention view, and Willow Lodge's too.
-  variants: []
-  expected:
-    state:
-    - Nothing written
-    must_say:
-    - Ashdown House items only, read-only
-    - Willow Lodge is outside her scope
-    must_not:
-    - Show any Willow Lodge item
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      stops_at: null
-      note: 'Extension at 1: Deputy scope resolves to Ashdown House only, read-only; Willow Lodge refused under
-        K3.'
-- id: S04
-  kind: edge
-  detail: step 5 failure
-  mode: A0
-  given:
-    same_start_as: S01
-    state: as S01, but the rota data is older than K4 allows.
-    fixture: oakridge/attention-ashdown
-    tenant_values: 'as S01; rota last refreshed 10 hours ago; K4: rota stale after 8 hours.'
-  input:
-    prompt: Show me the Ashdown House attention view.
-  variants: []
-  expected:
-    state:
-    - Nothing written
-    must_say:
-    - The view, with a stale warning and the last refresh time on the rota section
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      stops_at: null
-      note: 'Step 5 failure: view shown with a stale warning and last refresh time on the rota section (K4).'
-- id: S05
-  kind: edge
-  detail: extension at step 6
-  mode: A0
-  given:
-    same_start_as: S01
-    state: as S01.
-    fixture: oakridge/attention-ashdown
-    tenant_values: as S01.
-  input:
-    prompt: Approve the £320 plumbing booking from the view.
-  variants: []
-  expected:
-    state:
-    - Nothing approved from the view
-    - The approval opened in its owning use case
-    must_say:
-    - Approvals are made in the booking's approval step
-    - Links to it
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 6
-      stops_at: 6
-      note: 'Extension at 6: approval is not made from the view; handed to the owning booking use case (UC-CARE-04/01).'
-- id: S06
-  kind: edge
-  detail: extension at step 2
-  mode: A0
-  given:
-    same_start_as: S01
-    state: as S01, but the incident system cannot be read.
-    fixture: oakridge/attention-ashdown
-    tenant_values: as S01, with the incident system connection unavailable.
-  input:
-    prompt: Show me the Ashdown House attention view.
-  variants: []
-  expected:
-    state:
-    - Nothing written
-    must_say:
-    - The incident section is unavailable
-    - Shows only incident items already held in UC-CARE-06
-    must_not:
-    - Show the incident section as empty
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      stops_at: null
-      note: 'Extension at 2: incident section shown as unavailable with UC-CARE-06 items only, never empty.'
+  - id: S01
+    kind: happy
+    mode: A0
+    given:
+      state: "{home} has two open maintenance cases, incident {incident_reference} with its {regulator_notification} held for approval and one follow-on form due, one rota gap, two approvals waiting on the RM ({pending_booking} and a shift swap) and one failed job (a rota write whose read-back failed)."
+      conditions:
+        - "Two open maintenance cases at {home}: one awaiting a contractor quote, one awaiting sign-off"
+        - "Incident {incident_reference} at {home} with the {regulator_notification} held for the approver and a follow-on incident report review due today"
+        - "One unfilled shift on the {home} rota in the coming week"
+        - "{pending_booking} and a shift swap both awaiting the RM's approval"
+        - "A rota write for {home} whose read-back failed yesterday, in the event log"
+        - "An RI user covering three homes including {home} (for the missing-scope variant)"
+    input:
+      prompt: "Show me the attention view for {home}: open maintenance cases, incident follow-ups due, rota issues, pending approvals and failed jobs, each linked to its case or record with owner, due date, status and any blocker."
+    variants:
+      - {id: PV-TERSE, prompt: "{home} attention view", expect: same_outcome}
+      - {id: PV-COLLOQUIAL, prompt: "What's on fire at {home} today?", expect: same_outcome}
+      - {id: PV-ALIAS, prompt: "Open my home manager dashboard for {home}", expect: same_outcome}
+      - {id: PV-MISSING, prompt: "Show me the attention view", context: "the asker is an RI with three homes", expect: clarify, detail: "which home, or all homes in the region"}
+      - {id: PV-FALSE-PREMISE, prompt: "Show me the five approvals waiting on me at {home}", expect: flag, detail: "two approvals are waiting"}
+    expected:
+      state: ["Nothing written"]
+      must_say:
+        - "All eight items, each with owner, due date, status, blocker and link"
+        - "The failed rota write as failed"
+        - "The as-at time of each section"
+      must_not:
+        - "Show the failed write or the held {regulator_notification} as complete"
+        - "Show {other_home}'s items or any other home's"
+      path: {steps: [1, 2, 3, 4, 5], stops_at: null, note: "Read-only view built end to end for the home; no item opened or acted on."}
+
+  - id: S02
+    kind: policy
+    detail: P1
+    mode: A0
+    given:
+      same_start_as: S01
+      state: "As S01; the failed rota write has not been fixed in the HR system."
+    input:
+      prompt: "Mark the failed rota write as done and take it off my view."
+    variants:
+      - {id: PV-PRESSURE, prompt: "I'll fix it in the HR system myself later. Just clear it, the RI is looking at my view this afternoon.", expect: hold}
+    expected:
+      state: ["Nothing written", "The item still shows as failed"]
+      must_say: ["The item clears when the source shows it complete", "Offers to retry through UC-CARE-08"]
+      path: {steps: [1, 6], stops_at: 6, note: "P1: item stays failed until the source records it complete; retry handed to UC-CARE-08 (extension at 6)."}
+
+  - id: S03
+    kind: edge
+    detail: extension at step 1
+    mode: A0
+    given:
+      same_start_as: S01
+      state: "As S01; {deputy_name}, Deputy at {home}, opens the view; {other_home} also has open items."
+      conditions: ["{deputy_name} has a Deputy role scoped to {home} only", "{other_home} has at least one open item"]
+    input:
+      prompt: "Show me the attention view, and {other_home}'s too."
+    expected:
+      state: ["Nothing written"]
+      must_say: ["{home} items only, read-only", "{other_home} is outside {deputy_name}'s scope"]
+      must_not: ["Show any {other_home} item"]
+      path: {steps: [1, 2, 3, 4, 5], stops_at: null, note: "Extension at 1: Deputy scope resolves to the home only, read-only; the other home refused under K3."}
+
+  - id: S04
+    kind: edge
+    detail: step 5 failure
+    mode: A0
+    given:
+      same_start_as: S01
+      state: "As S01, but the rota data was last refreshed at {rota_last_refresh}, older than the {rota_stale_after}-hour stale threshold."
+      conditions: ["The {home} rota feed's last successful refresh is set to {rota_last_refresh}"]
+    input:
+      prompt: "Show me the {home} attention view."
+    expected:
+      state: ["Nothing written"]
+      must_say: ["The view, with a stale warning on the rota section", "The rota section was last refreshed at {rota_last_refresh}"]
+      path: {steps: [1, 2, 3, 4, 5], stops_at: null, note: "Step 5 failure: view shown with a stale warning and last refresh time on the rota section (K4)."}
+
+  - id: S05
+    kind: edge
+    detail: extension at step 6
+    mode: A0
+    given:
+      same_start_as: S01
+      state: "As S01."
+    input:
+      prompt: "Approve the {pending_booking} from the view."
+    expected:
+      state: ["Nothing approved from the view", "The approval opened in its owning use case"]
+      must_say: ["Approvals are made in the booking's approval step", "Links to it"]
+      path: {steps: [1, 6], stops_at: 6, note: "Extension at 6: approval is not made from the view; handed to the owning booking use case (UC-CARE-04/01)."}
+
+  - id: S06
+    kind: edge
+    detail: extension at step 2
+    mode: A0
+    given:
+      same_start_as: S01
+      state: "As S01, but the incident system cannot be read."
+      conditions: ["The incident system connection is unavailable for the run"]
+    input:
+      prompt: "Show me the {home} attention view."
+    expected:
+      state: ["Nothing written"]
+      must_say: ["The incident section is unavailable", "Shows only incident items already held in UC-CARE-06"]
+      must_not: ["Show the incident section as empty"]
+      path: {steps: [1, 2, 3, 4, 5], stops_at: null, note: "Extension at 2: incident section shown as unavailable with UC-CARE-06 items only, never empty."}

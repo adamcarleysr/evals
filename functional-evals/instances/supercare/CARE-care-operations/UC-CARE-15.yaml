@@ -1,0 +1,43 @@
+# SuperCare binding for UC-CARE-15 (eval v0.1). Draft. Values from ClickUp (SR-13432 and playbook doc 8cnycrm-164035).
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-CARE-15
+eval_version: "0.1"
+
+values:
+  home_a: Heroes Haven
+  rm_a: Becky Silvester
+  home_b: Phoenix
+  rm_b: Abbie Thomas
+  ri_name: Charley Hooper
+  emp_upcoming: "<to supply>"
+  emp_due: "<to supply>"
+  emp_overdue: "<to supply>"
+  emp_completed: "<to supply>"
+  emp_no_hire_date: "<to supply>"
+
+  people_team_contact: Damian Williams
+  final_escalation_contact: Chris Coleman
+  rm_review_escalation: Emma Chapman
+  extension_approver: the RI
+  initial_reminder_days: 14
+  urgent_reminder_days: 7
+  final_notice_days: 7
+  max_extension: "3 months"
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: four probationers in ADP: one at Heroes Haven with a review 14 days out, one at Phoenix with a review 7 days out, one at Heroes Haven with a review today, one at Phoenix with a pass recorded"
+  - "S01: reminder history with the initial reminder for the Phoenix 7-day employee, and the initial and urgent reminders for the Heroes Haven review-today employee"
+  - "S01: a pass outcome recorded for the completed Phoenix employee"
+  - "S03: reminder history with the urgent reminder for the Phoenix 7-day employee sent today"
+  - "S04: Becky Silvester in probation as RM of Heroes Haven, with a review 7 days out"
+  - "S06: a 3-month extension recorded for the Phoenix 7-day employee, with the new probation end date"
+  - "S07: reminder history for the Heroes Haven employee: review 9 days ago, final notice and escalation to Chris Coleman sent 2 days ago"
+  - "S08: an active probationer in ADP with a blank hire date"
+  - "S10: a pass outcome for the Heroes Haven review-today employee recorded by Becky Silvester one hour before the run"

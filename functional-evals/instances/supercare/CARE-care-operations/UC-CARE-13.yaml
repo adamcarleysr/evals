@@ -1,0 +1,37 @@
+# SuperCare binding for UC-CARE-13 (eval v0.1). Draft. Values from ClickUp (SR-13398, SR-13437 and playbook doc 8cnycrm-164035).
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-CARE-13
+eval_version: "0.1"
+
+values:
+  head_of_people: Hayley Harkins
+  region: London
+  region_homes: "Frimley, South Park Drive and Norwood"
+  filter_home: Norwood
+  filter_role: Senior Coach
+  ri_name: Charley Hooper
+  ri_region: "Eastbourne and Hastings"
+
+  employment_types: "<to supply>"
+  undefined_metric: retention
+  related_metric: turnover rate
+
+  hr_stale_after: 8
+  hr_block_after: 24
+  refresh_alert_after: 3
+  refresh_alert_target: the People team
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: a governed People calculation for London (Frimley, South Park Drive, Norwood) and for all nine homes, with employment type on every ADP employee"
+  - "S01: five open items in the data-quality queue"
+  - "S01: Hayley Harkins has the Head of People dashboard and a second view (e.g. Ofsted Readiness) pinned"
+  - "S02: Senior Coaches in post at Norwood"
+  - "S03: the ADP feed's last successful refresh set to more than 48 hours before the run, with three failed refreshes since"
+  - "S05: Charley Hooper set up as RI for the Eastbourne and Hastings homes only"

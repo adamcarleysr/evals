@@ -1,0 +1,32 @@
+# SuperCare binding for UC-CARE-14 (eval v0.1). Draft. Values from ClickUp (SR-13394, SR-13398, SR-13396, SR-13425 and playbook doc 8cnycrm-164035).
+# Dates are not bound: the runner computes them at run time.
+instance: SuperCare
+eval: UC-CARE-14
+eval_version: "0.1"
+
+values:
+  head_of_people: Hayley Harkins
+  home: Frimley
+  home_alias: SC Frimley
+  ambiguous_home_name: Lushington
+  home_without_absence: "<to supply>"
+  leaver_rise_home: "<to supply>"
+  employee_name: "<to supply>"
+  rm_name: Rachel Howard
+  rm_home: Frimley
+  other_home: Phoenix
+
+calendar:
+  locale: en-GB
+  time_zone: Europe/London
+  working_days: Monday–Friday
+  bank_holidays: England and Wales
+
+test_data_needed:
+  - "S01: dashboard reference values for headcount by home and last month's starters and leavers"
+  - "S01: starters exceeded leavers last month (false-premise variant)"
+  - "S01: both 23 Lushington and 13 Lushington present as canonical homes (ambiguity variant)"
+  - "S03: one SuperCare home with no absence records for last month"
+  - "S04: an employee in probation, review due in about 12 days, with four recorded absence instances in the last three months"
+  - "S05: one SuperCare home with one leaver the month before last and four last month, each with a termination reason code"
+  - "S06: Rachel Howard set up as RM scoped to Frimley only"

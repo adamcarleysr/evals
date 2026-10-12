@@ -1,250 +1,149 @@
-# Functional eval for UC-CARE-13, generated from the use case. Draft: pending sign-off.
+# Functional eval for UC-CARE-13 (generic). Parameterised. Draft.
 use_case: UC-CARE-13
 title: Monitor the workforce from the Head of People dashboard
-use_case_version: '0.1'
-source: verticals/CARE-care-operations/UC-CARE-13-monitor-the-workforce-from-the-head-of-people-dashboard.md
+use_case_version: "0.1"
 status: draft
 primary_role: Head of People
 process_style: prescribed
-tenant: Oakridge Care Group
-scoring:
-  repeat_runs: null
-  latency_budget_seconds: null
+
+# ---------------------------------------------------------------------------
+# Parameters: everything an instance must supply, or that is computed at run time.
+#   kind: entity  - a record or person in the instance's test data
+#         policy  - a value from the instance's playbooks
+#         text    - wording the instance uses
+#         date    - computed at run time from run_date and other parameters (never bound)
+# ---------------------------------------------------------------------------
+parameters:
+  head_of_people:        {kind: entity, about: "The Head of People, with full dashboard access", example: "Helen Marsh"}
+  region:                {kind: entity, about: "A region used as a dashboard filter", example: "North"}
+  region_homes:          {kind: entity, about: "The canonical homes in that region", example: "Ashdown House, Willow Lodge and Larch House"}
+  filter_home:           {kind: entity, about: "A home in that region used for single-home filters", example: "Willow Lodge"}
+  filter_role:           {kind: entity, about: "A canonical role with employees in post at that home", example: "Senior Coach"}
+  ri_name:               {kind: entity, about: "An RI whose region does not include the filter home", example: "Aisha Khan"}
+  ri_region:             {kind: entity, about: "That RI's region", example: "South"}
+
+  employment_types:      {kind: text,   about: "The provider's employment types, as staff name them", example: "permanent, bank and fixed-term"}
+  undefined_metric:      {kind: text,   about: "A dashboard metric with no governed definition", example: "retention"}
+  related_metric:        {kind: text,   about: "The governed metric closest to it", example: "turnover"}
+
+  hr_stale_after:        {kind: policy, unit: hours, about: "Age of HR data at which a tile shows a stale warning", example: 8}
+  hr_block_after:        {kind: policy, unit: hours, about: "Age of HR data at which reports are blocked", example: 24}
+  refresh_alert_after:   {kind: policy, unit: failures, about: "Failed refreshes that trigger an alert", example: 3}
+  refresh_alert_target:  {kind: policy, about: "Who is alerted when refreshes keep failing", example: "the People team"}
+
+  hr_last_refresh:       {kind: date, value: "run_date - (hr_block_after + 24) hours"}
+
+scoring: {repeat_runs: null, latency_budget_seconds: null}
+
 reference_steps:
-- n: 1
-  step: Open the pinned view with the viewer's saved layout and filters
-  by: worker
-- n: 2
-  step: Apply the viewer's access scope
-  by: worker
-- n: 3
-  step: 'Load the tiles from the governed calculation path: retention, absence, starters and leavers, probation,
-    length of service, data quality'
-  by: worker
-- n: 4
-  step: Apply the filters and breakdowns the viewer chooses
-  by: worker
-- n: 5
-  step: Check freshness and label stale tiles and connector failures
-  by: worker
-- n: 6
-  step: Drill from any total to the employees behind it
-  by: worker
+  - {n: 1, step: "Open the pinned view with the viewer's saved layout and filters", by: worker}
+  - {n: 2, step: "Apply the viewer's access scope", by: worker}
+  - {n: 3, step: "Load the tiles from the governed calculation path: retention, absence, starters and leavers, probation, length of service, data quality", by: worker}
+  - {n: 4, step: "Apply the filters and breakdowns the viewer chooses", by: worker}
+  - {n: 5, step: "Check freshness and label stale tiles and connector failures", by: worker}
+  - {n: 6, step: "Drill from any total to the employees behind it", by: worker}
+
 policies:
-  P1:
-    rule: Every tile, filter, drill-down and chat answer uses the governed definitions in K1, so the same question
-      gives the same number for the same scope. No tile computes its own version of a metric.
-    protects:
-    - data
-    - customer reputation
-    override: null
-  P2:
-    rule: A tile older than the warning threshold in K3, or whose last refresh failed, shows its last refresh time
-      and is never presented as current.
-    protects:
-    - data
-    - customer reputation
-    override: null
+  P1: {rule: "Every tile, filter, drill-down and chat answer uses the governed definitions in K1, so the same question gives the same number for the same scope. No tile computes its own version of a metric.", protects: [data, customer reputation]}
+  P2: {rule: "A tile older than the warning threshold in K3, or whose last refresh failed, shows its last refresh time and is never presented as current.", protects: [data, customer reputation]}
+
 scenarios:
-- id: S01
-  kind: happy
-  detail: null
-  mode: A0
-  given:
-    same_start_as: null
-    state: calculation results refreshed within the warning threshold; several open data-quality items; employees
-      in several homes across two regions with mixed employment types; the viewer has full access.
-    fixture: oakridge/people-w41
-    tenant_values: 'Viewer Helen Marsh (Head of People, full access). North region: Ashdown House, Willow Lodge,
-      Larch House; South region: Rowan House, Beacon House, Hazel Lodge, Cedar House. Employment types: permanent,
-      bank, fixed-term. Last refresh 40 minutes ago; 5 open data-quality items.'
-  input:
-    prompt: Show me the Head of People dashboard with retention, absence, starters and leavers, probation, service
-      length and data quality. Filter to the North region, then switch to company-wide with a breakdown by employment
-      type.
-  variants:
-  - id: PV-TERSE
-    prompt: people dashboard, North, then all by employment type
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-ALIAS
-    prompt: Open my HR dash for the northern homes, then whole company split perm, bank and fixed-term
-    context: null
-    expect: same_outcome
-    detail: null
-  - id: PV-CONTEXT
-    prompt: Now the same but company-wide by contract type
-    context: after the North view
-    expect: same_outcome
-    detail: company-wide part
-  - id: PV-AMBIGUOUS
-    prompt: Show me the dashboard
-    context: the viewer has this and a compliance view pinned
-    expect: clarify
-    detail: which dashboard
-  - id: PV-FALSE-PREMISE
-    prompt: Why has the dashboard stopped showing data-quality issues?
-    context: 5 are shown
-    expect: flag
-    detail: 5 are open and shown
-  expected:
-    state:
-    - North tiles equal the governed calculation for Ashdown House, Willow Lodge and Larch House
-    - Company-wide tiles equal the calculation for all seven homes
-    - Each employment-type row sums to the company total
-    - 5 items in the data-quality tile
-    - Nothing written
-    must_say:
-    - The last refresh time, the scope of each view, and any tile showing "no definition" or "unavailable"
-    must_not:
-    - Show a missing value as 0
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      stops_at: null
-      note: Full-access view with North filter then company-wide employment-type breakdown; no drill-down requested.
-- id: S02
-  kind: policy
-  detail: P1
-  mode: A0
-  given:
-    same_start_as: S01
-    state: as S01, filtered to one home, one role and a date range.
-    fixture: oakridge/people-w41
-    tenant_values: as S01, filtered to Willow Lodge, Senior Coach, last 6 months.
-  input:
-    prompt: How many Senior Coaches are in post at Willow Lodge?
-    context: asked in chat after setting the filter
-  variants: []
-  expected:
-    state:
-    - The chat answer equals the filtered headcount tile exactly
-    - The drill-down lists that many employees
-    must_say: []
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
-      stops_at: null
-      note: 'P1 and extension at 6: chat answer via UC-CARE-14 matches the filtered tile and drill-down count.'
-- id: S03
-  kind: policy
-  detail: P2
-  mode: A0
-  given:
-    same_start_as: S01
-    state: as S01, but the HR refreshes have failed for longer than the block threshold.
-    fixture: oakridge/people-w41
-    tenant_values: as S01; last successful refresh 2 days ago; warning threshold 8 hours, block threshold 24 hours
-      (K3); 3 failed refreshes, alert to the People team.
-  input:
-    prompt: Show me current headcount from the dashboard.
-  variants: []
-  expected:
-    state:
-    - Tiles keep their last values with a "Last refreshed [time]" banner
-    - Reports shown as blocked
-    - Alert raised to the People team
-    must_say:
-    - The data is 2 days old and the connector is failing
-    must_not:
-    - Present headcount as current
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 5
-      stops_at: null
-      note: 'P2 and extension at 5: tiles labelled stale and blocked; alert to People team per K3.'
-- id: S04
-  kind: edge
-  detail: extension at step 1
-  mode: A0
-  given:
-    same_start_as: S01
-    state: as S01, and the viewer has filtered and changed the layout.
-    fixture: oakridge/people-w41
-    tenant_values: as S01; filtered to Rowan House, last 3 months.
-  input:
-    prompt: Close and reopen the dashboard.
-  variants: []
-  expected:
-    state:
-    - Still pinned
-    - The Rowan House filter, date range and layout preserved
-    must_say: []
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      stops_at: null
-      note: 'Extension at 1: reopened view keeps its pin, Rowan House filter, date range and layout.'
-- id: S05
-  kind: edge
-  detail: extension at step 2
-  mode: A0
-  given:
-    same_start_as: S01
-    state: as S01, but the viewer is an RI mapped to one region.
-    fixture: oakridge/people-w41
-    tenant_values: as S01; viewer Aisha Khan, RI for the South region.
-  input:
-    prompt: Show the People dashboard for Willow Lodge.
-  variants: []
-  expected:
-    state:
-    - No Willow Lodge figures shown
-    - South region tiles available
-    must_say:
-    - Willow Lodge is outside the viewer's region
-    must_not: []
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 5
-      stops_at: null
-      note: 'Extension at 2: RI scope is South only; Willow Lodge declined, South tiles shown.'
-- id: S06
-  kind: edge
-  detail: extension at step 3
-  mode: A0
-  given:
-    same_start_as: S01
-    state: as S01; K1 defines turnover but no retention metric.
-    fixture: oakridge/people-w41
-    tenant_values: as S01.
-  input:
-    prompt: What's the retention figure on my dashboard?
-  variants: []
-  expected:
-    state:
-    - Retention tile shows "no definition"
-    - Turnover tile shows the governed figure
-    must_say: []
-    must_not:
-    - Show a derived retention figure
-    path:
-      steps:
-      - 1
-      - 2
-      - 3
-      - 5
-      stops_at: null
-      note: 'Extension at 3: retention tile shows ''no definition''; no derived figure (P1).'
+  - id: S01
+    kind: happy
+    mode: A0
+    given:
+      state: "Calculation results refreshed within {hr_stale_after} hours; five open data-quality items; employees in several homes across at least two regions with {employment_types} contracts; the viewer, {head_of_people}, has full access."
+      conditions:
+        - "A governed calculation (UC-CARE-11) for {region} ({region_homes}) and for all homes, with employment type on every employee"
+        - "Five open items in the data-quality queue"
+        - "{head_of_people} has this dashboard and a second view pinned (for the ambiguity variant)"
+    input:
+      prompt: "Show me the Head of People dashboard with retention, absence, starters and leavers, probation, service length and data quality. Filter to the {region} region, then switch to company-wide with a breakdown by employment type."
+    variants:
+      - {id: PV-TERSE, prompt: "people dashboard, {region}, then all by employment type", expect: same_outcome}
+      - {id: PV-ALIAS, prompt: "Open my HR dash for the {region} homes, then whole company split {employment_types}", expect: same_outcome}
+      - {id: PV-CONTEXT, prompt: "Now the same but company-wide by contract type", context: "after the {region} view", expect: same_outcome, detail: "company-wide part"}
+      - {id: PV-AMBIGUOUS, prompt: "Show me the dashboard", context: "the viewer has this and a compliance view pinned", expect: clarify, detail: "which dashboard"}
+      - {id: PV-FALSE-PREMISE, prompt: "Why has the dashboard stopped showing data-quality issues?", context: "five are shown", expect: flag, detail: "five are open and shown"}
+    expected:
+      state:
+        - "{region} tiles equal the governed calculation for {region_homes}"
+        - "Company-wide tiles equal the calculation for all homes"
+        - "Each employment-type row sums to the company total"
+        - "Five items in the data-quality tile"
+        - "Nothing written"
+      must_say: ["The last refresh time", "The scope of each view", "Any tile showing \"no definition\" or \"unavailable\""]
+      must_not: ["Show a missing value as 0"]
+      path: {steps: [1, 2, 3, 4, 5], stops_at: null, note: "Full-access view with a region filter then company-wide employment-type breakdown; no drill-down requested."}
+
+  - id: S02
+    kind: policy
+    detail: P1
+    mode: A0
+    given:
+      same_start_as: S01
+      state: "As S01, filtered to {filter_home}, {filter_role}, last 6 months."
+      conditions: ["Employees in post as {filter_role} at {filter_home}"]
+    input:
+      prompt: "How many {filter_role}s are in post at {filter_home}?"
+    expected:
+      state: ["The chat answer equals the filtered headcount tile exactly", "The drill-down lists that many employees"]
+      path: {steps: [1, 2, 3, 4, 5, 6], stops_at: null, note: "P1 and extension at 6: chat answer via UC-CARE-14 matches the filtered tile and drill-down count."}
+
+  - id: S03
+    kind: policy
+    detail: P2
+    mode: A0
+    given:
+      same_start_as: S01
+      state: "As S01, but the HR refreshes have failed since {hr_last_refresh}, past the {hr_block_after}-hour block threshold; {refresh_alert_after} refreshes have failed."
+      conditions: ["The HR system feed's last successful refresh is set to {hr_last_refresh}, with {refresh_alert_after} failed refreshes since"]
+    input:
+      prompt: "Show me current headcount from the dashboard."
+    expected:
+      state: ["Tiles keep their last values with a \"Last refreshed [time]\" banner", "Reports shown as blocked", "Alert raised to {refresh_alert_target}"]
+      must_say: ["The data is as at {hr_last_refresh}", "The connector is failing"]
+      must_not: ["Present headcount as current"]
+      path: {steps: [1, 2, 3, 5], stops_at: null, note: "P2 and extension at 5: tiles labelled stale and blocked; alert per K3."}
+
+  - id: S04
+    kind: edge
+    detail: extension at step 1
+    mode: A0
+    given:
+      same_start_as: S01
+      state: "As S01, and the viewer has filtered to {filter_home}, last 3 months, and changed the layout."
+    input:
+      prompt: "Close and reopen the dashboard."
+    expected:
+      state: ["Still pinned", "The {filter_home} filter, date range and layout preserved"]
+      path: {steps: [1, 2, 3, 4, 5], stops_at: null, note: "Extension at 1: reopened view keeps its pin, home filter, date range and layout."}
+
+  - id: S05
+    kind: edge
+    detail: extension at step 2
+    mode: A0
+    given:
+      same_start_as: S01
+      state: "As S01, but the viewer is {ri_name}, RI for {ri_region}."
+      conditions: ["{ri_name} has an RI role mapped to {ri_region} only"]
+    input:
+      prompt: "Show the People dashboard for {filter_home}."
+    expected:
+      state: ["No {filter_home} figures shown", "{ri_region} tiles available"]
+      must_say: ["{filter_home} is outside {ri_name}'s region"]
+      path: {steps: [1, 2, 3, 5], stops_at: null, note: "Extension at 2: RI scope is their region only; the out-of-region home declined, regional tiles shown."}
+
+  - id: S06
+    kind: edge
+    detail: extension at step 3
+    mode: A0
+    given:
+      same_start_as: S01
+      state: "As S01; K1 defines {related_metric} but no {undefined_metric} metric."
+    input:
+      prompt: "What's the {undefined_metric} figure on my dashboard?"
+    expected:
+      state: ["{undefined_metric} tile shows \"no definition\"", "{related_metric} tile shows the governed figure"]
+      must_not: ["Show a derived {undefined_metric} figure"]
+      path: {steps: [1, 2, 3, 5], stops_at: null, note: "Extension at 3: the undefined metric's tile shows 'no definition'; no derived figure (P1)."}
